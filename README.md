@@ -194,56 +194,10 @@ SOFTWARE.
 <!-- ============================================ --><!-- FOOTER --><!-- ============================================ --><div align="center"><!-- Animated Footer --><img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=100&section=footer" width="100%"/>
 ⭐ sʜᴏᴡ sᴜᴘᴘᴏʀᴛ
 <i>ɪғ ʏᴏᴜ ʟɪᴋᴇ ᴛʜɪs ʙᴏᴛ, ᴘʟᴇᴀsᴇ ɢɪᴠᴇ ɪᴛ ᴀ ⭐ ᴏɴ ɢɪᴛʜᴜʙ</i>
-text
+<div align="center">
 ╔═══════════════════════════════════════════════════════════════╗
                                                                
-         ⚡ ᴍᴀᴅᴇ ᴡɪᴛʜ ❤️ ʙʏ ᴄʀᴀᴢʏ ʙᴏʏ ⚡                  
+         ⚡️ ᴍᴀᴅᴇ ᴡɪᴛʜ ❤️ ʙʏ ᴄʀᴀᴢʏ ʙᴏʏ ⚡️                  
                                                                
 ╚═══════════════════════════════════════════════════════════════╝
-</div>
-How to Use:
-Copy the entire code above
-
-Go to your GitHub repository
-
-Click on "README.md" file
-
-Click on the pencil icon (Edit)
-
-Paste the copied code
-
-Replace yourusername with your GitHub username
-
-Commit the changes
-
-What's Included:
-✅ Premium animated banner
-
-✅ Animated typing effect
-
-✅ Visitor counter
-
-✅ Complete command guide
-
-✅ Feature comparison table
-
-✅ Installation instructions
-
-✅ Database structure diagram
-
-✅ Premium pricing plans
-
-✅ Developer information
-
-✅ Contributing guidelines
-
-✅ License information
-
-✅ Animated footer
-
-
-</td>
-</tr>
-</table>
-
 </div>
