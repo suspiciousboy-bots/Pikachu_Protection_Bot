@@ -17,7 +17,13 @@
 
 <p align="center">
   <a href="https://t.me/Pikachu_Protection_Robot">
-    <img src="https://img.shields.io/badge/🤖_Telegram_Bot-@Pikachu_Protection_Robot-0088cc?style=for-the-badge&logo=telegram&logoColor=white" alt="Telegram Bot"/>
+    <img src="https://img.shields.io/badge/🤖_Bot-@Pikachu_Protection_Robot-0088cc?style=for-the-badge&logo=telegram&logoColor=white" alt="Bot"/>
+  </a>
+  <a href="https://t.me/CrazyyCore">
+    <img src="https://img.shields.io/badge/👑_Owner-@CrazyyCore-FF6B6B?style=for-the-badge&logo=telegram&logoColor=white" alt="Owner"/>
+  </a>
+  <a href="https://t.me/CrazyyCore">
+    <img src="https://img.shields.io/badge/📞_Contact-@CrazyyCore-00C853?style=for-the-badge&logo=telegram&logoColor=white" alt="Contact"/>
   </a>
   <a href="https://python.org">
     <img src="https://img.shields.io/badge/Python-3.8+-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python"/>
@@ -25,25 +31,13 @@
   <a href="https://mongodb.com">
     <img src="https://img.shields.io/badge/MongoDB-4.4+-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB"/>
   </a>
-  <a href="https://t.me/CrazyyCore">
-    <img src="https://img.shields.io/badge/👑_Owner-@CrazyyCore-FF6B6B?style=for-the-badge&logo=telegram&logoColor=white" alt="Owner"/>
-  </a>
   <a href="#">
     <img src="https://img.shields.io/badge/Version-2.0.0-FFD93D?style=for-the-badge&logo=github&logoColor=white" alt="Version"/>
   </a>
   <a href="#">
     <img src="https://img.shields.io/badge/License-MIT-6C5B7B?style=for-the-badge&logo=opensourceinitiative&logoColor=white" alt="License"/>
   </a>
-  <a href="https://t.me/CrazyyCore">
-    <img src="https://img.shields.io/badge/📞_Contact_Owner-Click_Here-00C853?style=for-the-badge&logo=telegram&logoColor=white" alt="Contact Owner"/>
-  </a>
 </p>
-
-<!-- ============================================ -->
-<!--            TYPING ANIMATION                   -->
-<!-- ============================================ -->
-
-<img src="https://readme-typing-svg.demolab.com?font=Fira+Code&size=35&duration=3000&pause=500&color=F7F7F7&center=true&vCenter=true&width=800&height=70&lines=⚡+ᴘᴏᴡᴇʀғᴜʟ+ᴘʀᴏᴛᴇᴄᴛɪᴏɴ;🔥+ᴀᴅᴠᴀɴᴄᴇᴅ+ᴍᴏᴅᴇʀᴀᴛɪᴏɴ;💎+ᴘʀᴇᴍɪᴜᴍ+ғᴇᴀᴛᴜʀᴇs;🚀+24%2F7+ᴜᴘᴛɪᴍᴇ;🎯+ᴄᴏᴍᴘʟᴇᴛᴇ+ᴄᴏɴᴛʀᴏʟ;⭐+ʙᴇsᴛ+ᴘʀᴏᴛᴇᴄᴛɪᴏɴ" alt="Typing SVG" />
 
 
 <!-- ============================================ -->
