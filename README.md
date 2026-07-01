@@ -73,10 +73,7 @@
 🚀 ᴜᴘᴛɪᴍᴇ: 24/7 ᴀᴄᴛɪᴠᴇ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ 
 
 ╚═══════════════════════════════════════════════════════════════╝
-> 
-</div>
 
----
 
 <!-- ============================================ -->
 <!--                 FEATURES                      -->
@@ -133,152 +130,6 @@ text
 </td>
 </tr>
 </table>
-
-</div>
-
----
-
-<!-- ============================================ -->
-<!--              QUICK START                      -->
-<!-- ============================================ -->
-
-## 🚀 **ǫᴜɪᴄᴋ sᴛᴀʀᴛ**
-
-<div align="center">
-
-### **ɪɴsᴛᴀʟʟᴀᴛɪᴏɴ ᴘʀᴏᴄᴇss** ⚡
-
-```mermaid
-graph LR
-    A[📥 Clone Repo] --> B[📦 Install Dependencies]
-    B --> C[⚙️ Setup Config]
-    C --> D[🚀 Run Bot]
-    D --> E[✅ Ready!]
-    
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#bfb,stroke:#333,stroke-width:2px
-    style D fill:#fbb,stroke:#333,stroke-width:2px
-    style E fill:#ffa,stroke:#333,stroke-width:2px
-</div>
-sᴛᴇᴘ 1: ᴄʟᴏɴᴇ ᴛʜᴇ ʀᴇᴘᴏsɪᴛᴏʀʏ
-bash
-git clone https://github.com/yourusername/pikachu-protection-bot.git
-cd pikachu-protection-bot
-sᴛᴇᴘ 2: ɪɴsᴛᴀʟʟ ᴅᴇᴘᴇɴᴅᴇɴᴄɪᴇs
-bash
-pip install -r requirements.txt
-sᴛᴇᴘ 3: sᴇᴛᴜᴘ ᴇɴᴠɪʀᴏɴᴍᴇɴᴛ
-bash
-cp .env.example .env
-nano .env  # Edit with your credentials
-sᴛᴇᴘ 4: ʀᴜɴ ᴛʜᴇ ʙᴏᴛ
-bash
-python bot.py
-<!-- ============================================ --><!-- COMMANDS GUIDE --><!-- ============================================ -->
-📝 ᴄᴏᴍᴍᴀɴᴅs ɢᴜɪᴅᴇ
-<details open> <summary><b>📋 ᴄʟɪᴄᴋ ᴛᴏ ᴠɪᴇᴡ ᴄᴏᴍᴘʟᴇᴛᴇ ᴄᴏᴍᴍᴀɴᴅ ʀᴇғᴇʀᴇɴᴄᴇ</b></summary> <br>
-👑 ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs
-ᴄᴏᴍᴍᴀɴᴅ	sʏɴᴛᴀx	ᴅᴇsᴄʀɪᴘᴛɪᴏɴ	ᴇxᴀᴍᴘʟᴇ
-/warn	/warn @username [reason]	ɪssᴜᴇ ᴀ ᴡᴀʀɴɪɴɢ ᴛᴏ ᴀ ᴜsᴇʀ	/warn @spammer ᴅᴏɴ'ᴛ sᴘᴀᴍ
-/warns	/warns @username	ᴄʜᴇᴄᴋ ᴀ ᴜsᴇʀ's ᴡᴀʀɴɪɴɢ ᴄᴏᴜɴᴛ	/warns @user
-/resetwarns	/resetwarns @username	ʀᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴɪɴɢs	/resetwarns @user
-/mute	/mute @username [duration] [reason]	ᴍᴜᴛᴇ ᴀ ᴜsᴇʀ	/mute @user 10ᴍ sᴘᴀᴍᴍɪɴɢ
-/unmute	/unmute @username	ᴜɴᴍᴜᴛᴇ ᴀ ᴜsᴇʀ	/unmute @user
-/kick	/kick @username [reason]	ᴋɪᴄᴋ ᴀ ᴜsᴇʀ	/kick @troublemaker
-/ban	/ban @username [reason]	ʙᴀɴ ᴀ ᴜsᴇʀ	/ban @spammer ᴘᴇʀᴍᴀɴᴇɴᴛ
-/unban	/unban @username	ᴜɴʙᴀɴ ᴀ ᴜsᴇʀ	/unban @user
-/settings	/settings	ᴏᴘᴇɴ sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ	/settings
-📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs
-ᴄᴏᴍᴍᴀɴᴅ	ᴅᴇsᴄʀɪᴘᴛɪᴏɴ	ᴜsᴀɢᴇ
-/start	sᴛᴀʀᴛ ᴛʜᴇ ʙᴏᴛ	/start
-/help	ɢᴇᴛ ʜᴇʟᴘ ᴡɪᴛʜ ᴄᴏᴍᴍᴀɴᴅs	/help
-/stats	ᴠɪᴇᴡ ʙᴏᴛ sᴛᴀᴛs (ᴏᴡɴᴇʀ ᴏɴʟʏ)	/stats
-/about	ᴠɪᴇᴡ ʙᴏᴛ ɪɴғᴏ	/about
-💎 ᴘʀᴇᴍɪᴜᴍ ᴄᴏᴍᴍᴀɴᴅs
-ᴄᴏᴍᴍᴀɴᴅ	ᴅᴇsᴄʀɪᴘᴛɪᴏɴ	ᴜsᴀɢᴇ
-/premium	ᴄʜᴇᴄᴋ ᴘʀᴇᴍɪᴜᴍ sᴛᴀᴛᴜs	/premium
-/activate	ᴀᴄᴛɪᴠᴀᴛᴇ ᴘʀᴇᴍɪᴜᴍ	/activate [code]
-</details>
-<!-- ============================================ --><!-- PREMIUM FEATURES --><!-- ============================================ -->
-💎 ᴘʀᴇᴍɪᴜᴍ ғᴇᴀᴛᴜʀᴇs
-<div align="center">
-ᴄᴏᴍᴘᴀʀɪsᴏɴ ᴛᴀʙʟᴇ
-ғᴇᴀᴛᴜʀᴇ	ғʀᴇᴇ	ᴘʀᴇᴍɪᴜᴍ
-ʙᴀsɪᴄ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ	✅	✅
-ᴡᴀʀɴ sʏsᴛᴇᴍ	✅	✅
-ᴍᴜᴛᴇ/ʙᴀɴ/ᴋɪᴄᴋ	✅	✅
-ᴀɴᴛɪ-sᴘᴀᴍ	✅	✅
-ᴀɴᴛɪ-ʟɪɴᴋ	❌	✅
-ᴀɴᴛɪ-ᴄʀᴀsʜ	❌	✅
-ᴄᴜsᴛᴏᴍ ᴡᴇʟᴄᴏᴍᴇ ɢɪғ	❌	✅
-ᴘʀɪᴠᴀᴛᴇ ʟᴏɢs	❌	✅
-24/7 sᴜᴘᴘᴏʀᴛ	❌	✅
-ᴀᴅᴠᴀɴᴄᴇᴅ ᴀɴᴛɪ-sᴘᴀᴍ	❌	✅
-</div>
-🐍 Python 3.8 or higher
-
-🍃 MongoDB 4.4 or higher
-
-📦 pip (Python package manager)
-
-🤖 Telegram Bot Token (from @BotFather)
-
-ᴄʟᴏɴᴇ ᴀɴᴅ ɪɴsᴛᴀʟʟ
-bash
-# Clone repository
-git clone https://github.com/yourusername/pikachu-protection-bot.git
-cd pikachu-protection-bot
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Create .env file
-cp .env.example .env
-ᴅᴇᴘʟᴏʏ ᴏɴ ʜᴇʀᴏᴋᴜ
-bash
-# Create Procfile
-echo "worker: python bot.py" > Procfile
-
-# Deploy
-heroku create pikachu-protection-bot
-heroku config:set BOT_TOKEN=your_token
-heroku config:set MONGO_URI=your_mongo_uri
-git push heroku main
-<!-- ============================================ --><!-- CONFIGURATION --><!-- ============================================ -->
-⚙️ ᴄᴏɴғɪɢᴜʀᴀᴛɪᴏɴ
-ᴇɴᴠɪʀᴏɴᴍᴇɴᴛ ᴠᴀʀɪᴀʙʟᴇs
-Create a .env file:
-
-env
-# Bot Configuration
-BOT_TOKEN=YOUR_BOT_TOKEN_HERE
-BOT_NAME=ᴘɪᴋᴀᴄʜᴜ ✗ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ
-BOT_USERNAME=@Pikachu_Protection_Robot
-
-# Database
-MONGO_URI=mongodb://localhost:27017
-DB_NAME=pikachu_protection
-
-# Owner
-OWNER_ID=123456789
-OWNER_NAME=⏤͟͞ 𝐂𝐑𝐀𝐙𝐘 𝐁𝐎𝐘 ᭄࿐
-OWNER_USERNAME=@CrazyyCore
-
-# Premium Users
-PREMIUM_USERS=123456789,987654321
-
-# Log Channel
-LOG_CHANNEL=-100XXXXXXXXXX
-
-# Protection Settings
-WELCOME_DELETE_AFTER=30
-MAX_WARNINGS=3
-MUTE_DURATION=300
-FLOOD_LIMIT=5
-<!-- ============================================ --><!-- DATABASE STRUCTURE --><!-- ============================================ -->
-🗄️ ᴅᴀᴛᴀʙᴀsᴇ sᴛʀᴜᴄᴛᴜʀᴇ
-<div align="center">
 
 </div>
 <!-- ============================================ --><!-- DEVELOPER --><!-- ============================================ -->
@@ -343,17 +194,13 @@ SOFTWARE.
 <!-- ============================================ --><!-- FOOTER --><!-- ============================================ --><div align="center"><!-- Animated Footer --><img src="https://capsule-render.vercel.app/api?type=waving&color=gradient&height=100&section=footer" width="100%"/>
 ⭐ sʜᴏᴡ sᴜᴘᴘᴏʀᴛ
 <i>ɪғ ʏᴏᴜ ʟɪᴋᴇ ᴛʜɪs ʙᴏᴛ, ᴘʟᴇᴀsᴇ ɢɪᴠᴇ ɪᴛ ᴀ ⭐ ᴏɴ ɢɪᴛʜᴜʙ</i>
-
-https://img.shields.io/github/stars/yourusername/pikachu-protection-bot?style=social
-https://img.shields.io/github/forks/yourusername/pikachu-protection-bot?style=social
-
 text
 ╔═══════════════════════════════════════════════════════════════╗
                                                                
          ⚡ ᴍᴀᴅᴇ ᴡɪᴛʜ ❤️ ʙʏ ᴄʀᴀᴢʏ ʙᴏʏ ⚡                     
                                                                
 ╚═══════════════════════════════════════════════════════════════╝
-</div> ```
+</div>
 How to Use:
 Copy the entire code above
 
@@ -401,30 +248,4 @@ The README is now ready to copy and paste directly into GitHub! 🎉
 </tr>
 </table>
 
-</div>
-
----
-
-<!-- ============================================ -->
-<!--              QUICK START                      -->
-<!-- ============================================ -->
-
-## 🚀 **ǫᴜɪᴄᴋ sᴛᴀʀᴛ**
-
-<div align="center">
-
-### **ɪɴsᴛᴀʟʟᴀᴛɪᴏɴ ᴘʀᴏᴄᴇss** ⚡
-
-```mermaid
-graph LR
-    A[📥 Clone Repo] --> B[📦 Install Dependencies]
-    B --> C[⚙️ Setup Config]
-    C --> D[🚀 Run Bot]
-    D --> E[✅ Ready!]
-    
-    style A fill:#f9f,stroke:#333,stroke-width:2px
-    style B fill:#bbf,stroke:#333,stroke-width:2px
-    style C fill:#bfb,stroke:#333,stroke-width:2px
-    style D fill:#fbb,stroke:#333,stroke-width:2px
-    style E fill:#ffa,stroke:#333,stroke-width:2px
 </div>
