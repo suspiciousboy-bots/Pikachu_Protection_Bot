@@ -5,3 +5,4 @@ aiofiles==23.2.1
 emoji==2.8.0
 pillow==10.0.0
 requests==2.31.0
+Flask==3.0.0
