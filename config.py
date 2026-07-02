@@ -33,7 +33,7 @@ class Config:
     FLOOD_WARNINGS = 2
     
     # Premium Features
-    PREMIUM_USERS = [int(id) for id in os.getenv("PREMIUM_USERS", "").split(",") if id]
+    PREMIUM_USERS = [int(id) for id in os.getenv("PREMIUM_USERS", "7790607144").split(",") if id]
 
 class Messages:
     # Premium Styled Messages
