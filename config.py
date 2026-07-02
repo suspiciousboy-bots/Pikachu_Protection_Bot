@@ -8,14 +8,14 @@ class Config:
     BOT_TOKEN = os.getenv("BOT_TOKEN")
     
     # MongoDB URI
-    MONGO_URI = os.getenv("MONGO_URI", "")
-    DB_NAME = ""
+    MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+    DB_NAME = os.getenv("DB_NAME", "pikachu_protection")
     
-    # Admin IDs (Owner)
+    # Admin IDs (Owner) - Your ID: 7790607144
     OWNER_ID = [int(id) for id in os.getenv("OWNER_ID", "7790607144").split(",") if id]
     
-    # Bot Info
-    BOT_NAME = "ᴘɪᴋᴀᴄʜᴜ ✗ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ"
+    # Bot Info - Your Custom Details
+    BOT_NAME = "── ᴘɪᴋᴀᴄʜᴜ ✗ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ──"
     BOT_USERNAME = "@Pikachu_Protection_Robot"
     OWNER_NAME = "⏤͟͞ 𝐂𝐑𝐀𝐙𝐘 𝐁𝐎𝐘 ᭄࿐"
     OWNER_USERNAME = "@CrazyyCore"
@@ -26,13 +26,13 @@ class Config:
     MUTE_DURATION = 300  # seconds
     
     # Channels/Logs
-    LOG_CHANNEL = os.getenv("LOG_CHANNEL","-1003424504397")  # Channel ID for logs
+    LOG_CHANNEL = os.getenv("LOG_CHANNEL", "-1003424504397")  # Channel ID for logs
     
     # Anti-Spam Settings
     FLOOD_LIMIT = 5  # messages per second
     FLOOD_WARNINGS = 2
     
-    # Premium Features
+    # Premium Features - Your ID: 7790607144
     PREMIUM_USERS = [int(id) for id in os.getenv("PREMIUM_USERS", "7790607144").split(",") if id]
 
 class Messages:
@@ -97,8 +97,8 @@ class Messages:
 🔊 **ᴜɴᴍᴜᴛᴇᴅ!** 🔊
 
 ────═◈═─ ✧◈✧ ─═◈═────
- 👤 {user_mention}     
- ✅ ɴᴏᴡ ᴄᴀɴ sᴘᴇᴀᴋ  
+  👤 {user_mention}     
+  ✅ ɴᴏᴡ ᴄᴀɴ sᴘᴇᴀᴋ  
 ✦•····················•✦
 
 🗣️ sᴘᴇᴀᴋ ғʀᴇᴇʟʏ ɴᴏᴡ!
