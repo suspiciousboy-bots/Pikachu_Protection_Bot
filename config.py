@@ -8,11 +8,11 @@ class Config:
     BOT_TOKEN = os.getenv("BOT_TOKEN")
     
     # MongoDB URI
-    MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
-    DB_NAME = "pikachu_protection"
+    MONGO_URI = os.getenv("MONGO_URI", "")
+    DB_NAME = ""
     
     # Admin IDs (Owner)
-    OWNER_ID = [int(id) for id in os.getenv("OWNER_ID", "").split(",") if id]
+    OWNER_ID = [int(id) for id in os.getenv("OWNER_ID", "7790607144").split(",") if id]
     
     # Bot Info
     BOT_NAME = "ᴘɪᴋᴀᴄʜᴜ ✗ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ"
@@ -26,7 +26,7 @@ class Config:
     MUTE_DURATION = 300  # seconds
     
     # Channels/Logs
-    LOG_CHANNEL = os.getenv("LOG_CHANNEL")  # Channel ID for logs
+    LOG_CHANNEL = os.getenv("LOG_CHANNEL","-1003424504397")  # Channel ID for logs
     
     # Anti-Spam Settings
     FLOOD_LIMIT = 5  # messages per second
