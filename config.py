@@ -26,7 +26,7 @@ class Config:
     MUTE_DURATION = 300  # seconds
     
     # Channels/Logs
-    LOG_CHANNEL = os.getenv("LOG_CHANNEL", "-1003424504397")  # Channel ID for logs
+    LOG_CHANNEL = os.getenv("LOG_CHANNEL", "-1003983202182")  # Channel ID for logs
     
     # Anti-Spam Settings
     FLOOD_LIMIT = 5  # messages per second
