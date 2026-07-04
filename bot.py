@@ -64,6 +64,14 @@ class PikachuProtectionBot:
         premium_print(f"ᴏᴡɴᴇʀ: {Config.OWNER_NAME}", "👑")
         premium_print(f"ᴘʀᴇᴍɪᴜᴍ ғᴇᴀᴛᴜʀᴇs: ʟᴏᴀᴅᴇᴅ", "💎")
 
+    # ────═◈═─ CHECK ADMIN PERMISSION ─═◈═────
+    async def is_admin(self, context, chat_id, user_id):
+        try:
+            member = await context.bot.get_chat_member(chat_id, user_id)
+            return member.status in ['administrator', 'creator']
+        except:
+            return False
+
     # ────═◈═─ START COMMAND ─═◈═────
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
@@ -198,12 +206,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ sᴇᴛ ʀᴜʟᴇs!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ sᴇᴛ ʀᴜʟᴇs!")
             return
         
         if not context.args:
@@ -249,7 +253,6 @@ class PikachuProtectionBot:
             except:
                 member_count = "?"
             
-            # ────═◈═─ GET USER DETAILS ─═◈═────
             try:
                 user_full = await context.bot.get_chat(member.id)
                 user_bio = getattr(user_full, 'bio', 'N/A')
@@ -257,17 +260,14 @@ class PikachuProtectionBot:
                 user_name = member.first_name or "N/A"
                 user_username = f"@{member.username}" if member.username else "N/A"
                 
-                # ────═◈═─ GET PROFILE PHOTO ─═◈═────
                 photos = await context.bot.get_user_profile_photos(member.id, limit=1)
                 photo_file_id = None
                 if photos.total_count > 0:
                     photo_file_id = photos.photos[0][-1].file_id
                 
-                # ────═◈═─ GET RULES ─═◈═────
                 rules = await db.get_rules(chat.id)
                 rules_text = f"\n📋 **ʀᴜʟᴇs:**\n{rules}" if rules else ""
                 
-                # ────═◈═─ WELCOME MESSAGE ─═◈═────
                 welcome_msg = f"""
 ✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
 
@@ -285,7 +285,6 @@ class PikachuProtectionBot:
 🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
 """
                 
-                # ────═◈═─ SEND WELCOME WITH PHOTO ─═◈═────
                 if photo_file_id:
                     await context.bot.send_photo(
                         chat.id,
@@ -302,7 +301,6 @@ class PikachuProtectionBot:
                     
             except Exception as e:
                 logger.error(f"Welcome handler error: {e}")
-                # Fallback welcome
                 fallback_msg = f"""
 ✨ **ᴡᴇʟᴄᴏᴍᴇ {member.first_name}!** ✨
 
@@ -360,11 +358,7 @@ class PikachuProtectionBot:
         if not settings.get('antispam', True):
             return
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if member.status in ['administrator', 'creator']:
-                return
-        except:
+        if await self.is_admin(context, chat.id, user.id):
             return
         
         if not context.user_data.get('last_message_time'):
@@ -398,11 +392,7 @@ class PikachuProtectionBot:
         if not settings.get('antilink', False):
             return
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if member.status in ['administrator', 'creator']:
-                return
-        except:
+        if await self.is_admin(context, chat.id, user.id):
             return
         
         is_approved = await db.is_approved(user.id, chat.id)
@@ -429,11 +419,7 @@ class PikachuProtectionBot:
         if not settings.get('anti18', True):
             return
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if member.status in ['administrator', 'creator']:
-                return
-        except:
+        if await self.is_admin(context, chat.id, user.id):
             return
         
         adult_keywords = ['porn', 'xxx', 'sex', 'nude', 'nsfw', '18+', 'adult']
@@ -446,6 +432,7 @@ class PikachuProtectionBot:
 
     # ────═◈═─ MODERATION COMMANDS ─═◈═────
     
+    # ────═◈═─ WARN COMMAND ─═◈═────
     async def warn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -454,12 +441,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴡᴀʀɴ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴡᴀʀɴ!")
             return
         
         if not context.args and not update.message.reply_to_message:
@@ -521,6 +504,7 @@ class PikachuProtectionBot:
             except:
                 pass
     
+    # ────═◈═─ WARNS COMMAND ─═◈═────
     async def warns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -553,6 +537,7 @@ class PikachuProtectionBot:
         
         await update.message.reply_text(warn_text, parse_mode="Markdown")
     
+    # ────═◈═─ RESET WARNS COMMAND ─═◈═────
     async def reset_warns(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -561,12 +546,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʀᴇsᴇᴛ ᴡᴀʀɴs!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʀᴇsᴇᴛ ᴡᴀʀɴs!")
             return
         
         target = None
@@ -586,6 +567,7 @@ class PikachuProtectionBot:
         await db.clear_warnings(target.id, chat.id)
         await update.message.reply_text(f"✅ ᴄʟᴇᴀʀᴇᴅ ᴀʟʟ ᴡᴀʀɴɪɴɢs ғᴏʀ {target.first_name}!")
     
+    # ────═◈═─ MUTE COMMAND ─═◈═────
     async def mute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -594,12 +576,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴍᴜᴛᴇ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴍᴜᴛᴇ!")
             return
         
         target = None
@@ -616,16 +594,27 @@ class PikachuProtectionBot:
             await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
+        if target.is_bot:
+            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ᴍᴜᴛᴇ ʙᴏᴛs!")
+            return
+        
         duration = Config.MUTE_DURATION
         reason = " ".join(context.args[1:]) if len(context.args) > 1 else "ɴᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
         
-        await db.add_mute(target.id, chat.id, duration, reason, user.id)
         try:
+            # Check if duration is provided in command
+            if len(context.args) > 1 and context.args[1].isdigit():
+                duration = int(context.args[1])
+                reason = " ".join(context.args[2:]) if len(context.args) > 2 else "ɴᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+            
+            await db.add_mute(target.id, chat.id, duration, reason, user.id)
+            
             await context.bot.restrict_chat_member(
                 chat.id,
                 target.id,
                 ChatPermissions(can_send_messages=False)
             )
+            
             mute_msg = f"""
 🔇 **ᴍᴜᴛᴇᴅ!** 🔇
 
@@ -636,9 +625,32 @@ class PikachuProtectionBot:
 ────═◈═─ ✧◈✧ ─═◈═────
 """
             await update.message.reply_text(mute_msg, parse_mode="Markdown")
+            
+            # Auto-unmute after duration
+            asyncio.create_task(self.auto_unmute(context, chat.id, target.id, duration))
+            
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}\n\nᴍᴀᴋᴇ sᴜʀᴇ ɪ ʜᴀᴠᴇ ᴀᴅᴍɪɴ ᴘᴇʀᴍɪssɪᴏɴs ɪɴ ᴛʜɪs ɢʀᴏᴜᴘ!")
+
+    async def auto_unmute(self, context, chat_id, user_id, duration):
+        await asyncio.sleep(duration)
+        try:
+            await db.remove_mute(user_id, chat_id)
+            await context.bot.restrict_chat_member(
+                chat_id,
+                user_id,
+                ChatPermissions(
+                    can_send_messages=True,
+                    can_send_media_messages=True,
+                    can_send_polls=True,
+                    can_send_other_messages=True,
+                    can_add_web_page_previews=True
+                )
+            )
+        except:
+            pass
     
+    # ────═◈═─ UNMUTE COMMAND ─═◈═────
     async def unmute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -647,12 +659,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴍᴜᴛᴇ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴍᴜᴛᴇ!")
             return
         
         target = None
@@ -686,6 +694,7 @@ class PikachuProtectionBot:
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
     
+    # ────═◈═─ KICK COMMAND ─═◈═────
     async def kick_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -694,12 +703,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴋɪᴄᴋ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴋɪᴄᴋ!")
             return
         
         target = None
@@ -714,6 +719,10 @@ class PikachuProtectionBot:
             target = update.message.reply_to_message.from_user
         else:
             await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        if target.is_bot:
+            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ᴋɪᴄᴋ ʙᴏᴛs!")
             return
         
         reason = " ".join(context.args[1:]) if len(context.args) > 1 else "ɴᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
@@ -723,8 +732,9 @@ class PikachuProtectionBot:
             await context.bot.unban_chat_member(chat.id, target.id)
             await update.message.reply_text(f"👢 **ᴋɪᴄᴋᴇᴅ {target.first_name}!**\n📝 ʀᴇᴀsᴏɴ: {reason}", parse_mode="Markdown")
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}\n\nᴍᴀᴋᴇ sᴜʀᴇ ɪ ʜᴀᴠᴇ ᴀᴅᴍɪɴ ᴘᴇʀᴍɪssɪᴏɴs ɪɴ ᴛʜɪs ɢʀᴏᴜᴘ!")
     
+    # ────═◈═─ BAN COMMAND ─═◈═────
     async def ban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -733,12 +743,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʙᴀɴ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʙᴀɴ!")
             return
         
         target = None
@@ -755,14 +761,19 @@ class PikachuProtectionBot:
             await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
+        if target.is_bot:
+            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ʙᴀɴ ʙᴏᴛs!")
+            return
+        
         reason = " ".join(context.args[1:]) if len(context.args) > 1 else "ɴᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
         
         try:
             await context.bot.ban_chat_member(chat.id, target.id)
             await update.message.reply_text(f"🚫 **ʙᴀɴɴᴇᴅ {target.first_name}!**\n📝 ʀᴇᴀsᴏɴ: {reason}", parse_mode="Markdown")
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}\n\nᴍᴀᴋᴇ sᴜʀᴇ ɪ ʜᴀᴠᴇ ᴀᴅᴍɪɴ ᴘᴇʀᴍɪssɪᴏɴs ɪɴ ᴛʜɪs ɢʀᴏᴜᴘ!")
     
+    # ────═◈═─ UNBAN COMMAND ─═◈═────
     async def unban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -771,12 +782,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴʙᴀɴ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴʙᴀɴ!")
             return
         
         target = None
@@ -797,7 +804,7 @@ class PikachuProtectionBot:
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
     
-    # ────═◈═─ APPROVE/UNAPPROVE ─═◈═────
+    # ────═◈═─ APPROVE COMMAND ─═◈═────
     async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -806,12 +813,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴀᴘᴘʀᴏᴠᴇ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴀᴘᴘʀᴏᴠᴇ!")
             return
         
         target = None
@@ -831,6 +834,7 @@ class PikachuProtectionBot:
         await db.approve_user(target.id, chat.id)
         await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ ᴄᴀɴ sᴇɴᴅ ʟɪɴᴋs.", parse_mode="Markdown")
 
+    # ────═◈═─ UNAPPROVE COMMAND ─═◈═────
     async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -839,12 +843,8 @@ class PikachuProtectionBot:
         user = update.effective_user
         chat = update.effective_chat
         
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴀᴘᴘʀᴏᴠᴇ!")
-                return
-        except:
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴀᴘᴘʀᴏᴠᴇ!")
             return
         
         target = None
@@ -962,7 +962,7 @@ class PikachuProtectionBot:
 """
         await update.message.reply_text(stats_text, parse_mode="Markdown")
 
-    # ────═◈═─ FIXED CALLBACK HANDLER ─═◈═────
+    # ────═◈═─ CALLBACK HANDLER ─═◈═────
     async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -971,7 +971,6 @@ class PikachuProtectionBot:
         user_id = update.effective_user.id
         is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
         
-        # ────═◈═─ MAIN MENU ─═◈═────
         if data == "main_menu":
             keyboard = [
                 [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
@@ -994,7 +993,6 @@ class PikachuProtectionBot:
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
         
-        # ────═◈═─ STAFF ─═◈═────
         elif data == "staff":
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
             try:
@@ -1010,7 +1008,6 @@ class PikachuProtectionBot:
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
         
-        # ────═◈═─ ABOUT ─═◈═────
         elif data == "about":
             text = f"""
 ⚡ **ᴀʙᴏᴜᴛ {Config.BOT_NAME}** ⚡
@@ -1042,7 +1039,6 @@ class PikachuProtectionBot:
             except:
                 await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
-        # ────═◈═─ HELP ─═◈═────
         elif data == "help":
             text = f"""
 📖 **ᴄᴏᴍᴍᴀɴᴅ ʟɪsᴛ** 📖
@@ -1076,7 +1072,6 @@ class PikachuProtectionBot:
             except:
                 await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
-        # ────═◈═─ STATS ─═◈═────
         elif data == "stats":
             if user_id != Config.OWNER_ID:
                 try:
@@ -1113,7 +1108,6 @@ class PikachuProtectionBot:
             except:
                 await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
-        # ────═◈═─ SETTINGS ─═◈═────
         elif data == "settings":
             keyboard = [
                 [InlineKeyboardButton("👋 ᴡᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 ɢᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
@@ -1126,7 +1120,6 @@ class PikachuProtectionBot:
             except:
                 await query.message.reply_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
-        # ────═◈═─ PREMIUM ─═◈═────
         elif data == "premium":
             if is_premium:
                 text = f"""
@@ -1162,7 +1155,6 @@ class PikachuProtectionBot:
             except:
                 await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
-        # ────═◈═─ SETTINGS TOGGLES ─═◈═────
         elif data.startswith("toggle_"):
             setting = data.replace("toggle_", "")
             chat_id = update.effective_chat.id
@@ -1188,7 +1180,6 @@ class PikachuProtectionBot:
             except:
                 await query.message.reply_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
-        # ────═◈═─ SETTINGS OPTIONS ─═◈═────
         elif data in ["set_welcome", "set_goodbye", "set_antispam", "set_antilink", "set_anti18"]:
             setting_map = {
                 "set_welcome": "welcome",
