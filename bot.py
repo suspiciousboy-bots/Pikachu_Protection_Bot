@@ -56,40 +56,6 @@ def premium_print(message, symbol="⚡"):
 ╚{border}╝
 """)
 
-# ────═◈═─ MESSAGE TEMPLATES ─═◈═────
-class Messages:
-    WELCOME_TEMPLATE = """
-✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
-
-────═◈═─ ✧◈✧ ─═◈═────
-  🎯 {user_mention}     
-  📍 {group_name}       
-  👥 {member_count}     
-✦•····················•✦
-
-🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ:**  
-╰┈➤ {bot_name}
-
-💫 **ʀᴜʟᴇs:**  
-╰┈➤ ᴅᴏɴ'ᴛ sᴘᴀᴍ  
-╰┈➤ ɴᴏ ᴀʙᴜsᴇ  
-╰┈➤ ɴᴏ ᴘᴏʀɴ  
-
-🔰 **ʏᴏᴜ ʜᴀᴠᴇ ʙᴇᴇɴ ᴡᴇʟᴄᴏᴍᴇᴅ** 🔰
-"""
-    
-    GOODBYE_TEMPLATE = """
-💔 **ɢᴏᴏᴅʙʏᴇ!** 💔
-
-────═◈═─ ✧◈✧ ─═◈═────
-  👋 {user_mention}     
-  🚪 ʟᴇғᴛ ᴛʜᴇ ɢʀᴏᴜᴘ   
-  📍 {group_name}      
-✦•····················•✦
-
-😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
-"""
-
 class PikachuProtectionBot:
     def __init__(self):
         self.app = None
@@ -105,27 +71,24 @@ class PikachuProtectionBot:
         
         is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
         
-        welcome_msg = f"""
-╔═══════════════════════════════════════╗
-║     ⚡ ᴘɪᴋᴀᴄʜᴜ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ ⚡     ║
-╚═══════════════════════════════════════╝
+        welcome_text = f"""
+✨ **ʜᴇʟʟᴏ {user.first_name}!** ✨
 
-✨ **ʜᴇʏ {user.first_name}..ʜᴇʀᴇ!** ✨
+👋 **ɪ ᴀᴍ {Config.BOT_NAME}** 🤖
 
-ɪ ᴀᴍ ʏᴏᴜʀ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ!
+**ʜɪɢʜʟɪɢʜᴛs:**
+─────────────────────────────
+- 🛡️ Sᴍᴀʀᴛ Aɴᴛɪ-Sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
+- 🔒 Aᴅᴀᴘᴛɪᴠᴇ Lᴏᴄᴋ Sʏsᴛᴇᴍ (URLs, Mᴇᴅɪᴀ, Lᴀɴɢᴜᴀɢᴇ & ᴍᴏʀᴇ)
+- ⚙️ Mᴏᴅᴜʟᴀʀ & Sᴄᴀʟᴀʙʟᴇ Pʀᴏᴛᴇᴄᴛɪᴏɴ
+- 🎨 Sʟᴇᴇᴋ UI ᴡɪᴛʜ Iɴʟɪɴᴇ Cᴏɴᴛʀᴏʟs
+─────────────────────────────
 
-🔰 **ᴍʏ ғᴇᴀᴛᴜʀᴇs:**
-╰┈➤ 🛡️ ᴀɴᴛɪ-sᴘᴀᴍ
-╰┈➤ 🔗 ᴀɴᴛɪ-ʟɪɴᴋ (ɴᴇᴇᴅs ᴀᴘᴘʀᴏᴠᴀʟ)
-╰┈➤ 🔞 ᴀɴᴛɪ-18+ ᴄᴏɴᴛᴇɴᴛ
-╰┈➤ ⚠️ ᴡᴀʀɴ/ᴍᴜᴛᴇ/ʙᴀɴ/ᴋɪᴄᴋ
-╰┈➤ 👋 ᴄᴜsᴛᴏᴍ ᴡᴇʟᴄᴏᴍᴇ/ɢᴏᴏᴅʙʏᴇ
-╰┈➤ 💎 ᴘʀᴇᴍɪᴜᴍ ғᴇᴀᴛᴜʀᴇs
+» **ᴍᴏʀᴇ ɴᴇᴡ ғᴇᴀᴛᴜʀᴇs ᴄᴏᴍɪɴɢ sᴏᴏɴ ...**
 
 💎 **ᴘʀᴇᴍɪᴜᴍ sᴛᴀᴛᴜs:** {'✅ ᴀᴄᴛɪᴠᴇ' if is_premium else '❌ ɪɴᴀᴄᴛɪᴠᴇ'}
-
-📌 **ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!**
 """
+        
         keyboard = [
             [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
             [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
@@ -134,7 +97,21 @@ class PikachuProtectionBot:
         if is_premium:
             keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
         
-        await update.message.reply_text(welcome_msg, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+        photo_url = "https://i.ibb.co/7NT4SDXy/file-124.jpg"
+        
+        try:
+            await update.message.reply_photo(
+                photo=photo_url,
+                caption=welcome_text,
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except:
+            await update.message.reply_text(
+                welcome_text,
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
     # ────═◈═─ HELP COMMAND ─═◈═────
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -152,6 +129,8 @@ class PikachuProtectionBot:
 ╰┈➤ /unban @user - ᴜɴʙᴀɴ ᴜsᴇʀ
 ╰┈➤ /approve @user - ᴀᴘᴘʀᴏᴠᴇ ᴜsᴇʀ ᴛᴏ sᴇɴᴅ ʟɪɴᴋs
 ╰┈➤ /unapprove @user - ʀᴇᴠᴏᴋᴇ ʟɪɴᴋ ᴀᴘᴘʀᴏᴠᴀʟ
+╰┈➤ /setrules - sᴇᴛ ɢʀᴏᴜᴘ ʀᴜʟᴇs
+╰┈➤ /rules - ᴠɪᴇᴡ ɢʀᴏᴜᴘ ʀᴜʟᴇs
 
 **📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
 ╰┈➤ /start - sᴛᴀʀᴛ ʙᴏᴛ
@@ -210,8 +189,8 @@ class PikachuProtectionBot:
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
-    # ────═◈═─ APPROVE/UNAPPROVE COMMANDS ─═◈═────
-    async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # ────═◈═─ RULES COMMANDS ─═◈═────
+    async def set_rules(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -222,60 +201,248 @@ class PikachuProtectionBot:
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴀᴘᴘʀᴏᴠᴇ!")
+                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ sᴇᴛ ʀᴜʟᴇs!")
                 return
         except:
             return
         
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        if not context.args:
+            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ʀᴜʟᴇs!\nᴇxᴀᴍᴘʟᴇ: `/setrules ɴᴏ sᴘᴀᴍ, ɴᴏ ᴀʙᴜsᴇ`")
             return
         
-        await db.approve_user(target.id, chat.id)
-        await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ ᴄᴀɴ sᴇɴᴅ ʟɪɴᴋs.", parse_mode="Markdown")
+        rules = " ".join(context.args)
+        await db.set_rules(chat.id, rules)
+        await update.message.reply_text(f"✅ **ʀᴜʟᴇs sᴇᴛ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n📋 {rules}", parse_mode="Markdown")
 
-    async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    async def get_rules(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
         
-        user = update.effective_user
         chat = update.effective_chat
+        rules = await db.get_rules(chat.id)
+        
+        if rules:
+            await update.message.reply_text(f"📋 **ɢʀᴏᴜᴘ ʀᴜʟᴇs:**\n\n{rules}", parse_mode="Markdown")
+        else:
+            await update.message.reply_text("ℹ️ ɴᴏ ʀᴜʟᴇs sᴇᴛ ғᴏʀ ᴛʜɪs ɢʀᴏᴜᴘ.\nᴀᴅᴍɪɴs ᴄᴀɴ sᴇᴛ ʀᴜʟᴇs ᴜsɪɴɢ `/setrules`")
+
+    # ────═◈═─ WELCOME HANDLER (WITH USER DETAILS) ─═◈═────
+    async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message.new_chat_members:
+            return
+        
+        chat = update.effective_chat
+        settings = await db.get_settings(chat.id)
+        
+        if not settings.get('welcome', True):
+            return
+        
+        for member in update.message.new_chat_members:
+            if member.is_bot:
+                continue
+            
+            await db.add_user(member.id, member.username, member.first_name)
+            
+            try:
+                member_count = await context.bot.get_chat_member_count(chat.id)
+            except:
+                member_count = "?"
+            
+            # ────═◈═─ GET USER DETAILS ─═◈═────
+            try:
+                user_full = await context.bot.get_chat(member.id)
+                user_bio = getattr(user_full, 'bio', 'N/A')
+                user_id = member.id
+                user_name = member.first_name or "N/A"
+                user_username = f"@{member.username}" if member.username else "N/A"
+                
+                # ────═◈═─ GET PROFILE PHOTO ─═◈═────
+                photos = await context.bot.get_user_profile_photos(member.id, limit=1)
+                photo_file_id = None
+                if photos.total_count > 0:
+                    photo_file_id = photos.photos[0][-1].file_id
+                
+                # ────═◈═─ GET RULES ─═◈═────
+                rules = await db.get_rules(chat.id)
+                rules_text = f"\n📋 **ʀᴜʟᴇs:**\n{rules}" if rules else ""
+                
+                # ────═◈═─ WELCOME MESSAGE ─═◈═────
+                welcome_msg = f"""
+✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
+
+────═◈═─ ✧◈✧ ─═◈═────
+👤 **ɴᴀᴍᴇ:** {user_name}
+🆔 **ɪᴅ:** `{user_id}`
+📛 **ᴜsᴇʀɴᴀᴍᴇ:** {user_username}
+📝 **ʙɪᴏ:** {user_bio[:100] if user_bio != 'N/A' else 'N/A'}
+────═◈═─ ✧◈✧ ─═◈═────
+📍 **ɢʀᴏᴜᴘ:** {chat.title}
+👥 **ᴍᴇᴍʙᴇʀs:** {member_count}
+🔰 **ʀᴏʟᴇ:** { '👑 Oᴡɴᴇʀ' if member.id == chat.id else '👤 Mᴇᴍʙᴇʀ' }
+{rules_text}
+────═◈═─ ✧◈✧ ─═◈═────
+🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
+"""
+                
+                # ────═◈═─ SEND WELCOME WITH PHOTO ─═◈═────
+                if photo_file_id:
+                    await context.bot.send_photo(
+                        chat.id,
+                        photo=photo_file_id,
+                        caption=welcome_msg,
+                        parse_mode="Markdown"
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat.id,
+                        welcome_msg,
+                        parse_mode="Markdown"
+                    )
+                    
+            except Exception as e:
+                logger.error(f"Welcome handler error: {e}")
+                # Fallback welcome
+                fallback_msg = f"""
+✨ **ᴡᴇʟᴄᴏᴍᴇ {member.first_name}!** ✨
+
+📍 {chat.title}
+👥 ᴍᴇᴍʙᴇʀs: {member_count}
+🌟 ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}
+"""
+                await context.bot.send_message(
+                    chat.id,
+                    fallback_msg,
+                    parse_mode="Markdown"
+                )
+
+    # ────═◈═─ GOODBYE HANDLER ─═◈═────
+    async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message.left_chat_member:
+            return
+        
+        chat = update.effective_chat
+        settings = await db.get_settings(chat.id)
+        
+        if not settings.get('goodbye', True):
+            return
+        
+        member = update.message.left_chat_member
+        if member.is_bot:
+            return
+        
+        goodbye_msg = f"""
+💔 **ɢᴏᴏᴅʙʏᴇ!** 💔
+
+────═◈═─ ✧◈✧ ─═◈═────
+  👋 {member.first_name}     
+  🚪 ʟᴇғᴛ ᴛʜᴇ ɢʀᴏᴜᴘ   
+  📍 {chat.title}      
+✦•····················•✦
+
+😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
+"""
+        await context.bot.send_message(
+            chat.id,
+            goodbye_msg,
+            parse_mode="Markdown"
+        )
+
+    # ────═◈═─ ANTI-SPAM HANDLER ─═◈═────
+    async def antispam_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message or not update.message.text:
+            return
+        
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        settings = await db.get_settings(chat.id)
+        if not settings.get('antispam', True):
+            return
         
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴀᴘᴘʀᴏᴠᴇ!")
+            if member.status in ['administrator', 'creator']:
                 return
         except:
             return
         
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        if not context.user_data.get('last_message_time'):
+            context.user_data['last_message_time'] = []
+        
+        current_time = datetime.now().timestamp()
+        context.user_data['last_message_time'].append(current_time)
+        
+        if len(context.user_data['last_message_time']) > 10:
+            context.user_data['last_message_time'] = context.user_data['last_message_time'][-10:]
+        
+        if len(context.user_data['last_message_time']) >= 5:
+            time_diff = current_time - context.user_data['last_message_time'][-5]
+            if time_diff < 5:
+                await context.bot.delete_message(chat.id, update.message.message_id)
+                warnings = await db.get_warnings(user.id, chat.id)
+                warn_count = len(warnings)
+                if warn_count < Config.MAX_WARNINGS:
+                    await db.add_warning(user.id, chat.id, "sᴘᴀᴍᴍɪɴɢ", "ʙᴏᴛ")
+                    await update.message.reply_text(f"⚠️ {user.first_name} ᴡᴀʀɴᴇᴅ ғᴏʀ sᴘᴀᴍ! ({warn_count+1}/{Config.MAX_WARNINGS})")
+
+    # ────═◈═─ ANTI-LINK HANDLER ─═◈═────
+    async def antilink_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message or not update.message.text:
             return
         
-        await db.unapprove_user(target.id, chat.id)
-        await update.message.reply_text(f"❌ **ᴜɴᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏ ᴍᴏʀᴇ ʟɪɴᴋs.", parse_mode="Markdown")
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        settings = await db.get_settings(chat.id)
+        if not settings.get('antilink', False):
+            return
+        
+        try:
+            member = await context.bot.get_chat_member(chat.id, user.id)
+            if member.status in ['administrator', 'creator']:
+                return
+        except:
+            return
+        
+        is_approved = await db.is_approved(user.id, chat.id)
+        if is_approved:
+            return
+        
+        url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+])|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+        if url_pattern.search(update.message.text):
+            await context.bot.delete_message(chat.id, update.message.message_id)
+            await update.message.reply_text(
+                f"🔗 **ʟɪɴᴋ ᴅᴇᴛᴇᴄᴛᴇᴅ!**\n\n{user.first_name}, ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴘᴘʀᴏᴠᴇᴅ ᴛᴏ sᴇɴᴅ ʟɪɴᴋs.\nᴄᴏɴᴛᴀᴄᴛ ᴀɴ ᴀᴅᴍɪɴ ᴛᴏ ɢᴇᴛ ᴀᴘᴘʀᴏᴠᴀʟ.",
+                parse_mode="Markdown"
+            )
+
+    # ────═◈═─ ANTI-18+ HANDLER ─═◈═────
+    async def anti18_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message or not update.message.text:
+            return
+        
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        settings = await db.get_settings(chat.id)
+        if not settings.get('anti18', True):
+            return
+        
+        try:
+            member = await context.bot.get_chat_member(chat.id, user.id)
+            if member.status in ['administrator', 'creator']:
+                return
+        except:
+            return
+        
+        adult_keywords = ['porn', 'xxx', 'sex', 'nude', 'nsfw', '18+', 'adult']
+        if any(keyword in update.message.text.lower() for keyword in adult_keywords):
+            await context.bot.delete_message(chat.id, update.message.message_id)
+            await update.message.reply_text(
+                f"🔞 **18+ ᴄᴏɴᴛᴇɴᴛ ᴅᴇᴛᴇᴄᴛᴇᴅ!**\n\n{user.first_name}, ᴛʜɪs ᴛʏᴘᴇ ᴏғ ᴄᴏɴᴛᴇɴᴛ ɪs ɴᴏᴛ ᴀʟʟᴏᴡᴇᴅ.",
+                parse_mode="Markdown"
+            )
 
     # ────═◈═─ MODERATION COMMANDS ─═◈═────
     
@@ -629,180 +796,73 @@ class PikachuProtectionBot:
             await update.message.reply_text(f"✅ **ᴜɴʙᴀɴɴᴇᴅ {target.first_name}!**", parse_mode="Markdown")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
-
-    # ────═◈═─ WELCOME HANDLER ─═◈═────
-    async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message.new_chat_members:
+    
+    # ────═◈═─ APPROVE/UNAPPROVE ─═◈═────
+    async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
         
+        user = update.effective_user
         chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
         
-        if not settings.get('welcome', True):
+        try:
+            member = await context.bot.get_chat_member(chat.id, user.id)
+            if not member.status in ['administrator', 'creator']:
+                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴀᴘᴘʀᴏᴠᴇ!")
+                return
+        except:
             return
         
-        for member in update.message.new_chat_members:
-            if member.is_bot:
-                continue
-            
-            await db.add_user(member.id, member.username, member.first_name)
-            
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
             try:
-                member_count = await context.bot.get_chat_member_count(chat.id)
+                target = await context.bot.get_chat(username)
             except:
-                member_count = "?"
-            
-            custom_welcome = await db.get_custom_welcome(chat.id)
-            if custom_welcome:
-                welcome_msg = custom_welcome.format(
-                    user_mention=f"[{member.first_name}](tg://user?id={member.id})",
-                    group_name=chat.title or "Group",
-                    member_count=member_count,
-                    bot_name=Config.BOT_NAME
-                )
-            else:
-                welcome_msg = Messages.WELCOME_TEMPLATE.format(
-                    user_mention=f"[{member.first_name}](tg://user?id={member.id})",
-                    group_name=chat.title or "Group",
-                    member_count=member_count,
-                    bot_name=Config.BOT_NAME
-                )
-            
-            await context.bot.send_message(
-                chat.id,
-                welcome_msg,
-                parse_mode="Markdown",
-                disable_web_page_preview=True
-            )
-
-    # ────═◈═─ GOODBYE HANDLER ─═◈═────
-    async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message.left_chat_member:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('goodbye', True):
-            return
-        
-        member = update.message.left_chat_member
-        if member.is_bot:
-            return
-        
-        custom_goodbye = await db.get_custom_goodbye(chat.id)
-        if custom_goodbye:
-            goodbye_msg = custom_goodbye.format(
-                user_mention=f"[{member.first_name}](tg://user?id={member.id})",
-                group_name=chat.title or "Group"
-            )
+                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
         else:
-            goodbye_msg = Messages.GOODBYE_TEMPLATE.format(
-                user_mention=f"[{member.first_name}](tg://user?id={member.id})",
-                group_name=chat.title or "Group"
-            )
+            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
         
-        await context.bot.send_message(
-            chat.id,
-            goodbye_msg,
-            parse_mode="Markdown"
-        )
+        await db.approve_user(target.id, chat.id)
+        await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ ᴄᴀɴ sᴇɴᴅ ʟɪɴᴋs.", parse_mode="Markdown")
 
-    # ────═◈═─ ANTI-SPAM HANDLER ─═◈═────
-    async def antispam_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message or not update.message.text:
+    async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
         
-        chat = update.effective_chat
         user = update.effective_user
-        
-        settings = await db.get_settings(chat.id)
-        if not settings.get('antispam', True):
-            return
+        chat = update.effective_chat
         
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
-            if member.status in ['administrator', 'creator']:
+            if not member.status in ['administrator', 'creator']:
+                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴀᴘᴘʀᴏᴠᴇ!")
                 return
         except:
             return
         
-        if not context.user_data.get('last_message_time'):
-            context.user_data['last_message_time'] = []
-        
-        current_time = datetime.now().timestamp()
-        context.user_data['last_message_time'].append(current_time)
-        
-        if len(context.user_data['last_message_time']) > 10:
-            context.user_data['last_message_time'] = context.user_data['last_message_time'][-10:]
-        
-        if len(context.user_data['last_message_time']) >= 5:
-            time_diff = current_time - context.user_data['last_message_time'][-5]
-            if time_diff < 5:
-                await context.bot.delete_message(chat.id, update.message.message_id)
-                warnings = await db.get_warnings(user.id, chat.id)
-                warn_count = len(warnings)
-                if warn_count < Config.MAX_WARNINGS:
-                    await db.add_warning(user.id, chat.id, "sᴘᴀᴍᴍɪɴɢ", "ʙᴏᴛ")
-                    await update.message.reply_text(f"⚠️ {user.first_name} ᴡᴀʀɴᴇᴅ ғᴏʀ sᴘᴀᴍ! ({warn_count+1}/{Config.MAX_WARNINGS})")
-
-    # ────═◈═─ ANTI-LINK HANDLER ─═◈═────
-    async def antilink_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message or not update.message.text:
-            return
-        
-        chat = update.effective_chat
-        user = update.effective_user
-        
-        settings = await db.get_settings(chat.id)
-        if not settings.get('antilink', False):
-            return
-        
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if member.status in ['administrator', 'creator']:
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
-        except:
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
-        is_approved = await db.is_approved(user.id, chat.id)
-        if is_approved:
-            return
-        
-        url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+])|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-        if url_pattern.search(update.message.text):
-            await context.bot.delete_message(chat.id, update.message.message_id)
-            await update.message.reply_text(
-                f"🔗 **ʟɪɴᴋ ᴅᴇᴛᴇᴄᴛᴇᴅ!**\n\n{user.first_name}, ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴘᴘʀᴏᴠᴇᴅ ᴛᴏ sᴇɴᴅ ʟɪɴᴋs.\nᴄᴏɴᴛᴀᴄᴛ ᴀɴ ᴀᴅᴍɪɴ ᴛᴏ ɢᴇᴛ ᴀᴘᴘʀᴏᴠᴀʟ.",
-                parse_mode="Markdown"
-            )
-
-    # ────═◈═─ ANTI-18+ HANDLER ─═◈═────
-    async def anti18_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message or not update.message.text:
-            return
-        
-        chat = update.effective_chat
-        user = update.effective_user
-        
-        settings = await db.get_settings(chat.id)
-        if not settings.get('anti18', True):
-            return
-        
-        try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if member.status in ['administrator', 'creator']:
-                return
-        except:
-            return
-        
-        adult_keywords = ['porn', 'xxx', 'sex', 'nude', 'nsfw', '18+', 'adult']
-        if any(keyword in update.message.text.lower() for keyword in adult_keywords):
-            await context.bot.delete_message(chat.id, update.message.message_id)
-            await update.message.reply_text(
-                f"🔞 **18+ ᴄᴏɴᴛᴇɴᴛ ᴅᴇᴛᴇᴄᴛᴇᴅ!**\n\n{user.first_name}, ᴛʜɪs ᴛʏᴘᴇ ᴏғ ᴄᴏɴᴛᴇɴᴛ ɪs ɴᴏᴛ ᴀʟʟᴏᴡᴇᴅ.",
-                parse_mode="Markdown"
-            )
+        await db.unapprove_user(target.id, chat.id)
+        await update.message.reply_text(f"❌ **ᴜɴᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏ ᴍᴏʀᴇ ʟɪɴᴋs.", parse_mode="Markdown")
 
     # ────═◈═─ ABOUT COMMAND ─═◈═────
     async def about_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -968,6 +1028,8 @@ class PikachuProtectionBot:
 ╰┈➤ /unban @user - ᴜɴʙᴀɴ ᴜsᴇʀ
 ╰┈➤ /approve @user - ᴀᴘᴘʀᴏᴠᴇ ᴜsᴇʀ
 ╰┈➤ /unapprove @user - ʀᴇᴠᴏᴋᴇ ᴀᴘᴘʀᴏᴠᴀʟ
+╰┈➤ /setrules - sᴇᴛ ɢʀᴏᴜᴘ ʀᴜʟᴇs
+╰┈➤ /rules - ᴠɪᴇᴡ ɢʀᴏᴜᴘ ʀᴜʟᴇs
 
 **📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
 ╰┈➤ /start - sᴛᴀʀᴛ ʙᴏᴛ
@@ -1117,6 +1179,8 @@ class PikachuProtectionBot:
             self.app.add_handler(CommandHandler("ping", self.ping_command))
             self.app.add_handler(CommandHandler("staff", self.staff_command))
             self.app.add_handler(CommandHandler("stats", self.stats_command))
+            self.app.add_handler(CommandHandler("setrules", self.set_rules))
+            self.app.add_handler(CommandHandler("rules", self.get_rules))
             
             # Moderation commands
             self.app.add_handler(CommandHandler("warn", self.warn_command))
