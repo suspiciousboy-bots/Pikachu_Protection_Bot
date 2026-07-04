@@ -7,16 +7,15 @@ import os
 import sys
 import asyncio
 import logging
-import threading
 from datetime import datetime
-from flask import Flask
 
 # ────═◈═─ FIX FOR PTB VERSION COMPATIBILITY ─═◈═────
-import telegram.ext._updater
-if not hasattr(telegram.ext._updater.Updater, '_Updater__polling_cleanup_cb'):
-    class PatchedUpdater(telegram.ext.Updater):
-        pass
-    telegram.ext.Updater = PatchedUpdater
+# This fixes the '_Updater__polling_cleanup_cb' error
+import telegram
+if not hasattr(telegram.ext.Updater, '_Updater__polling_cleanup_cb'):
+    # Add the missing attribute
+    setattr(telegram.ext.Updater, '_Updater__polling_cleanup_cb', None)
+    print("✅ Applied monkey patch for Updater")
 # ──────────────────────────────────────────────────
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
@@ -26,28 +25,10 @@ from telegram.ext import (
     CallbackQueryHandler,
     ContextTypes
 )
+from telegram.constants import ParseMode
 
 from config import Config
 from database import Database
-
-# ────═◈═─ FLASK WEB SERVER FOR RENDER ─═◈═────
-flask_app = Flask(__name__)
-
-@flask_app.route('/')
-def home():
-    return "⚡ Pikachu Protection Bot is running!"
-
-@flask_app.route('/health')
-def health():
-    return "OK", 200
-
-def run_web():
-    port = int(os.environ.get("PORT", 10000))
-    flask_app.run(host='0.0.0.0', port=port, debug=False)
-
-threading.Thread(target=run_web, daemon=True).start()
-print("🌐 Web server started for Render port binding")
-# ──────────────────────────────────────────────────
 
 # Setup logging
 logging.basicConfig(
@@ -81,7 +62,7 @@ class PikachuProtectionBot:
         user = update.effective_user
         await db.add_user(user.id, user.username, user.first_name)
         
-        is_premium = user.id in Config.PREMIUM_USERS or user.id in Config.OWNER_ID
+        is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
         
         keyboard = [
             [
@@ -98,8 +79,6 @@ class PikachuProtectionBot:
             keyboard.append([
                 InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")
             ])
-        
-        reply_markup = InlineKeyboardMarkup(keyboard)
         
         welcome_text = f"""
 ╔═══════════════════════════════════════╗
@@ -124,7 +103,7 @@ class PikachuProtectionBot:
 
 ᴜsᴇ /help ᴛᴏ sᴇᴇ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs.
 """
-        await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=reply_markup)
+        await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         help_text = f"""
@@ -192,7 +171,7 @@ class PikachuProtectionBot:
     
     async def premium_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
-        is_premium = user.id in Config.PREMIUM_USERS or user.id in Config.OWNER_ID
+        is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
         
         if is_premium:
             text = f"""
@@ -299,7 +278,7 @@ class PikachuProtectionBot:
             await query.edit_message_text(text, parse_mode="Markdown")
         
         elif data == "stats":
-            if user_id not in Config.OWNER_ID:
+            if user_id != Config.OWNER_ID:
                 await query.edit_message_text("❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="Markdown")
                 return
             
@@ -348,7 +327,7 @@ class PikachuProtectionBot:
             await query.edit_message_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
         elif data == "back_main":
-            is_premium = user_id in Config.PREMIUM_USERS or user_id in Config.OWNER_ID
+            is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
             keyboard = [
                 [
                     InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"),
@@ -366,7 +345,7 @@ class PikachuProtectionBot:
             await query.edit_message_text("🏠 **ᴍᴀɪɴ ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
         elif data == "premium":
-            is_premium = user_id in Config.PREMIUM_USERS or user_id in Config.OWNER_ID
+            is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
             if is_premium:
                 text = f"""
 💎 **ᴘʀᴇᴍɪᴜᴍ sᴛᴀᴛᴜs** 💎
