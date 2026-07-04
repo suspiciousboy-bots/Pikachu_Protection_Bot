@@ -11,15 +11,7 @@ import threading
 from datetime import datetime
 from flask import Flask
 
-# ────═◈═─ IMPORT TELEGRAM ─═◈═────
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
-from telegram.constants import ParseMode
-
-from config import Config
-from database import Database
-
-# ────═◈═─ FLASK WEB SERVER FOR RENDER ─═◈═────
+# ────═◈═─ FLASK WEB SERVER FOR RAILWAY ─═◈═────
 flask_app = Flask(__name__)
 
 @flask_app.route('/')
@@ -31,12 +23,19 @@ def health():
     return "OK", 200
 
 def run_web():
-    port = int(os.environ.get("PORT", 10000))
+    port = int(os.environ.get("PORT", 8080))
     flask_app.run(host='0.0.0.0', port=port, debug=False)
 
 threading.Thread(target=run_web, daemon=True).start()
-print("🌐 Web server started for Render port binding")
+print("🌐 Web server started for Railway port binding")
 # ──────────────────────────────────────────────────
+
+# ────═◈═─ IMPORT TELEGRAM ─═◈═────
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+
+from config import Config
+from database import Database
 
 # Setup logging
 logging.basicConfig(
