@@ -227,7 +227,7 @@ class PikachuProtectionBot:
         else:
             await update.message.reply_text("ℹ️ ɴᴏ ʀᴜʟᴇs sᴇᴛ ғᴏʀ ᴛʜɪs ɢʀᴏᴜᴘ.\nᴀᴅᴍɪɴs ᴄᴀɴ sᴇᴛ ʀᴜʟᴇs ᴜsɪɴɢ `/setrules`")
 
-    # ────═◈═─ WELCOME HANDLER (WITH USER DETAILS) ─═◈═────
+    # ────═◈═─ WELCOME HANDLER ─═◈═────
     async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.message.new_chat_members:
             return
@@ -962,7 +962,7 @@ class PikachuProtectionBot:
 """
         await update.message.reply_text(stats_text, parse_mode="Markdown")
 
-    # ────═◈═─ CALLBACK HANDLER ─═◈═────
+    # ────═◈═─ FIXED CALLBACK HANDLER ─═◈═────
     async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -971,6 +971,7 @@ class PikachuProtectionBot:
         user_id = update.effective_user.id
         is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
         
+        # ────═◈═─ MAIN MENU ─═◈═────
         if data == "main_menu":
             keyboard = [
                 [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
@@ -979,12 +980,37 @@ class PikachuProtectionBot:
             ]
             if is_premium:
                 keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
-            await query.edit_message_text("🏠 **ᴍᴀɪɴ ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            
+            try:
+                await query.edit_message_text(
+                    "🏠 **ᴍᴀɪɴ ᴍᴇɴᴜ**",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                await query.message.reply_text(
+                    "🏠 **ᴍᴀɪɴ ᴍᴇɴᴜ**",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
         
+        # ────═◈═─ STAFF ─═◈═────
         elif data == "staff":
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text("👥 ᴜsᴇ /staff ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(
+                    "👥 ᴜsᴇ /staff ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                await query.message.reply_text(
+                    "👥 ᴜsᴇ /staff ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
         
+        # ────═◈═─ ABOUT ─═◈═────
         elif data == "about":
             text = f"""
 ⚡ **ᴀʙᴏᴜᴛ {Config.BOT_NAME}** ⚡
@@ -1011,8 +1037,12 @@ class PikachuProtectionBot:
 🔰 **sᴛᴀᴛᴜs:** ᴀᴄᴛɪᴠᴇ
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
+        # ────═◈═─ HELP ─═◈═────
         elif data == "help":
             text = f"""
 📖 **ᴄᴏᴍᴍᴀɴᴅ ʟɪsᴛ** 📖
@@ -1041,11 +1071,18 @@ class PikachuProtectionBot:
 🔥 ᴘᴏᴡᴇʀᴇᴅ ʙʏ {Config.BOT_NAME}
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
+        # ────═◈═─ STATS ─═◈═────
         elif data == "stats":
             if user_id != Config.OWNER_ID:
-                await query.edit_message_text("❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="Markdown")
+                try:
+                    await query.edit_message_text("❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="Markdown")
+                except:
+                    await query.message.reply_text("❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="Markdown")
                 return
             
             users_count = db.users.count_documents({})
@@ -1071,8 +1108,12 @@ class PikachuProtectionBot:
 ⚡ **sᴛᴀᴛᴜs:** ᴏɴʟɪɴᴇ
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
+        # ────═◈═─ SETTINGS ─═◈═────
         elif data == "settings":
             keyboard = [
                 [InlineKeyboardButton("👋 ᴡᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 ɢᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
@@ -1080,8 +1121,12 @@ class PikachuProtectionBot:
                 [InlineKeyboardButton("🔞 ᴀɴᴛɪ-18+", callback_data="set_anti18")],
                 [InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]
             ]
-            await query.edit_message_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
+        # ────═◈═─ PREMIUM ─═◈═────
         elif data == "premium":
             if is_premium:
                 text = f"""
@@ -1112,24 +1157,38 @@ class PikachuProtectionBot:
 📞 {Config.OWNER_USERNAME}
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
+        # ────═◈═─ SETTINGS TOGGLES ─═◈═────
         elif data.startswith("toggle_"):
             setting = data.replace("toggle_", "")
             chat_id = update.effective_chat.id
             settings = await db.get_settings(chat_id)
             current = settings.get(setting, True)
             await db.update_settings(chat_id, setting, not current)
-            await query.edit_message_text(f"✅ **{setting.upper()}** {'ᴇɴᴀʙʟᴇᴅ' if not current else 'ᴅɪsᴀʙʟᴇᴅ'}!", parse_mode="Markdown")
+            
+            try:
+                await query.edit_message_text(f"✅ **{setting.upper()}** {'ᴇɴᴀʙʟᴇᴅ' if not current else 'ᴅɪsᴀʙʟᴇᴅ'}!", parse_mode="Markdown")
+            except:
+                await query.message.reply_text(f"✅ **{setting.upper()}** {'ᴇɴᴀʙʟᴇᴅ' if not current else 'ᴅɪsᴀʙʟᴇᴅ'}!", parse_mode="Markdown")
+            
             await asyncio.sleep(1)
+            
             keyboard = [
                 [InlineKeyboardButton("👋 ᴡᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 ɢᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
                 [InlineKeyboardButton("🛡️ ᴀɴᴛɪ-sᴘᴀᴍ", callback_data="set_antispam"), InlineKeyboardButton("🔗 ᴀɴᴛɪ-ʟɪɴᴋ", callback_data="set_antilink")],
                 [InlineKeyboardButton("🔞 ᴀɴᴛɪ-18+", callback_data="set_anti18")],
                 [InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]
             ]
-            await query.edit_message_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text("⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
         
+        # ────═◈═─ SETTINGS OPTIONS ─═◈═────
         elif data in ["set_welcome", "set_goodbye", "set_antispam", "set_antilink", "set_anti18"]:
             setting_map = {
                 "set_welcome": "welcome",
@@ -1146,11 +1205,18 @@ class PikachuProtectionBot:
                 [InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="settings")]
             ]
             display_name = data.replace("set_", "").upper()
-            await query.edit_message_text(
-                f"{display_name}\n\nᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs: {'✅ ᴇɴᴀʙʟᴇᴅ' if current else '❌ ᴅɪsᴀʙʟᴇᴅ'}",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            try:
+                await query.edit_message_text(
+                    f"{display_name}\n\nᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs: {'✅ ᴇɴᴀʙʟᴇᴅ' if current else '❌ ᴅɪsᴀʙʟᴇᴅ'}",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                await query.message.reply_text(
+                    f"{display_name}\n\nᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs: {'✅ ᴇɴᴀʙʟᴇᴅ' if current else '❌ ᴅɪsᴀʙʟᴇᴅ'}",
+                    parse_mode="Markdown",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
 
     # ────═◈═─ ERROR HANDLER ─═◈═────
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
