@@ -7,28 +7,36 @@ import os
 import sys
 import asyncio
 import logging
+import threading
 from datetime import datetime
+from flask import Flask
 
-# ────═◈═─ FIX FOR PTB VERSION COMPATIBILITY ─═◈═────
-# This fixes the '_Updater__polling_cleanup_cb' error
-import telegram
-if not hasattr(telegram.ext.Updater, '_Updater__polling_cleanup_cb'):
-    # Add the missing attribute
-    setattr(telegram.ext.Updater, '_Updater__polling_cleanup_cb', None)
-    print("✅ Applied monkey patch for Updater")
-# ──────────────────────────────────────────────────
-
+# ────═◈═─ IMPORT TELEGRAM ─═◈═────
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import (
-    Application,
-    CommandHandler,
-    CallbackQueryHandler,
-    ContextTypes
-)
+from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from telegram.constants import ParseMode
 
 from config import Config
 from database import Database
+
+# ────═◈═─ FLASK WEB SERVER FOR RENDER ─═◈═────
+flask_app = Flask(__name__)
+
+@flask_app.route('/')
+def home():
+    return "⚡ Pikachu Protection Bot is running!"
+
+@flask_app.route('/health')
+def health():
+    return "OK", 200
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    flask_app.run(host='0.0.0.0', port=port, debug=False)
+
+threading.Thread(target=run_web, daemon=True).start()
+print("🌐 Web server started for Render port binding")
+# ──────────────────────────────────────────────────
 
 # Setup logging
 logging.basicConfig(
@@ -80,6 +88,8 @@ class PikachuProtectionBot:
                 InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")
             ])
         
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
         welcome_text = f"""
 ╔═══════════════════════════════════════╗
 ║     ⚡ ᴘɪᴋᴀᴄʜᴜ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ ⚡     ║
@@ -103,7 +113,7 @@ class PikachuProtectionBot:
 
 ᴜsᴇ /help ᴛᴏ sᴇᴇ ᴀʟʟ ᴄᴏᴍᴍᴀɴᴅs.
 """
-        await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+        await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=reply_markup)
     
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         help_text = f"""
