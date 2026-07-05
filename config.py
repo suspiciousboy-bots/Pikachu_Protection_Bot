@@ -27,4 +27,4 @@ class Config:
     MAX_WARNINGS = int(os.getenv("MAX_WARNINGS", "3"))
     MUTE_DURATION = int(os.getenv("MUTE_DURATION", "300"))
     FLOOD_LIMIT = int(os.getenv("FLOOD_LIMIT", "5"))
-    LOG_CHANNEL = os.getenv("LOG_CHANNEL", "-1003983202182")
+    LOG_CHANNEL = os.getenv("LOG_CHANNEL", "-1003424504397")
