@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ⚡ PIKACHU X PROTECTION BOT - ULTIMATE GROUP MANAGEMENT ⚡
-More Powerful Than RoseBot
+More Powerful Than Any Bot
 """
 
 import os
@@ -37,7 +37,7 @@ threading.Thread(target=run_web, daemon=True).start()
 print("🌐 Web server started")
 # ──────────────────────────────────────────────────
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions, User
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions, User, ChatMember
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from telegram.constants import ParseMode
 
@@ -52,7 +52,22 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 db = Database()
-LOG_CHANNEL = -1003424504397  # Your log channel
+LOG_CHANNEL = -1003424504397
+
+# ────═◈═─ FANCY TEXT CONVERTER ─═◈═────
+def fancy_text(text):
+    """Convert text to fancy Unicode style"""
+    fancy_chars = {
+        'A': 'ᴀ', 'B': 'ʙ', 'C': 'ᴄ', 'D': 'ᴅ', 'E': 'ᴇ', 'F': 'ғ', 'G': 'ɢ',
+        'H': 'ʜ', 'I': 'ɪ', 'J': 'ᴊ', 'K': 'ᴋ', 'L': 'ʟ', 'M': 'ᴍ', 'N': 'ɴ',
+        'O': 'ᴏ', 'P': 'ᴘ', 'Q': 'ǫ', 'R': 'ʀ', 'S': 's', 'T': 'ᴛ', 'U': 'ᴜ',
+        'V': 'ᴠ', 'W': 'ᴡ', 'X': 'x', 'Y': 'ʏ', 'Z': 'ᴢ',
+        'a': 'ᴀ', 'b': 'ʙ', 'c': 'ᴄ', 'd': 'ᴅ', 'e': 'ᴇ', 'f': 'ғ', 'g': 'ɢ',
+        'h': 'ʜ', 'i': 'ɪ', 'j': 'ᴊ', 'k': 'ᴋ', 'l': 'ʟ', 'm': 'ᴍ', 'n': 'ɴ',
+        'o': 'ᴏ', 'p': 'ᴘ', 'q': 'ǫ', 'r': 'ʀ', 's': 's', 't': 'ᴛ', 'u': 'ᴜ',
+        'v': 'ᴠ', 'w': 'ᴡ', 'x': 'x', 'y': 'ʏ', 'z': 'ᴢ'
+    }
+    return ''.join(fancy_chars.get(char, char) for char in text)
 
 def premium_print(message, symbol="⚡"):
     border = "═" * 50
@@ -69,6 +84,7 @@ class PikachuProtectionBot:
         self.user_message_cache = {}
         self.log_channel = LOG_CHANNEL
         self.start_time = datetime.now()
+        self.bot_added_groups = {}  # Track groups where bot is added
         premium_print(f"ʙᴏᴛ ɪɴɪᴛɪᴀʟɪᴢɪɴɢ: {Config.BOT_NAME}", "🚀")
         premium_print(f"ᴏᴡɴᴇʀ: {Config.OWNER_NAME}", "👑")
         premium_print(f"ᴘʀᴇᴍɪᴜᴍ ғᴇᴀᴛᴜʀᴇs: ʟᴏᴀᴅᴇᴅ", "💎")
@@ -81,12 +97,52 @@ class PikachuProtectionBot:
         except:
             return False
 
-    async def is_mod(self, context, chat_id, user_id):
+    async def is_owner(self, context, chat_id, user_id):
         try:
             member = await context.bot.get_chat_member(chat_id, user_id)
-            return member.status in ['administrator', 'creator']
+            return member.status == 'creator'
         except:
             return False
+
+    async def is_founder(self, context, chat_id, user_id):
+        try:
+            member = await context.bot.get_chat_member(chat_id, user_id)
+            return member.status == 'creator'
+        except:
+            return False
+
+    async def get_user_role(self, user_id, chat_id):
+        """Get user's role in the group"""
+        role_data = await db.get_user_role(user_id, chat_id)
+        if role_data:
+            return role_data.get('role', 'Member')
+        
+        # Check if admin/owner
+        try:
+            member = await self.app.bot.get_chat_member(chat_id, user_id)
+            if member.status == 'creator':
+                return 'Founder'
+            elif member.status == 'administrator':
+                return 'Admin'
+        except:
+            pass
+        return 'Member'
+
+    async def is_mod(self, context, chat_id, user_id):
+        """Check if user has moderator permissions"""
+        role = await self.get_user_role(user_id, chat_id)
+        mod_roles = ['Founder', 'Co-Founder', 'Admin', 'Moderator', 'Muter']
+        return role in mod_roles
+
+    async def is_cleaner(self, context, chat_id, user_id):
+        role = await self.get_user_role(user_id, chat_id)
+        cleaner_roles = ['Founder', 'Co-Founder', 'Admin', 'Chat Cleaner']
+        return role in cleaner_roles
+
+    async def is_free(self, context, chat_id, user_id):
+        role = await self.get_user_role(user_id, chat_id)
+        free_roles = ['Founder', 'Co-Founder', 'Admin', 'Moderator', 'Muter', 'Free']
+        return role in free_roles
 
     async def log_action(self, chat_id, message):
         if self.log_channel:
@@ -96,27 +152,182 @@ class PikachuProtectionBot:
                 pass
 
     def get_footer(self):
-        return f"\n\n╰┈➤ <b>Created by {Config.OWNER_NAME}</b>"
+        return f"\n\n╰┈➤ <b>Cʀᴇᴀᴛᴇᴅ ʙʏ {Config.OWNER_NAME}</b>"
 
     def get_owner_credit(self):
-        return f"\n\n<b>👑 Created by: {Config.OWNER_NAME}</b>"
+        return f"\n\n<b>👑 Cʀᴇᴀᴛᴇᴅ ʙʏ: {Config.OWNER_NAME}</b>"
+
+    # ────═◈═─ CHECK BOT ADDED ─═◈═────
+    async def check_bot_added(self, chat_id):
+        """Check if bot is added to the group"""
+        try:
+            bot_member = await self.app.bot.get_chat_member(chat_id, self.app.bot.id)
+            if bot_member.status in ['administrator', 'creator', 'member']:
+                return True
+        except:
+            pass
+        return False
+
+    async def bot_added_checker(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Check if bot is added and send warning if not"""
+        chat = update.effective_chat
+        if chat.type not in ['group', 'supergroup']:
+            return
+        
+        chat_id = chat.id
+        
+        # Check if bot is admin
+        is_added = await self.check_bot_added(chat_id)
+        
+        if not is_added:
+            # Bot is not added - send warning with kidnap button
+            keyboard = [[
+                InlineKeyboardButton(
+                    "🔗 Kɪᴅɴᴀᴘ Mᴇ - Aᴅᴅ Tᴏ Gʀᴏᴜᴘ", 
+                    url=f"https://t.me/{context.bot.username}?startgroup=start"
+                )
+            ]]
+            
+            warning_msg = f"""
+╔═══════════════════════════════════╗
+║  ⚠️ <b>Bᴏᴛ Nᴏᴛ Aᴅᴅᴇᴅ Yᴇᴛ!</b> ⚠️
+╚═══════════════════════════════════╝
+
+Hᴇʏ {chat.title}!
+
+Tᴏ ᴜsᴇ ᴍʏ ᴘᴏᴡᴇʀғᴜʟ ғᴇᴀᴛᴜʀᴇs, 
+ʏᴏᴜ ᴍᴜsᴛ ᴀᴅᴅ ᴍᴇ ᴛᴏ ᴛʜɪs ɢʀᴏᴜᴘ ғɪʀsᴛ!
+
+<b>📌 Hᴏᴡ ᴛᴏ ᴀᴅᴅ ᴍᴇ:</b>
+1️⃣ Cʟɪᴄᴋ ᴛʜᴇ ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ
+2️⃣ Sᴇʟᴇᴄᴛ ᴛʜɪs ɢʀᴏᴜᴘ
+3️⃣ Mᴀᴋᴇ ᴍᴇ ᴀɴ ᴀᴅᴍɪɴ
+4️⃣ I'ʟʟ ᴀᴜᴛᴏᴍᴀᴛɪᴄᴀʟʟʏ sᴛᴀʀᴛ ᴡᴏʀᴋɪɴɢ!
+
+<b>💡 Pʀᴏ Tɪᴘ:</b> Gɪᴠᴇ ᴍᴇ ᴀʟʟ ᴘᴇʀᴍɪssɪᴏɴs ғᴏʀ ʙᴇsᴛ ᴘᴇʀғᴏʀᴍᴀɴᴄᴇ!
+{self.get_footer()}
+"""
+            try:
+                await update.message.reply_text(
+                    warning_msg,
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                pass
+            return False
+        
+        return True
+
+    # ────═◈═─ USER ROLE MANAGEMENT ─═◈═────
+    async def set_user_role(self, update: Update, context: ContextTypes.DEFAULT_TYPE, role: str, action: str):
+        """Set or remove user role"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        # Check if user has permission to manage roles
+        user_role = await self.get_user_role(user.id, chat.id)
+        allowed_roles = ['Founder', 'Co-Founder']
+        
+        if user_role not in allowed_roles and user.id != Config.OWNER_ID:
+            await update.message.reply_text(f"❌ Oɴʟʏ Fᴏᴜɴᴅᴇʀ ᴀɴᴅ Cᴏ-Fᴏᴜɴᴅᴇʀ ᴄᴀɴ ᴍᴀɴᴀɢᴇ ʀᴏʟᴇs!")
+            return
+        
+        if not context.args and not update.message.reply_to_message:
+            await update.message.reply_text(f"⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
+            return
+        
+        target = None
+        if update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        
+        if target.is_bot:
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴍᴀɴᴀɢᴇ ʀᴏʟᴇs ғᴏʀ ʙᴏᴛs!")
+            return
+        
+        if target.id == user.id:
+            await update.message.reply_text("❌ Yᴏᴜ ᴄᴀɴ'ᴛ ᴄʜᴀɴɢᴇ ʏᴏᴜʀ ᴏᴡɴ ʀᴏʟᴇ!")
+            return
+        
+        if action == "add":
+            await db.set_user_role(target.id, chat.id, role)
+            await update.message.reply_text(
+                f"✅ <b>{role} ʀᴏʟᴇ ᴀᴅᴅᴇᴅ ᴛᴏ {target.first_name}!</b>\n\n"
+                f"📌 <b>Rᴏʟᴇ:</b> {role}\n"
+                f"👤 <b>Uꜱᴇʀ:</b> {target.first_name}\n"
+                f"🆔 <b>ID:</b> <code>{target.id}</code>{self.get_footer()}",
+                parse_mode="HTML"
+            )
+            await self.log_action(chat.id, f"➕ <b>{role}</b> ᴀᴅᴅᴇᴅ ᴛᴏ {target.first_name} ʙʏ {user.first_name}")
+        else:
+            await db.remove_user_role(target.id, chat.id)
+            await update.message.reply_text(
+                f"✅ <b>{role} ʀᴏʟᴇ ʀᴇᴍᴏᴠᴇᴅ ғʀᴏᴍ {target.first_name}!</b>\n\n"
+                f"📌 <b>Rᴏʟᴇ:</b> {role}\n"
+                f"👤 <b>Uꜱᴇʀ:</b> {target.first_name}\n"
+                f"🆔 <b>ID:</b> <code>{target.id}</code>{self.get_footer()}",
+                parse_mode="HTML"
+            )
+            await self.log_action(chat.id, f"➖ <b>{role}</b> ʀᴇᴍᴏᴠᴇᴅ ғʀᴏᴍ {target.first_name} ʙʏ {user.first_name}")
+
+    # ────═◈═─ ROLE COMMANDS ─═◈═────
+    async def cofounder_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Co-Founder", "add")
+    
+    async def uncofounder_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Co-Founder", "remove")
+    
+    async def moderator_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Moderator", "add")
+    
+    async def unmoderator_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Moderator", "remove")
+    
+    async def muter_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Muter", "add")
+    
+    async def unmuter_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Muter", "remove")
+    
+    async def cleaner_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Chat Cleaner", "add")
+    
+    async def uncleaner_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Chat Cleaner", "remove")
+    
+    async def helper_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Helper", "add")
+    
+    async def unhelper_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Helper", "remove")
+    
+    async def free_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Free", "add")
+    
+    async def unfree_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        await self.set_user_role(update, context, "Free", "remove")
 
     # ────═◈═─ USER HISTORY TRACKING ─═◈═────
     async def track_user_history(self, user: User):
-        """Track user's name and username changes"""
         try:
-            # Get current user data
             current_data = {
                 'first_name': user.first_name,
                 'last_name': user.last_name or '',
                 'username': user.username,
                 'timestamp': datetime.now().isoformat()
             }
-            
-            # Get previous history
             history = await db.get_user_history(user.id)
-            
-            # Check for changes
             changed = False
             if history:
                 last = history[-1]
@@ -125,28 +336,13 @@ class PikachuProtectionBot:
                     changed = True
             else:
                 changed = True
-            
             if changed:
                 await db.add_user_history(user.id, current_data)
-                # Log the change
-                change_msg = f"""
-🔄 <b>USER PROFILE UPDATE</b>
-
-👤 <b>User:</b> {user.first_name}
-🆔 <b>ID:</b> <code>{user.id}</code>
-📛 <b>New Username:</b> @{user.username if user.username else 'None'}
-📝 <b>New Name:</b> {user.first_name}
-
-📊 <b>Total Changes:</b> {len(await db.get_user_history(user.id))}
-"""
-                await self.log_action(None, change_msg)
-                
         except Exception as e:
             logger.error(f"Error tracking user history: {e}")
 
-    # ────═◈═─ SG COMMAND (User History) ─═◈═────
+    # ────═◈═─ SG COMMAND ─═◈═────
     async def sg_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show user's complete history (SG - User History Tracking)"""
         chat = update.effective_chat
         
         target = None
@@ -155,7 +351,7 @@ class PikachuProtectionBot:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
@@ -163,29 +359,29 @@ class PikachuProtectionBot:
             target = update.effective_user
         
         if not target:
-            await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+            await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
             return
         
-        # Get user history
         history = await db.get_user_history(target.id)
         user_stats = await db.get_user_stats(target.id)
+        role = await self.get_user_role(target.id, chat.id)
         
         if not history:
             msg = f"""
 📋 <b>HISTORY FOR {target.id}</b>
 
-<b>Names</b>
-No history recorded yet!
+<b>Nᴀᴍᴇs</b>
+Nᴏ ʜɪsᴛᴏʀʏ ʀᴇᴄᴏʀᴅᴇᴅ ʏᴇᴛ!
 
-<b>Usernames</b>
-No history recorded yet!
+<b>Uꜱᴇʀɴᴀᴍᴇs</b>
+Nᴏ ʜɪsᴛᴏʀʏ ʀᴇᴄᴏʀᴅᴇᴅ ʏᴇᴛ!
 
+<b>Rᴏʟᴇ:</b> {role}
 {self.get_footer()}
 """
             await update.message.reply_text(msg, parse_mode="HTML")
             return
         
-        # Separate names and usernames
         names = []
         usernames = []
         
@@ -211,68 +407,72 @@ No history recorded yet!
                     'username': f"@{username}"
                 })
         
-        # Build the message
         msg = f"""
 📋 <b>HISTORY FOR {target.id}</b>
 
-<b>Names</b>
+<b>Nᴀᴍᴇs</b>
 """
         
-        # Add names (numbered)
-        for i, entry in enumerate(names, 1):
+        for i, entry in enumerate(names[:20], 1):
             msg += f"{i:02d}. {entry['timestamp']} {entry['name']}\n"
         
-        msg += f"\n<b>Usernames</b>\n"
+        if len(names) > 20:
+            msg += f"\n... ᴀɴᴅ {len(names) - 20} ᴍᴏʀᴇ ᴄʜᴀɴɢᴇs\n"
         
-        # Add usernames (numbered)
+        msg += f"\n<b>Uꜱᴇʀɴᴀᴍᴇs</b>\n"
+        
         if usernames:
-            for i, entry in enumerate(usernames, 1):
-                username_display = entry['username'] if entry['username'] else '(empty)'
+            for i, entry in enumerate(usernames[:20], 1):
+                username_display = entry['username'] if entry['username'] else '(ᴇᴍᴘᴛʏ)'
                 msg += f"{i}. {entry['timestamp']} {username_display}\n"
+            if len(usernames) > 20:
+                msg += f"\n... ᴀɴᴅ {len(usernames) - 20} ᴍᴏʀᴇ ᴄʜᴀɴɢᴇs\n"
         else:
-            msg += "No username history recorded!\n"
+            msg += "Nᴏ ᴜsᴇʀɴᴀᴍᴇ ʜɪsᴛᴏʀʏ ʀᴇᴄᴏʀᴅᴇᴅ!\n"
         
-        # Add stats
-        msg += f"\n📊 <b>Total Name Changes:</b> {len(names)}"
-        msg += f"\n📊 <b>Total Username Changes:</b> {len(usernames)}"
-        msg += f"\n📊 <b>Total Messages:</b> {user_stats.get('messages', 0)}"
-        
+        msg += f"\n📊 <b>Tᴏᴛᴀʟ Nᴀᴍᴇ Cʜᴀɴɢᴇs:</b> {len(names)}"
+        msg += f"\n📊 <b>Tᴏᴛᴀʟ Uꜱᴇʀɴᴀᴍᴇ Cʜᴀɴɢᴇs:</b> {len(usernames)}"
+        msg += f"\n📊 <b>Tᴏᴛᴀʟ Mᴇssᴀɢᴇs:</b> {user_stats.get('messages', 0)}"
+        msg += f"\n👑 <b>Rᴏʟᴇ:</b> {role}"
         msg += self.get_footer()
         
         await update.message.reply_text(msg, parse_mode="HTML")
 
-    # ────═◈═─ MAIN MENU MESSAGE ─═◈═────
+    # ────═◈═─ MAIN MENU ─═◈═────
     async def get_main_menu_message(self, user, is_premium):
         user_stats = await db.get_user_stats(user.id)
         history_count = len(await db.get_user_history(user.id))
         
         return f"""
-⚡ <b>ᴘɪᴋᴀᴄʜᴜ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ</b> ⚡
+╔═══════════════════════════════════╗
+║  ⚡ <b>PIKACHU PROTECTION BOT</b> ⚡
+╚═══════════════════════════════════╝
 
-✨ <b>ʜᴇʟʟᴏ {user.first_name}!</b> ✨
+✨ <b>Hᴇʟʟᴏ {user.first_name}!</b> ✨
 
-ɪ ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ʙᴏᴛ!
+I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ʙᴏᴛ!
 
-<b>📊 ʏᴏᴜʀ sᴛᴀᴛs:</b>
-╰┈➤ 👥 ɢʀᴏᴜᴘs: {user_stats.get('groups', 0)}
-╰┈➤ 🔄 ɴᴀᴍᴇ ᴄʜᴀɴɢᴇs: {history_count}
-╰┈➤ 📝 ᴛᴏᴛᴀʟ ᴍᴇssᴀɢᴇs: {user_stats.get('messages', 0)}
+<b>📊 Yᴏᴜʀ Sᴛᴀᴛs:</b>
+╰┈➤ 👥 Gʀᴏᴜᴘs: {user_stats.get('groups', 0)}
+╰┈➤ 🔄 Nᴀᴍᴇ Cʜᴀɴɢᴇs: {history_count}
+╰┈➤ 📝 Tᴏᴛᴀʟ Mᴇssᴀɢᴇs: {user_stats.get('messages', 0)}
 
-<b>🔰 ᴘᴏᴡᴇʀғᴜʟ ғᴇᴀᴛᴜʀᴇs:</b>
-╰┈➤ 🛡️ Aɴᴛɪ-sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
+<b>🔰 Pᴏᴡᴇʀғᴜʟ Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ 🛡️ Aɴᴛɪ-Sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
 ╰┈➤ ⚠️ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ
 ╰┈➤ 📌 Pɪɴ/Uɴᴘɪɴ/Dᴇʟᴇᴛᴇ/Pᴜʀɢᴇ
 ╰┈➤ 👋 Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ/Gᴏᴏᴅʙʏᴇ
+╰┈➤ 👥 Aᴅᴠᴀɴᴄᴇᴅ Rᴏʟᴇs Sʏsᴛᴇᴍ
 ╰┈➤ 📊 Sᴛᴀғғ Lɪsᴛ & Sᴛᴀᴛs
 ╰┈➤ 📋 Cᴜsᴛᴏᴍ Rᴜʟᴇs
-╰┈➤ 🔄 SG (User History Tracking)
+╰┈➤ 🔄 SG (Uꜱᴇʀ Hɪsᴛᴏʀʏ)
 ╰┈➤ 📜 Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ
-╰┈➤ 💬 Sᴍᴀʀᴛ Cʜᴀᴛ Rᴇsᴘᴏɴsᴇs
+╰┈➤ 💬 Sᴍᴀʀᴛ Cʜᴀᴛ
 ╰┈➤ 💎 Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs
 
-💎 <b>ᴘʀᴇᴍɪᴜᴍ sᴛᴀᴛᴜs:</b> {'✅ ᴀᴄᴛɪᴠᴇ' if is_premium else '❌ ɪɴᴀᴄᴛɪᴠᴇ'}
+💎 <b>Pʀᴇᴍɪᴜᴍ Sᴛᴀᴛᴜs:</b> {'✅ Aᴄᴛɪᴠᴇ' if is_premium else '❌ Iɴᴀᴄᴛɪᴠᴇ'}
 
-📌 <b>ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!</b>
+📌 <b>Aᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!</b>
 {self.get_owner_credit()}
 """
 
@@ -284,16 +484,24 @@ No history recorded yet!
         
         is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
         
+        # Check if bot is added to the group
+        if update.effective_chat.type in ['group', 'supergroup']:
+            is_added = await self.bot_added_checker(update, context)
+            if not is_added:
+                return
+        
         welcome_text = await self.get_main_menu_message(user, is_premium)
         
         keyboard = [
-            [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
-            [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
-            [InlineKeyboardButton("👥 sᴛᴀғғ", callback_data="staff"), InlineKeyboardButton("🔄 SG", callback_data="sg")],
-            [InlineKeyboardButton("📜 ʜɪsᴛᴏʀʏ", callback_data="history"), InlineKeyboardButton("💬 ᴄʜᴀᴛ", callback_data="chat")]
+            [InlineKeyboardButton("📊 Sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs", callback_data="settings")],
+            [InlineKeyboardButton("📖 Hᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ Aʙᴏᴜᴛ", callback_data="about")],
+            [InlineKeyboardButton("👥 Sᴛᴀғғ", callback_data="staff"), InlineKeyboardButton("🔄 SG", callback_data="sg")],
+            [InlineKeyboardButton("📜 Hɪsᴛᴏʀʏ", callback_data="history"), InlineKeyboardButton("💬 Cʜᴀᴛ", callback_data="chat")],
+            [InlineKeyboardButton("👑 Rᴏʟᴇs", callback_data="roles")],
+            [InlineKeyboardButton("🔗 Kɪᴅɴᴀᴘ Mᴇ - Aᴅᴅ Tᴏ Gʀᴏᴜᴘ", url=f"https://t.me/{context.bot.username}?startgroup=start")]
         ]
         if is_premium:
-            keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
+            keyboard.append([InlineKeyboardButton("💎 Pʀᴇᴍɪᴜᴍ", callback_data="premium")])
         
         photo_url = "https://i.ibb.co/7NT4SDXy/file-124.jpg"
         
@@ -312,7 +520,7 @@ No history recorded yet!
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
-    # ────═◈═─ UPDATED WELCOME HANDLER ─═◈═────
+    # ────═◈═─ WELCOME HANDLER ─═◈═────
     async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.message.new_chat_members:
             return
@@ -323,13 +531,16 @@ No history recorded yet!
         
         logger.info(f"Welcome handler triggered in {chat_title} ({chat_id})")
         
+        # Check if bot is added
+        if not await self.check_bot_added(chat_id):
+            return
+        
         try:
             settings = await db.get_settings(chat_id)
             if not settings.get('welcome', True):
-                logger.info(f"Welcome disabled for {chat_title}")
                 return
-        except Exception as e:
-            logger.error(f"Error getting settings for {chat_id}: {e}")
+        except:
+            pass
         
         for member in update.message.new_chat_members:
             if member.is_bot:
@@ -338,7 +549,6 @@ No history recorded yet!
             try:
                 await db.add_user(member.id, member.username, member.first_name)
                 await self.track_user_history(member)
-                logger.info(f"Processing new member: {member.first_name} ({member.id})")
                 
                 # Get member count
                 try:
@@ -352,8 +562,7 @@ No history recorded yet!
                     user_bio = getattr(user_full, 'bio', 'No bio set')
                     user_name = member.first_name or "N/A"
                     user_username = f"@{member.username}" if member.username else "No username"
-                except Exception as e:
-                    logger.error(f"Error getting user details: {e}")
+                except:
                     user_name = member.first_name or "N/A"
                     user_username = "No username"
                     user_bio = "No bio set"
@@ -364,39 +573,45 @@ No history recorded yet!
                     photos = await context.bot.get_user_profile_photos(member.id, limit=1)
                     if photos.total_count > 0:
                         photo_file_id = photos.photos[0][-1].file_id
-                except Exception as e:
-                    logger.warning(f"Could not fetch profile photo: {e}")
+                except:
+                    pass
                 
                 # Get role
                 role = "👤 Member"
                 try:
                     chat_member = await context.bot.get_chat_member(chat_id, member.id)
                     if chat_member.status == 'creator':
-                        role = "👑 Owner"
+                        role = "👑 Founder"
                     elif chat_member.status == 'administrator':
                         role = "👔 Admin"
+                    else:
+                        role = await self.get_user_role(member.id, chat_id)
+                        role = f"👤 {role}" if role != 'Member' else "👤 Member"
                 except:
                     pass
                 
                 # Build welcome message
                 welcome_msg = f"""
-<b>WELCOME TO THE PARTY!</b>
+╔═══════════════════════════════════╗
+║  <b>WELCOME TO THE PARTY!</b> ║
+╚═══════════════════════════════════╝
 
 <b>NAME:</b> <code>{user_name}</code>
 <b>ID:</b> <code>{member.id}</code>
 <b>USERNAME:</b> <code>{user_username}</code>
 <b>BIO:</b> <i>{user_bio[:100] if user_bio != 'No bio set' else 'No bio set'}</i>
 
+╔═══════════════════════════════════╗
 <b>GROUP:</b> {chat_title}
 <b>TOTAL MEMBERS:</b> {member_count}
 <b>STATUS:</b> {role}
+╚═══════════════════════════════════╝
 
-You won't leave me, right...?
-I'm not a human...
+Yᴏᴜ ᴡᴏɴ'ᴛ ʟᴇᴀᴠᴇ ᴍᴇ, ʀɪɢʜᴛ...?
+I'ᴍ ɴᴏᴛ ᴀ ʜᴜᴍᴀɴ...
 {self.get_owner_credit()}
 """
                 
-                # Send welcome
                 try:
                     if photo_file_id:
                         await context.bot.send_photo(
@@ -413,366 +628,185 @@ I'm not a human...
                         )
                 except Exception as e:
                     logger.error(f"Error sending welcome: {e}")
-                    simple_msg = f"<b>WELCOME TO THE PARTY!</b>\n\n<b>NAME:</b> <code>{member.first_name}</code>\n\nYou won't leave me, right...?{self.get_owner_credit()}"
-                    await context.bot.send_message(chat_id, simple_msg, parse_mode="HTML")
                     
             except Exception as e:
                 logger.error(f"Error processing member {member.id}: {e}")
 
-    # ────═◈═─ HISTORY COMMAND ─═◈═────
-    async def history_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show user's complete change history"""
-        chat = update.effective_chat
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            target = update.effective_user
-        
-        if not target:
-            await update.message.reply_text("❌ User not found!")
-            return
-        
-        history = await db.get_user_history(target.id)
-        
-        if not history:
-            await update.message.reply_text(f"📜 No history found for {target.first_name}!", parse_mode="HTML")
-            return
-        
-        # Send history as a file if too long
-        if len(history) > 50:
-            # Create a text file
-            history_text = f"USER HISTORY FOR {target.first_name} (ID: {target.id})\n"
-            history_text += "=" * 50 + "\n\n"
-            
-            for i, entry in enumerate(history, 1):
-                timestamp = entry.get('timestamp', 'Unknown')
-                name = entry.get('first_name', 'Unknown')
-                username = entry.get('username', 'None')
-                history_text += f"{i}. {timestamp}\n   Name: {name}\n   Username: @{username}\n\n"
-            
-            history_text += self.get_owner_credit()
-            
-            # Send as file
-            with open(f"history_{target.id}.txt", "w", encoding="utf-8") as f:
-                f.write(history_text)
-            
-            with open(f"history_{target.id}.txt", "rb") as f:
-                await update.message.reply_document(
-                    document=f,
-                    filename=f"history_{target.id}.txt",
-                    caption=f"📜 Full history for {target.first_name}"
-                )
-            
-            os.remove(f"history_{target.id}.txt")
-        else:
-            # Send as message
-            msg = f"📜 <b>HISTORY FOR {target.first_name}</b>\n\n"
-            for i, entry in enumerate(history, 1):
-                timestamp = entry.get('timestamp', 'Unknown')
-                try:
-                    dt = datetime.fromisoformat(timestamp)
-                    timestamp = dt.strftime("%Y-%m-%d %H:%M")
-                except:
-                    pass
-                name = entry.get('first_name', 'Unknown')
-                username = entry.get('username', 'None')
-                msg += f"{i}. {timestamp}\n   👤 {name}\n   📛 @{username}\n\n"
-            
-            msg += self.get_owner_credit()
-            await update.message.reply_text(msg, parse_mode="HTML")
-
-    # ────═◈═─ CHAT COMMAND ─═◈═────
-    async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Interactive chat with the bot"""
-        await update.message.reply_text(
-            f"💬 <b>Chat with me!</b>\n\n"
-            f"Send me any message and I'll respond!\n"
-            f"Try asking me about:\n"
-            f"• Your info\n"
-            f"• Group stats\n"
-            f"• Commands\n"
-            f"• Anything else!{self.get_owner_credit()}",
-            parse_mode="HTML"
-        )
-
-    # ────═◈═─ SMART CHAT HANDLER ─═◈═────
-    async def smart_chat_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle chat messages with smart responses"""
-        if not update.message or not update.message.text:
-            return
-        
-        chat = update.effective_chat
-        user = update.effective_user
-        text = update.message.text.lower()
-        
-        # Track user messages
-        await db.increment_user_messages(user.id, chat.id)
-        
-        # Smart responses
-        responses = {
-            'hi': f"👋 Hello {user.first_name}! How can I help you?",
-            'hello': f"👋 Hi {user.first_name}! Nice to see you!",
-            'hey': f"👋 Hey {user.first_name}! What's up?",
-            'how are you': f"🤖 I'm great! Thanks for asking, {user.first_name}!",
-            'who are you': f"🤖 I'm Pikachu Protection Bot, the ultimate group management bot!",
-            'what is your name': f"🤖 My name is {Config.BOT_NAME}!",
-            'thank you': f"🙌 You're welcome, {user.first_name}!",
-            'thanks': f"🙌 No problem, {user.first_name}!",
-            'goodbye': f"👋 Goodbye, {user.first_name}! See you later!",
-            'bye': f"👋 Bye {user.first_name}! Have a great day!",
-            'help': f"📖 Use /help to see all commands!",
-            'info': f"📊 Use /info to get user information!",
-            'ping': f"🏓 Use /ping to check bot status!",
-            'love you': f"❤️ Love you too, {user.first_name}!",
-            'i love you': f"❤️ I love you too, {user.first_name}!",
-            'you are best': f"🌟 Thank you, {user.first_name}! You're the best!",
-            'good bot': f"🤖 Thank you, {user.first_name}! I try my best!",
-            'bad bot': f"😢 I'm sorry, {user.first_name}! I'll try harder!",
-        }
-        
-        # Check for responses
-        for key, response in responses.items():
-            if key in text:
-                await update.message.reply_text(response + self.get_owner_credit(), parse_mode="HTML")
-                return
-        
-        # Check if user is asking about their info
-        if 'my' in text and ('info' in text or 'id' in text or 'details' in text):
-            info = f"""
-📋 <b>Your Information</b>
-
-👤 <b>Name:</b> {user.first_name}
-🆔 <b>ID:</b> <code>{user.id}</code>
-📛 <b>Username:</b> @{user.username if user.username else 'None'}
-📊 <b>Messages:</b> {await db.get_user_message_count(user.id)}
-{self.get_owner_credit()}
-"""
-            await update.message.reply_text(info, parse_mode="HTML")
-            return
-        
-        # Check if user is asking about group
-        if 'group' in text and ('info' in text or 'stats' in text):
-            try:
-                member_count = await context.bot.get_chat_member_count(chat.id)
-                admins = await context.bot.get_chat_administrators(chat.id)
-                
-                group_info = f"""
-📊 <b>Group Information</b>
-
-📍 <b>Name:</b> {chat.title}
-👥 <b>Members:</b> {member_count}
-👔 <b>Admins:</b> {len(admins)}
-🆔 <b>ID:</b> <code>{chat.id}</code>
-{self.get_owner_credit()}
-"""
-                await update.message.reply_text(group_info, parse_mode="HTML")
-                return
-            except:
-                pass
-
-    # ────═◈═─ GOODBYE HANDLER ─═◈═────
-    async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message.left_chat_member:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('goodbye', True):
-            return
-        
-        member = update.message.left_chat_member
-        if member.is_bot:
-            return
-        
-        goodbye_msg = f"""
-💔 <b>ɢᴏᴏᴅʙʏᴇ!</b> 💔
-
-<b>ɴᴀᴍᴇ:</b> {member.first_name}
-📍 <b>ɢʀᴏᴜᴘ:</b> {chat.title}
-
-😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
-{self.get_owner_credit()}
-"""
-        await context.bot.send_message(
-            chat.id,
-            goodbye_msg,
-            parse_mode="HTML"
-        )
-
     # ────═◈═─ HELP COMMAND ─═◈═────
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         help_text = f"""
-📖 <b>ᴄᴏᴍᴍᴀɴᴅ ʟɪsᴛ</b> 📖
+╔═══════════════════════════════════════════╗
+║  📖 <b>POWERFUL COMMANDS LIST</b> 📖
+╚═══════════════════════════════════════════╝
 
-╔═══════════════════════════════════════╗
+<b>👑 Fᴏᴜɴᴅᴇʀ & Cᴏ-Fᴏᴜɴᴅᴇʀ Cᴏᴍᴍᴀɴᴅs:</b>
+╰┈➤ /cofounder @user - Aᴅᴅ Cᴏ-Fᴏᴜɴᴅᴇʀ
+╰┈➤ /uncofounder @user - Rᴇᴍᴏᴠᴇ Cᴏ-Fᴏᴜɴᴅᴇʀ
+╰┈➤ /mod @user - Aᴅᴅ Mᴏᴅᴇʀᴀᴛᴏʀ
+╰┈➤ /unmod @user - Rᴇᴍᴏᴠᴇ Mᴏᴅᴇʀᴀᴛᴏʀ
+╰┈➤ /muter @user - Aᴅᴅ Mᴜᴛᴇʀ
+╰┈➤ /unmuter @user - Rᴇᴍᴏᴠᴇ Mᴜᴛᴇʀ
+╰┈➤ /cleaner @user - Aᴅᴅ Cʜᴀᴛ Cʟᴇᴀɴᴇʀ
+╰┈➤ /uncleaner @user - Rᴇᴍᴏᴠᴇ Cʜᴀᴛ Cʟᴇᴀɴᴇʀ
+╰┈➤ /helper @user - Aᴅᴅ Hᴇʟᴘᴇʀ
+╰┈➤ /unhelper @user - Rᴇᴍᴏᴠᴇ Hᴇʟᴘᴇʀ
+╰┈➤ /free @user - Aᴅᴅ Fʀᴇᴇ Uꜱᴇʀ
+╰┈➤ /unfree @user - Rᴇᴍᴏᴠᴇ Fʀᴇᴇ Uꜱᴇʀ
 
-<b>👑 ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs:</b>
+<b>👮 Aᴅᴍɪɴ & Mᴏᴅᴇʀᴀᴛᴏʀ Cᴏᴍᴍᴀɴᴅs:</b>
+╰┈➤ /reload - Rᴇʟᴏᴀᴅ ᴀᴅᴍɪɴs ʟɪsᴛ
+╰┈➤ /settings - Mᴀɴᴀɢᴇ ɢʀᴏᴜᴘ sᴇᴛᴛɪɴɢs
+╰┈➤ /ban @user - Bᴀɴ ᴜsᴇʀ
+╰┈➤ /unban @user - Uɴʙᴀɴ ᴜsᴇʀ
+╰┈➤ /kick @user - Kɪᴄᴋ ᴜsᴇʀ
+╰┈➤ /mute @user - Mᴜᴛᴇ ᴜsᴇʀ
+╰┈➤ /unmute @user - Uɴᴍᴜᴛᴇ ᴜsᴇʀ
+╰┈➤ /warn @user - Wᴀʀɴ ᴜsᴇʀ
+╰┈➤ /unwarn @user - Rᴇᴍᴏᴠᴇ ᴡᴀʀɴ
+╰┈➤ /warns @user - Cʜᴇᴄᴋ ᴡᴀʀɴs
+╰┈➤ /delwarn - Dᴇʟᴇᴛᴇ & ᴡᴀʀɴ
+╰┈➤ /resetwarns @user - Rᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴs
 
-╰┈➤ /warn @user - ᴡᴀʀɴ ᴜsᴇʀ
-╰┈➤ /unwarn @user - ʀᴇᴍᴏᴠᴇ ᴡᴀʀɴ
-╰┈➤ /warns @user - ᴄʜᴇᴄᴋ ᴡᴀʀɴs
-╰┈➤ /delwarn - ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ & ᴡᴀʀɴ
-╰┈➤ /resetwarns @user - ʀᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴs
-╰┈➤ /mute @user - ᴍᴜᴛᴇ ᴜsᴇʀ
-╰┈➤ /unmute @user - ᴜɴᴍᴜᴛᴇ ᴜsᴇʀ
-╰┈➤ /kick @user - ᴋɪᴄᴋ ᴜsᴇʀ
-╰┈➤ /ban @user - ʙᴀɴ ᴜsᴇʀ
-╰┈➤ /unban @user - ᴜɴʙᴀɴ ᴜsᴇʀ
-╰┈➤ /pin - ᴘɪɴ ᴀ ᴍᴇssᴀɢᴇ (ʀᴇᴘʟʏ)
-╰┈➤ /unpin - ᴜɴᴘɪɴ ᴄᴜʀʀᴇɴᴛ ᴘɪɴ
-╰┈➤ /del - ᴅᴇʟᴇᴛᴇ ᴀ ᴍᴇssᴀɢᴇ (ʀᴇᴘʟʏ)
-╰┈➤ /logdel - ᴅᴇʟᴇᴛᴇ & ʟᴏɢ ᴍᴇssᴀɢᴇ
-╰┈➤ /purge - ᴄʟᴇᴀʀ ᴍᴜʟᴛɪᴘʟᴇ ᴍᴇssᴀɢᴇs
-╰┈➤ /reload - ʀᴇғʀᴇsʜ ᴀᴅᴍɪɴs ʟɪsᴛ
-╰┈➤ /settings - ᴍᴀɴᴀɢᴇ ɢʀᴏᴜᴘ sᴇᴛᴛɪɴɢs
-╰┈➤ /rules - ᴠɪᴇᴡ ɢʀᴏᴜᴘ ʀᴜʟᴇs
-╰┈➤ /setrules - sᴇᴛ ɢʀᴏᴜᴘ ʀᴜʟᴇs
-╰┈➤ /approve @user - ᴀᴘᴘʀᴏᴠᴇ ᴜsᴇʀ
-╰┈➤ /unapprove @user - ʀᴇᴠᴏᴋᴇ ᴀᴘᴘʀᴏᴠᴀʟ
-╰┈➤ /filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ - ᴀᴅᴅ ᴀ ғɪʟᴛᴇʀ
-╰┈➤ /stopfilter ᴋᴇʏᴡᴏʀᴅ - ʀᴇᴍᴏᴠᴇ ᴀ ғɪʟᴛᴇʀ
-╰┈➤ /filters - ʟɪsᴛ ᴀʟʟ ғɪʟᴛᴇʀs
-╰┈➤ /enablewelcome - ᴇɴᴀʙʟᴇ ᴡᴇʟᴄᴏᴍᴇ
-╰┈➤ /disablewelcome - ᴅɪsᴀʙʟᴇ ᴡᴇʟᴄᴏᴍᴇ
+<b>📌 Pɪɴ Mᴇssᴀɢᴇs:</b>
+╰┈➤ /pin - Pɪɴ ᴀ ᴍᴇssᴀɢᴇ
+╰┈➤ /unpin - Uɴᴘɪɴ
+╰┈➤ /pinned - Vɪᴇᴡ ᴘɪɴɴᴇᴅ
+╰┈➤ /editpin - Eᴅɪᴛ ᴘɪɴɴᴇᴅ
+╰┈➤ /delpin - Dᴇʟᴇᴛᴇ ᴘɪɴɴᴇᴅ
 
-<b>📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:</b>
+<b>🗑️ Dᴇʟᴇᴛᴇ Cᴏᴍᴍᴀɴᴅs:</b>
+╰┈➤ /del - Dᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ
+╰┈➤ /logdel - Dᴇʟᴇᴛᴇ & ʟᴏɢ
+╰┈➤ /purge - Pᴜʀɢᴇ ᴍᴜʟᴛɪᴘʟᴇ ᴍᴇssᴀɢᴇs
 
-╰┈➤ /start - sᴛᴀʀᴛ ʙᴏᴛ
-╰┈➤ /help - ɢᴇᴛ ʜᴇʟᴘ
-╰┈➤ /about - ᴀʙᴏᴜᴛ ʙᴏᴛ
-╰┈➤ /ping - ᴄʜᴇᴄᴋ ʙᴏᴛ & sʏsᴛᴇᴍ sᴛᴀᴛs
-╰┈➤ /staff - ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ
-╰┈➤ /info @user - ɢᴇᴛ ᴜsᴇʀ ɪɴғᴏ
-╰┈➤ /infopvt @user - ɢᴇᴛ ᴜsᴇʀ ɪɴғᴏ ɪɴ ᴘʀɪᴠᴀᴛᴇ
-╰┈➤ /me - ʏᴏᴜʀ ᴏᴡɴ ɪɴғᴏʀᴍᴀᴛɪᴏɴ
-╰┈➤ /pinned - ᴠɪᴇᴡ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ
-╰┈➤ /geturl - ɢᴇᴛ ᴍᴇssᴀɢᴇ ʟɪɴᴋ
-╰┈➤ /sg @user - ᴠɪᴇᴡ ᴜsᴇʀ ʜɪsᴛᴏʀʏ (SG)
-╰┈➤ /history @user - ᴠɪᴇᴡ ғᴜʟʟ ʜɪsᴛᴏʀʏ
-╰┈➤ /chat - ᴄʜᴀᴛ ᴡɪᴛʜ ʙᴏᴛ
+<b>📊 Gᴇɴᴇʀᴀʟ Cᴏᴍᴍᴀɴᴅs:</b>
+╰┈➤ /start - Sᴛᴀʀᴛ ʙᴏᴛ
+╰┈➤ /help - Gᴇᴛ ʜᴇʟᴘ
+╰┈➤ /about - Aʙᴏᴜᴛ ʙᴏᴛ
+╰┈➤ /ping - Cʜᴇᴄᴋ ʙᴏᴛ sᴛᴀᴛs
+╰┈➤ /staff - Vɪᴇᴡ sᴛᴀғғ ʟɪsᴛ
+╰┈➤ /info @user - Gᴇᴛ ᴜsᴇʀ ɪɴғᴏ
+╰┈➤ /infopvt @user - Iɴғᴏ ɪɴ ᴘʀɪᴠᴀᴛᴇ
+╰┈➤ /me - Yᴏᴜʀ ɪɴғᴏʀᴍᴀᴛɪᴏɴ
+╰┈➤ /geturl - Gᴇᴛ ᴍᴇssᴀɢᴇ ʟɪɴᴋ
+╰┈➤ /sg @user - Uꜱᴇʀ ʜɪsᴛᴏʀʏ
+╰┈➤ /history @user - Fᴜʟʟ ʜɪsᴛᴏʀʏ
+╰┈➤ /chat - Cʜᴀᴛ ᴡɪᴛʜ ʙᴏᴛ
+╰┈➤ /filter - Aᴅᴅ ғɪʟᴛᴇʀ
+╰┈➤ /filters - Lɪsᴛ ғɪʟᴛᴇʀs
 
-<b>🔰 ᴍᴏᴅᴇʀᴀᴛᴏʀ ᴄᴏᴍᴍᴀɴᴅs:</b>
+<b>🔰 Mᴏᴅᴇʀᴀᴛᴏʀ Cᴏᴍᴍᴀɴᴅs:</b>
+╰┈➤ /reload - Rᴇʟᴏᴀᴅ ᴀᴅᴍɪɴs
+╰┈➤ /kick - Kɪᴄᴋ ᴜsᴇʀ
+╰┈➤ /mute - Mᴜᴛᴇ ᴜsᴇʀ
+╰┈➤ /warn - Wᴀʀɴ ᴜsᴇʀ
 
-╰┈➤ /reload - ᴜᴘᴅᴀᴛᴇ ᴀᴅᴍɪɴs ʟɪsᴛ
-╰┈➤ /kick - ᴋɪᴄᴋ ᴜsᴇʀ
-╰┈➤ /mute - ᴍᴜᴛᴇ ᴜsᴇʀ
-╰┈➤ /warn - ᴡᴀʀɴ ᴜsᴇʀ
+<b>🔗 Aᴅᴅ Mᴇ Tᴏ Yᴏᴜʀ Gʀᴏᴜᴘ:</b>
+╰┈➤ Cʟɪᴄᴋ "Kɪᴅɴᴀᴘ Mᴇ" ʙᴜᴛᴛᴏɴ ʙᴇʟᴏᴡ
 
-╚═══════════════════════════════════════╝
-
-🔥 <b>ᴘᴏᴡᴇʀᴇᴅ ʙʏ {Config.BOT_NAME}</b>
 {self.get_owner_credit()}
 """
-        keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
+        keyboard = [
+            [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")],
+            [InlineKeyboardButton("🔗 Kɪᴅɴᴀᴘ Mᴇ - Aᴅᴅ Tᴏ Gʀᴏᴜᴘ", url=f"https://t.me/{context.bot.username}?startgroup=start")]
+        ]
         await update.message.reply_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
 
-    # ────═◈═─ FILTER COMMANDS ─═◈═────
-    async def add_filter(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    # ────═◈═─ ABOUT COMMAND ─═◈═────
+    async def about_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        about_text = f"""
+⚡ <b>Aʙᴏᴜᴛ {Config.BOT_NAME}</b> ⚡
+
+────═◈═─ ✧◈✧ ─═◈═────
+🤖 <b>Nᴀᴍᴇ:</b> {Config.BOT_NAME}  
+📌 <b>ID:</b> {Config.BOT_USERNAME} 
+👑 <b>Oᴡɴᴇʀ:</b> {Config.OWNER_NAME} 
+📞 <b>Cᴏɴᴛᴀᴄᴛ:</b> {Config.OWNER_USERNAME} 
+────═◈═─ ✧◈✧ ─═◈═────
+
+💫 <b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>
+Tʜᴇ Uʟᴛɪᴍᴀᴛᴇ Gʀᴏᴜᴘ Pʀᴏᴛᴇᴄᴛɪᴏɴ Bᴏᴛ
+
+⚙️ <b>Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ Aɴᴛɪ-Sᴘᴀᴍ
+╰┈➤ Aɴᴛɪ-Lɪɴᴋ
+╰┈➤ Aɴᴛɪ-18+
+╰┈➤ Wᴀʀɴ Sʏsᴛᴇᴍ
+╰┈➤ Mᴜᴛᴇ/Uɴᴍᴜᴛᴇ
+╰┈➤ Bᴀɴ/Kɪᴄᴋ
+╰┈➤ Pɪɴ/Uɴᴘɪɴ
+╰┈➤ Dᴇʟᴇᴛᴇ/Pᴜʀɢᴇ
+╰┈➤ Fɪʟᴛᴇʀs
+╰┈➤ SG (Uꜱᴇʀ Hɪsᴛᴏʀʏ)
+╰┈➤ Rᴏʟᴇs Sʏsᴛᴇᴍ
+╰┈➤ Sᴍᴀʀᴛ Cʜᴀᴛ
+
+📢 <b>Vᴇʀsɪᴏɴ:</b> 3.0.0
+🔰 <b>Sᴛᴀᴛᴜs:</b> Aᴄᴛɪᴠᴇ
+
+{self.get_owner_credit()}
+"""
+        keyboard = [
+            [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")],
+            [InlineKeyboardButton("🔗 Kɪᴅɴᴀᴘ Mᴇ - Aᴅᴅ Tᴏ Gʀᴏᴜᴘ", url=f"https://t.me/{context.bot.username}?startgroup=start")]
+        ]
+        await update.message.reply_text(about_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+
+    # ────═◈═─ STAFF COMMAND ─═◈═────
+    async def staff_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
         
-        user = update.effective_user
         chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can add filters!")
-            return
-        
-        if not context.args:
-            await update.message.reply_text("⚠️ Usage: `/filter keyword reply text`\n\nExample: `/filter hello Hi there!`")
-            return
-        
-        args = " ".join(context.args).split(" ", 1)
-        if len(args) < 2:
-            await update.message.reply_text("⚠️ Please provide a keyword and reply text!")
-            return
-        
-        keyword = args[0].lower()
-        reply_text = args[1]
-        
-        await db.add_filter(chat.id, keyword, reply_text)
-        await update.message.reply_text(f"✅ <b>Filter added!</b>\n\n📌 <b>Keyword:</b> <code>{keyword}</code>\n📝 <b>Reply:</b> {reply_text}{self.get_owner_credit()}", parse_mode="HTML")
+        try:
+            # Get all staff members with roles
+            staff_members = await db.get_all_staff(chat.id)
+            
+            if not staff_members:
+                await update.message.reply_text("👥 Nᴏ sᴛᴀғғ ᴍᴇᴍʙᴇʀs ғᴏᴜɴᴅ!", parse_mode="HTML")
+                return
+            
+            staff_text = f"""
+👥 <b>Sᴛᴀғғ Lɪsᴛ</b> 👥
 
-    async def remove_filter(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can remove filters!")
-            return
-        
-        if not context.args:
-            await update.message.reply_text("⚠️ Usage: `/stopfilter keyword`")
-            return
-        
-        keyword = context.args[0].lower()
-        await db.remove_filter(chat.id, keyword)
-        await update.message.reply_text(f"✅ <b>Filter removed!</b>\n\n📌 <b>Keyword:</b> <code>{keyword}</code>{self.get_owner_credit()}", parse_mode="HTML")
-
-    async def list_filters(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        chat = update.effective_chat
-        filters = await db.get_filters(chat.id)
-        
-        if not filters:
-            await update.message.reply_text(f"ℹ️ <b>No filters set in this group!</b>\n\nUse `/filter keyword reply` to add one.{self.get_owner_credit()}", parse_mode="HTML")
-            return
-        
-        filter_text = "📋 <b>Active Filters:</b>\n\n"
-        for f in filters:
-            filter_text += f"├ <b>{f['keyword']}</b> → {f['reply_text'][:50]}...\n"
-        
-        filter_text += f"\n📊 <b>Total:</b> {len(filters)} filters"
-        filter_text += self.get_owner_credit()
-        
-        await update.message.reply_text(filter_text, parse_mode="HTML")
-
-    async def filter_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message or not update.message.text:
-            return
-        
-        chat = update.effective_chat
-        user = update.effective_user
-        
-        if await self.is_admin(context, chat.id, user.id):
-            return
-        
-        text = update.message.text.lower()
-        filters = await db.get_filters(chat.id)
-        
-        for f in filters:
-            if f['keyword'] in text:
-                await update.message.reply_text(f['reply_text'] + self.get_owner_credit(), parse_mode="HTML")
-                break
-
-    # ────═◈═─ GET URL COMMAND ─═◈═────
-    async def geturl_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please reply to a message to get its link!")
-            return
-        
-        chat = update.effective_chat
-        msg = update.message.reply_to_message
-        link = f"https://t.me/{chat.username}/{msg.message_id}" if chat.username else f"https://t.me/c/{str(chat.id)[4:]}/{msg.message_id}"
-        await update.message.reply_text(f"🔗 <b>Message Link:</b>\n{link}{self.get_owner_credit()}", parse_mode="HTML")
+────═◈═─ ✧◈✧ ─═◈═────
+"""
+            # Group by role
+            roles = {}
+            for member in staff_members:
+                role = member.get('role', 'Member')
+                if role not in roles:
+                    roles[role] = []
+                roles[role].append(member)
+            
+            role_emojis = {
+                'Founder': '👑',
+                'Co-Founder': '⚜️',
+                'Admin': '👔',
+                'Moderator': '👷',
+                'Muter': '🙊',
+                'Chat Cleaner': '🛃',
+                'Helper': '⛑',
+                'Free': '🔓'
+            }
+            
+            for role, members in roles.items():
+                emoji = role_emojis.get(role, '👤')
+                staff_text += f"\n{emoji} <b>{role}s ({len(members)})</b>\n"
+                for member in members[:20]:
+                    name = member.get('first_name', 'Unknown')
+                    user_id = member.get('user_id', '')
+                    staff_text += f"╰┈➤ {name} (<code>{user_id}</code>)\n"
+                if len(members) > 20:
+                    staff_text += f"╰┈➤ ... ᴀɴᴅ {len(members) - 20} ᴍᴏʀᴇ\n"
+            
+            staff_text += self.get_owner_credit()
+            
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            await update.message.reply_text(staff_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
 
     # ────═◈═─ INFO COMMAND ─═◈═────
     async def info_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -782,7 +816,7 @@ I'm not a human...
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ User not found!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
@@ -790,1159 +824,85 @@ I'm not a human...
             target = update.effective_user
         
         if not target:
-            await update.message.reply_text("❌ User not found!")
+            await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
             return
         
         try:
+            chat = update.effective_chat
             user_full = await context.bot.get_chat(target.id)
-            bio = getattr(user_full, 'bio', 'No bio set')
+            bio = getattr(user_full, 'bio', 'Nᴏ ʙɪᴏ sᴇᴛ')
             history_count = len(await db.get_user_history(target.id))
             msg_count = await db.get_user_message_count(target.id)
+            role = await self.get_user_role(target.id, chat.id)
             
             info_text = f"""
-📋 <b>User Information</b>
+📋 <b>Uꜱᴇʀ Iɴғᴏʀᴍᴀᴛɪᴏɴ</b>
 
 ────═◈═─ ✧◈✧ ─═◈═────
-👤 <b>Name:</b> {target.first_name}
+👤 <b>Nᴀᴍᴇ:</b> {target.first_name}
 🆔 <b>ID:</b> <code>{target.id}</code>
-📛 <b>Username:</b> @{target.username if target.username else 'None'}
-📝 <b>Bio:</b> {bio[:100] if bio != 'No bio set' else 'No bio set'}
-📊 <b>Messages:</b> {msg_count}
-🔄 <b>Name Changes:</b> {history_count}
+📛 <b>Uꜱᴇʀɴᴀᴍᴇ:</b> @{target.username if target.username else 'Nᴏɴᴇ'}
+📝 <b>Bɪᴏ:</b> {bio[:100] if bio != 'Nᴏ ʙɪᴏ sᴇᴛ' else 'Nᴏ ʙɪᴏ sᴇᴛ'}
+👑 <b>Rᴏʟᴇ:</b> {role}
+📊 <b>Mᴇssᴀɢᴇs:</b> {msg_count}
+🔄 <b>Nᴀᴍᴇ Cʜᴀɴɢᴇs:</b> {history_count}
 ────═◈═─ ✧◈✧ ─═◈═────
 {self.get_owner_credit()}
 """
-            await update.message.reply_text(info_text, parse_mode="HTML")
+            
+            # Add role management buttons
+            keyboard = [
+                [InlineKeyboardButton("👑 Rᴏʟᴇs", callback_data=f"role_menu_{target.id}")],
+                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
+            ]
+            
+            await update.message.reply_text(info_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
         except Exception as e:
             await update.message.reply_text(f"❌ Error: {str(e)}")
 
-    async def infopvt_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            target = update.effective_user
+    # ────═◈═─ ROLES MENU ─═◈═────
+    async def roles_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user = update.effective_user
+        chat = update.effective_chat
         
-        if not target:
-            await update.message.reply_text("❌ User not found!")
+        # Check if user has permission
+        user_role = await self.get_user_role(user.id, chat.id)
+        allowed_roles = ['Founder', 'Co-Founder']
+        
+        if user_role not in allowed_roles and user.id != Config.OWNER_ID:
+            await update.message.reply_text("❌ Oɴʟʏ Fᴏᴜɴᴅᴇʀ ᴀɴᴅ Cᴏ-Fᴏᴜɴᴅᴇʀ ᴄᴀɴ ᴠɪᴇᴡ ᴛʜɪs ᴍᴇɴᴜ!")
             return
         
-        try:
-            user_full = await context.bot.get_chat(target.id)
-            bio = getattr(user_full, 'bio', 'No bio set')
-            history_count = len(await db.get_user_history(target.id))
-            msg_count = await db.get_user_message_count(target.id)
-            
-            info_text = f"""
-📋 <b>User Information</b>
+        roles_text = f"""
+👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>
 
-────═◈═─ ✧◈✧ ─═◈═────
-👤 <b>Name:</b> {target.first_name}
-🆔 <b>ID:</b> <code>{target.id}</code>
-📛 <b>Username:</b> @{target.username if target.username else 'None'}
-📝 <b>Bio:</b> {bio[:100] if bio != 'No bio set' else 'No bio set'}
-📊 <b>Messages:</b> {msg_count}
-🔄 <b>Name Changes:</b> {history_count}
-────═◈═─ ✧◈✧ ─═◈═────
+Uꜱᴇ ᴛʜᴇ ɪɴʟɪɴᴇ ᴋᴇʏʙᴏᴀʀᴅ ᴛᴏ ᴅɪsᴄᴏᴠᴇʀ ᴛʜᴇ ᴘᴏᴡᴇʀ ᴏғ ᴛʜᴇsᴇ ʀᴏʟᴇs!
+
+<b>👑 Fᴏᴜɴᴅᴇʀ</b> - Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ, ᴀʟʟ ᴘᴏᴡᴇʀ
+<b>⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ</b> - Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ
+<b>👔 Aᴅᴍɪɴ</b> - Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ
+<b>👷 Mᴏᴅᴇʀᴀᴛᴏʀ</b> - Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs
+<b>🙊 Mᴜᴛᴇʀ</b> - Cᴀɴ ᴍᴜᴛᴇ ᴜsᴇʀs
+<b>🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ</b> - Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs
+<b>⛑ Hᴇʟᴘᴇʀ</b> - Sᴛᴀғғ ʟɪsᴛ ᴏɴʟʏ
+<b>🔓 Fʀᴇᴇ</b> - Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏ-ᴘᴜɴɪsʜᴍᴇɴᴛ
+
+Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
+/cᴏғᴏᴜɴᴅᴇʀ, /ᴍᴏᴅ, /ᴍᴜᴛᴇʀ, /ᴄʟᴇᴀɴᴇʀ, /ʜᴇʟᴘᴇʀ, /ғʀᴇᴇ
 {self.get_owner_credit()}
 """
-            await context.bot.send_message(update.effective_user.id, info_text, parse_mode="HTML")
-            await update.message.reply_text(f"✅ <b>Information sent in private!</b>{self.get_owner_credit()}", parse_mode="HTML")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    # ────═◈═─ ME COMMAND ─═◈═────
-    async def me_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        warnings = await db.get_warnings(user.id, chat.id)
-        rules = await db.get_rules(chat.id)
-        history_count = len(await db.get_user_history(user.id))
-        msg_count = await db.get_user_message_count(user.id)
-        
-        me_text = f"""
-📋 <b>Your Information</b>
-
-────═◈═─ ✧◈✧ ─═◈═────
-👤 <b>Name:</b> {user.first_name}
-🆔 <b>ID:</b> <code>{user.id}</code>
-📛 <b>Username:</b> @{user.username if user.username else 'None'}
-⚠️ <b>Warnings:</b> {len(warnings)}
-📊 <b>Messages:</b> {msg_count}
-🔄 <b>Name Changes:</b> {history_count}
-📋 <b>Rules:</b> {rules[:100] if rules else 'No rules set'}
-────═◈═─ ✧◈✧ ─═◈═────
-{self.get_owner_credit()}
-"""
-        await update.message.reply_text(me_text, parse_mode="HTML")
-
-    # ────═◈═─ PIN COMMANDS ─═◈═────
-    async def pin_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can pin messages!")
-            return
-        
-        if not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please reply to a message to pin!")
-            return
-        
-        try:
-            await context.bot.pin_chat_message(chat.id, update.message.reply_to_message.message_id)
-            await update.message.reply_text(f"📌 <b>Pinned!</b>{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"📌 <b>Pinned</b> by {user.first_name}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    async def unpin_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can unpin messages!")
-            return
-        
-        try:
-            await context.bot.unpin_chat_message(chat.id)
-            await update.message.reply_text(f"📌 <b>Unpinned!</b>{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"📌 <b>Unpinned</b> by {user.first_name}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    async def pinned_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        chat = update.effective_chat
-        try:
-            pinned = await context.bot.get_chat(chat.id)
-            if pinned.pinned_message:
-                link = f"https://t.me/{chat.username}/{pinned.pinned_message.message_id}" if chat.username else f"https://t.me/c/{str(chat.id)[4:]}/{pinned.pinned_message.message_id}"
-                await update.message.reply_text(f"📌 <b>Current Pinned Message:</b>\n{link}{self.get_owner_credit()}", parse_mode="HTML")
-            else:
-                await update.message.reply_text(f"📌 <b>No pinned message!</b>{self.get_owner_credit()}", parse_mode="HTML")
-        except:
-            await update.message.reply_text(f"❌ Unable to fetch pinned message!{self.get_owner_credit()}", parse_mode="HTML")
-
-    # ────═◈═─ DELETE/PURGE COMMANDS ─═◈═────
-    async def del_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can delete messages!")
-            return
-        
-        if not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please reply to a message to delete!")
-            return
-        
-        try:
-            await context.bot.delete_message(chat.id, update.message.reply_to_message.message_id)
-            await context.bot.delete_message(chat.id, update.message.message_id)
-            await self.log_action(chat.id, f"🗑️ <b>Deleted</b> by {user.first_name}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    async def logdel_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can use this command!")
-            return
-        
-        if not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please reply to a message!")
-            return
-        
-        msg = update.message.reply_to_message
-        try:
-            log_msg = f"""
-🗑️ <b>Log Deleted Message</b>
-
-📝 <b>Content:</b> {msg.text if msg.text else 'Media'}
-👤 <b>User:</b> {msg.from_user.first_name}
-🆔 <b>ID:</b> <code>{msg.from_user.id}</code>
-👮 <b>By:</b> {user.first_name}
-📍 <b>Group:</b> {chat.title}
-"""
-            await self.log_action(chat.id, log_msg)
-            await context.bot.delete_message(chat.id, msg.message_id)
-            await context.bot.delete_message(chat.id, update.message.message_id)
-            await update.message.reply_text(f"✅ <b>Deleted and logged!</b>{self.get_owner_credit()}", parse_mode="HTML")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    async def purge_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can purge messages!")
-            return
-        
-        if not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please reply to a message to purge from!")
-            return
-        
-        try:
-            msg_id = update.message.reply_to_message.message_id
-            current_id = update.message.message_id
-            deleted = 0
-            
-            for i in range(msg_id, current_id):
-                try:
-                    await context.bot.delete_message(chat.id, i)
-                    deleted += 1
-                    await asyncio.sleep(0.1)
-                except:
-                    pass
-            
-            await update.message.reply_text(f"🗑️ <b>Deleted {deleted} messages!</b>{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"🗑️ <b>Purged</b> {deleted} messages by {user.first_name}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    # ────═◈═─ RELOAD COMMAND ─═◈═────
-    async def reload_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can reload!")
-            return
-        
-        try:
-            admins = await context.bot.get_chat_administrators(chat.id)
-            await db.update_settings(chat.id, "admins", [admin.user.id for admin in admins])
-            await update.message.reply_text(f"✅ <b>Admins list reloaded!</b>{self.get_owner_credit()}", parse_mode="HTML")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    # ────═◈═─ STAFF COMMAND ─═◈═────
-    async def staff_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        chat = update.effective_chat
-        try:
-            admins = await context.bot.get_chat_administrators(chat.id)
-            owner = None
-            admin_list = []
-            
-            for admin in admins:
-                if admin.status == 'creator':
-                    owner = admin.user
-                else:
-                    admin_list.append(admin.user)
-            
-            staff_text = f"""
-👥 <b>Staff List</b> 👥
-
-────═◈═─ ✧◈✧ ─═◈═────
-👑 <b>Owner:</b>
-╰┈➤ {owner.first_name}
-
-👔 <b>Admins: ({len(admin_list)})</b>
-"""
-            for admin in admin_list:
-                staff_text += f"╰┈➤ {admin.first_name}\n"
-            
-            staff_text += f"\n📊 <b>Total Staff:</b> {len(admin_list) + 1}"
-            staff_text += self.get_owner_credit()
-            
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
-            await update.message.reply_text(staff_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    # ────═◈═─ SETTINGS COMMAND ─═◈═────
-    async def settings_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can view settings!")
-            return
-        
-        settings = await db.get_settings(chat.id)
-        
         keyboard = [
-            [InlineKeyboardButton("🛡️ Anti-Spam", callback_data="set_antispam"), InlineKeyboardButton("🔗 Anti-Link", callback_data="set_antilink")],
-            [InlineKeyboardButton("👋 Welcome", callback_data="set_welcome"), InlineKeyboardButton("👋 Goodbye", callback_data="set_goodbye")],
-            [InlineKeyboardButton("🔞 Anti-18+", callback_data="set_anti18")],
-            [InlineKeyboardButton("🔙 Back", callback_data="main_menu")]
+            [InlineKeyboardButton("👑 Fᴏᴜɴᴅᴇʀ", callback_data="role_founder")],
+            [InlineKeyboardButton("⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ", callback_data="role_cofounder")],
+            [InlineKeyboardButton("👔 Aᴅᴍɪɴ", callback_data="role_admin")],
+            [InlineKeyboardButton("👷 Mᴏᴅᴇʀᴀᴛᴏʀ", callback_data="role_moderator")],
+            [InlineKeyboardButton("🙊 Mᴜᴛᴇʀ", callback_data="role_muter")],
+            [InlineKeyboardButton("🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ", callback_data="role_cleaner")],
+            [InlineKeyboardButton("⛑ Hᴇʟᴘᴇʀ", callback_data="role_helper")],
+            [InlineKeyboardButton("🔓 Fʀᴇᴇ", callback_data="role_free")],
+            [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
         ]
-        
-        settings_text = f"""
-⚙️ <b>Settings Menu</b>
-
-📍 <b>Group:</b> {chat.title}
-
-<b>Current Settings:</b>
-├ Anti-Spam: {'✅' if settings.get('antispam', True) else '❌'}
-├ Anti-Link: {'✅' if settings.get('antilink', False) else '❌'}
-├ Anti-18+: {'✅' if settings.get('anti18', True) else '❌'}
-├ Welcome: {'✅' if settings.get('welcome', True) else '❌'}
-├ Goodbye: {'✅' if settings.get('goodbye', True) else '❌'}
-└ Warn Limit: {settings.get('warn_limit', 3)}
-
-Select a setting to change.
-{self.get_owner_credit()}
-"""
-        await update.message.reply_text(settings_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-
-    # ────═◈═─ RULES COMMANDS ─═◈═────
-    async def set_rules(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can set rules!")
-            return
-        
-        if not context.args:
-            await update.message.reply_text("⚠️ Please provide rules!\nExample: `/setrules No spam, No abuse`")
-            return
-        
-        rules = " ".join(context.args)
-        await db.set_rules(chat.id, rules)
-        await update.message.reply_text(f"✅ <b>Rules set successfully!</b>\n\n📋 {rules}{self.get_owner_credit()}", parse_mode="HTML")
-
-    async def get_rules(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        chat = update.effective_chat
-        rules = await db.get_rules(chat.id)
-        
-        if rules:
-            await update.message.reply_text(f"📋 <b>Group Rules:</b>\n\n{rules}{self.get_owner_credit()}", parse_mode="HTML")
-        else:
-            await update.message.reply_text(f"ℹ️ No rules set for this group.\nAdmins can set rules using `/setrules`{self.get_owner_credit()}", parse_mode="HTML")
-
-    # ────═◈═─ PING COMMAND ─═◈═────
-    async def ping_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        try:
-            cpu_usage = psutil.cpu_percent(interval=0.5)
-            ram = psutil.virtual_memory()
-            ram_used = ram.used / (1024 ** 3)
-            ram_total = ram.total / (1024 ** 3)
-            ram_percent = ram.percent
-            disk = psutil.disk_usage('/')
-            disk_used = disk.used / (1024 ** 3)
-            disk_total = disk.total / (1024 ** 3)
-            disk_percent = disk.percent
-            boot_time = datetime.fromtimestamp(psutil.boot_time())
-            uptime = datetime.now() - boot_time
-            uptime_str = str(uptime).split('.')[0]
-        except:
-            cpu_usage = "N/A"
-            ram_used = "N/A"
-            ram_total = "N/A"
-            ram_percent = "N/A"
-            disk_used = "N/A"
-            disk_total = "N/A"
-            disk_percent = "N/A"
-            uptime_str = "N/A"
-        
-        # Bot uptime
-        bot_uptime = datetime.now() - self.start_time
-        bot_uptime_str = str(bot_uptime).split('.')[0]
-        
-        start_time = datetime.now()
-        msg = await update.message.reply_text("🏓 Pinging...")
-        end_time = datetime.now()
-        latency = (end_time - start_time).microseconds / 1000
-        
-        ping_text = f"""
-⚡️ <b>{Config.BOT_NAME}</b>
-
-🏓 Ping..Pong : <code>{latency:.3f}ms</code>
-
-» <b>Bot Stats:</b>
-:⧽ Uptime : <code>{bot_uptime_str}</code>
-:⧽ Users : <code>{db.users.count_documents({})}</code>
-:⧽ Groups : <code>{db.groups.count_documents({})}</code>
-
-» <b>System Stats:</b>
-:⧽ Uptime : <code>{uptime_str}</code>
-:⧽ RAM : <code>{ram_used:.2f}GB / {ram_total:.2f}GB</code> ({ram_percent}%)
-:⧽ CPU : <code>{cpu_usage}%</code>
-:⧽ Disk : <code>{disk_used:.2f}GB / {disk_total:.2f}GB</code> ({disk_percent}%)
-
-{self.get_owner_credit()}
-"""
-        
-        await msg.edit_text(ping_text, parse_mode="HTML")
-
-    # ────═◈═─ ABOUT COMMAND ─═◈═────
-    async def about_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        about_text = f"""
-⚡ <b>About {Config.BOT_NAME}</b> ⚡
-
-────═◈═─ ✧◈✧ ─═◈═────
-🤖 <b>Name:</b> {Config.BOT_NAME}  
-📌 <b>ID:</b> {Config.BOT_USERNAME} 
-👑 <b>Owner:</b> {Config.OWNER_NAME} 
-📞 <b>Contact:</b> {Config.OWNER_USERNAME} 
-────═◈═─ ✧◈✧ ─═◈═────
-
-💫 <b>Description:</b>
-The Ultimate Group Protection Bot
-
-⚙️ <b>Features:</b>
-╰┈➤ Anti-Spam
-╰┈➤ Anti-Link
-╰┈➤ Anti-18+
-╰┈➤ Warn System
-╰┈➤ Mute/Unmute
-╰┈➤ Ban/Kick
-╰┈➤ Pin/Unpin
-╰┈➤ Delete/Purge
-╰┈➤ Filters
-╰┈➤ SG (User History)
-╰┈➤ History Tracking
-╰┈➤ Smart Chat
-
-📢 <b>Version:</b> 3.0.0
-🔰 <b>Status:</b> Active
-
-{self.get_owner_credit()}
-"""
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
-        await update.message.reply_text(about_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-
-    # ────═◈═─ PREMIUM COMMAND ─═◈═────
-    async def premium_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
-        
-        if is_premium:
-            text = f"""
-💎 <b>Premium Status</b> 💎
-
-✅ <b>You are a Premium User!</b>
-
-<b>Unlocked Features:</b>
-╰┈➤ Anti-Crash
-╰┈➤ Advanced Anti-Spam
-╰┈➤ Custom Welcome GIF
-╰┈➤ Private Logs
-╰┈➤ 24/7 Support
-╰┈➤ Advanced Analytics
-╰┈➤ Custom Commands
-
-{self.get_owner_credit()}
-"""
-        else:
-            text = f"""
-💎 <b>Premium Plan</b> 💎
-
-<b>Unlock Premium Features:</b>
-╰┈➤ Anti-Crash
-╰┈➤ Advanced Anti-Spam
-╰┈➤ Custom Welcome GIF
-╰┈➤ Private Logs
-╰┈➤ 24/7 Support
-╰┈➤ Advanced Analytics
-╰┈➤ Custom Commands
-
-<b>Price:</b> $5/month
-
-Contact Owner to Buy:
-📞 {Config.OWNER_USERNAME}
-
-{self.get_owner_credit()}
-"""
-        keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
-        await update.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-
-    # ────═◈═─ STATS COMMAND ─═◈═────
-    async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        if user.id != Config.OWNER_ID:
-            await update.message.reply_text(f"❌ Only owner can view stats!{self.get_owner_credit()}", parse_mode="HTML")
-            return
-        
-        users_count = db.users.count_documents({})
-        groups_count = db.groups.count_documents({})
-        warnings_count = db.warnings.count_documents({})
-        mutes_count = db.mutes.count_documents({})
-        premium_count = db.premium.count_documents({})
-        history_count = db.user_history.count_documents({})
-        filters_count = db.filters.count_documents({})
-        
-        stats_text = f"""
-📊 <b>Bot Statistics</b> 📊
-
-────═◈═─ ✧◈✧ ─═◈═────
-👥 Total Users: {users_count}  
-📍 Total Groups: {groups_count} 
-⚠️ Warnings: {warnings_count}   
-🔇 Active Mutes: {mutes_count} 
-💎 Premium Users: {premium_count}
-🔄 History Records: {history_count}
-📋 Filters: {filters_count}
-────═◈═─ ✧◈✧ ─═◈═────
-🔥 <b>Bot Info:</b>
-╰┈➤ Name: {Config.BOT_NAME}
-╰┈➤ Version: 3.0.0
-╰┈➤ Owner: {Config.OWNER_NAME}
-⚡ <b>Status:</b> Online
-
-{self.get_owner_credit()}
-"""
-        await update.message.reply_text(stats_text, parse_mode="HTML")
-
-    # ────═◈═─ WELCOME CONTROL COMMANDS ─═◈═────
-    async def enable_welcome(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can enable welcome!")
-            return
-        
-        await db.update_settings(chat.id, "welcome", True)
-        await update.message.reply_text(f"✅ <b>Welcome messages enabled for this group!</b>{self.get_owner_credit()}", parse_mode="HTML")
-
-    async def disable_welcome(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can disable welcome!")
-            return
-        
-        await db.update_settings(chat.id, "welcome", False)
-        await update.message.reply_text(f"❌ <b>Welcome messages disabled for this group!</b>{self.get_owner_credit()}", parse_mode="HTML")
-
-    # ────═◈═─ MODERATION COMMANDS ─═◈═────
-    async def warn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_mod(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can warn!")
-            return
-        
-        if not context.args and not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please provide a username or reply to a message!")
-            return
-        
-        target = None
-        if update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        
-        if target.is_bot:
-            await update.message.reply_text("❌ Can't warn bots!")
-            return
-        
-        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "No reason provided"
-        
-        await db.add_warning(target.id, chat.id, reason, user.id)
-        warnings = await db.get_warnings(target.id, chat.id)
-        warn_count = len(warnings)
-        max_warns = Config.MAX_WARNINGS
-        
-        warn_msg = f"""
-⚠️ <b>Warning!</b> ⚠️
-
-────═◈═─ ✧◈✧ ─═◈═────
-👤 {target.first_name}
-📊 Warn: {warn_count}/{max_warns}
-📝 Reason: {reason}
-────═◈═─ ✧◈✧ ─═◈═────
-{self.get_owner_credit()}
-"""
-        await update.message.reply_text(warn_msg, parse_mode="HTML")
-        
-        await self.log_action(chat.id, f"⚠️ <b>Warn</b> {target.first_name} ({warn_count}/{max_warns}) by {user.first_name} - {reason}")
-        
-        if warn_count >= max_warns:
-            mute_duration = Config.MUTE_DURATION
-            await db.add_mute(target.id, chat.id, mute_duration, "Exceeded warn limit", user.id)
-            try:
-                await context.bot.restrict_chat_member(
-                    chat.id,
-                    target.id,
-                    ChatPermissions(can_send_messages=False)
-                )
-                mute_msg = f"""
-🔇 <b>Auto-Muted!</b> 🔇
-
-────═◈═─ ✧◈✧ ─═◈═────
-👤 {target.first_name}
-⏱️ {mute_duration}s
-📝 Reason: Exceeded warn limit
-────═◈═─ ✧◈✧ ─═◈═────
-{self.get_owner_credit()}
-"""
-                await update.message.reply_text(mute_msg, parse_mode="HTML")
-            except:
-                pass
-
-    async def unwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can remove warns!")
-            return
-        
-        if not context.args and not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        target = None
-        if update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        
-        warnings = await db.get_warnings(target.id, chat.id)
-        if warnings:
-            await db.clear_warnings(target.id, chat.id)
-            await update.message.reply_text(f"✅ <b>Removed all warns for {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"✅ <b>Unwarn</b> {target.first_name} by {user.first_name}")
-        else:
-            await update.message.reply_text(f"ℹ️ {target.first_name} has no warns!{self.get_owner_credit()}", parse_mode="HTML")
-
-    async def warns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        chat = update.effective_chat
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            target = update.effective_user
-        
-        warnings = await db.get_warnings(target.id, chat.id)
-        
-        if not warnings:
-            await update.message.reply_text(f"✅ {target.first_name} has no warnings!{self.get_owner_credit()}", parse_mode="HTML")
-            return
-        
-        warn_text = f"⚠️ <b>Warnings for {target.first_name}:</b>\n\n"
-        for i, warn in enumerate(warnings, 1):
-            warn_text += f"└ {i}. {warn['reason']}\n"
-        warn_text += self.get_owner_credit()
-        
-        await update.message.reply_text(warn_text, parse_mode="HTML")
-
-    async def delwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can use this command!")
-            return
-        
-        if not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ Please reply to a message!")
-            return
-        
-        target = update.message.reply_to_message.from_user
-        await context.bot.delete_message(chat.id, update.message.reply_to_message.message_id)
-        await context.bot.delete_message(chat.id, update.message.message_id)
-        await db.add_warning(target.id, chat.id, "Deleted message", user.id)
-        warnings = await db.get_warnings(target.id, chat.id)
-        
-        await update.message.reply_text(f"⚠️ <b>Deleted message & warned {target.first_name}!</b> ({len(warnings)}/{Config.MAX_WARNINGS}){self.get_owner_credit()}", parse_mode="HTML")
-
-    async def reset_warns(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can reset warns!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        await db.clear_warnings(target.id, chat.id)
-        await update.message.reply_text(f"✅ <b>Reset all warns for {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
-
-    # ────═◈═─ MUTE/UNMUTE COMMANDS ─═◈═────
-    async def mute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_mod(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can mute!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        if target.is_bot:
-            await update.message.reply_text("❌ Can't mute bots!")
-            return
-        
-        duration = Config.MUTE_DURATION
-        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "No reason provided"
-        
-        try:
-            if len(context.args) > 1 and context.args[1].isdigit():
-                duration = int(context.args[1])
-                reason = " ".join(context.args[2:]) if len(context.args) > 2 else "No reason provided"
-            
-            await db.add_mute(target.id, chat.id, duration, reason, user.id)
-            await context.bot.restrict_chat_member(
-                chat.id,
-                target.id,
-                ChatPermissions(can_send_messages=False)
-            )
-            
-            mute_msg = f"""
-🔇 <b>Muted!</b> 🔇
-
-────═◈═─ ✧◈✧ ─═◈═────
-👤 {target.first_name}
-⏱️ {duration}s
-📝 Reason: {reason}
-────═◈═─ ✧◈✧ ─═◈═────
-{self.get_owner_credit()}
-"""
-            await update.message.reply_text(mute_msg, parse_mode="HTML")
-            await self.log_action(chat.id, f"🔇 <b>Mute</b> {target.first_name} ({duration}s) by {user.first_name} - {reason}")
-            
-            asyncio.create_task(self.auto_unmute(context, chat.id, target.id, duration))
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    async def auto_unmute(self, context, chat_id, user_id, duration):
-        await asyncio.sleep(duration)
-        try:
-            await db.remove_mute(user_id, chat_id)
-            await context.bot.restrict_chat_member(
-                chat_id,
-                user_id,
-                ChatPermissions(
-                    can_send_messages=True,
-                    can_send_media_messages=True,
-                    can_send_polls=True,
-                    can_send_other_messages=True,
-                    can_add_web_page_previews=True
-                )
-            )
-        except:
-            pass
-
-    async def unmute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_mod(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can unmute!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        await db.remove_mute(target.id, chat.id)
-        try:
-            await context.bot.restrict_chat_member(
-                chat.id,
-                target.id,
-                ChatPermissions(
-                    can_send_messages=True,
-                    can_send_media_messages=True,
-                    can_send_polls=True,
-                    can_send_other_messages=True,
-                    can_add_web_page_previews=True
-                )
-            )
-            await update.message.reply_text(f"🔊 <b>Unmuted {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"🔊 <b>Unmute</b> {target.first_name} by {user.first_name}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    # ────═◈═─ KICK/BAN/UNBAN COMMANDS ─═◈═────
-    async def kick_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_mod(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can kick!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        if target.is_bot:
-            await update.message.reply_text("❌ Can't kick bots!")
-            return
-        
-        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "No reason provided"
-        
-        try:
-            await context.bot.ban_chat_member(chat.id, target.id)
-            await context.bot.unban_chat_member(chat.id, target.id)
-            await update.message.reply_text(f"👢 <b>Kicked {target.first_name}!</b>\n📝 Reason: {reason}{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"👢 <b>Kick</b> {target.first_name} by {user.first_name} - {reason}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    async def ban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can ban!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        if target.is_bot:
-            await update.message.reply_text("❌ Can't ban bots!")
-            return
-        
-        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "No reason provided"
-        
-        try:
-            await context.bot.ban_chat_member(chat.id, target.id)
-            await update.message.reply_text(f"🚫 <b>Banned {target.first_name}!</b>\n📝 Reason: {reason}{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"🚫 <b>Ban</b> {target.first_name} by {user.first_name} - {reason}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    async def unban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can unban!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        else:
-            await update.message.reply_text("⚠️ Please provide a username!")
-            return
-        
-        try:
-            await context.bot.unban_chat_member(chat.id, target.id)
-            await update.message.reply_text(f"✅ <b>Unbanned {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
-            await self.log_action(chat.id, f"✅ <b>Unban</b> {target.first_name} by {user.first_name}")
-        except Exception as e:
-            await update.message.reply_text(f"❌ Error: {str(e)}")
-
-    # ────═◈═─ APPROVE/UNAPPROVE COMMANDS ─═◈═────
-    async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can approve!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        await db.approve_user(target.id, chat.id)
-        await update.message.reply_text(f"✅ <b>Approved</b> {target.first_name}!\n🔗 Now You Are Free.{self.get_owner_credit()}", parse_mode="HTML")
-        await self.log_action(chat.id, f"✅ <b>Approve</b> {target.first_name} by {user.first_name}")
-
-    async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            await update.message.reply_text("❌ This command only works in groups!")
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        if not await self.is_admin(context, chat.id, user.id):
-            await update.message.reply_text("❌ Only admins can unapprove!")
-            return
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            await update.message.reply_text("⚠️ Please provide a user!")
-            return
-        
-        await db.unapprove_user(target.id, chat.id)
-        await update.message.reply_text(f"❌ <b>Unapproved</b> {target.first_name}!\n🔗 No more links.{self.get_owner_credit()}", parse_mode="HTML")
-        await self.log_action(chat.id, f"❌ <b>Unapprove</b> {target.first_name} by {user.first_name}")
-
-    # ────═◈═─ ANTI-SPAM/LINK/18+ HANDLERS ─═◈═────
-    async def antispam_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message or not update.message.text:
-            return
-        
-        chat = update.effective_chat
-        user = update.effective_user
-        
-        settings = await db.get_settings(chat.id)
-        if not settings.get('antispam', True):
-            return
-        
-        if await self.is_admin(context, chat.id, user.id):
-            return
-        
-        if not context.user_data.get('last_message_time'):
-            context.user_data['last_message_time'] = []
-        
-        current_time = datetime.now().timestamp()
-        context.user_data['last_message_time'].append(current_time)
-        
-        if len(context.user_data['last_message_time']) > 10:
-            context.user_data['last_message_time'] = context.user_data['last_message_time'][-10:]
-        
-        if len(context.user_data['last_message_time']) >= 5:
-            time_diff = current_time - context.user_data['last_message_time'][-5]
-            if time_diff < 5:
-                await context.bot.delete_message(chat.id, update.message.message_id)
-                warnings = await db.get_warnings(user.id, chat.id)
-                warn_count = len(warnings)
-                if warn_count < Config.MAX_WARNINGS:
-                    await db.add_warning(user.id, chat.id, "Spamming", "Bot")
-                    await update.message.reply_text(f"⚠️ {user.first_name} warned for spam! ({warn_count+1}/{Config.MAX_WARNINGS})")
-
-    async def antilink_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message or not update.message.text:
-            return
-        
-        chat = update.effective_chat
-        user = update.effective_user
-        
-        settings = await db.get_settings(chat.id)
-        if not settings.get('antilink', False):
-            return
-        
-        if await self.is_admin(context, chat.id, user.id):
-            return
-        
-        is_approved = await db.is_approved(user.id, chat.id)
-        if is_approved:
-            return
-        
-        url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+])|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
-        if url_pattern.search(update.message.text):
-            await context.bot.delete_message(chat.id, update.message.message_id)
-            await update.message.reply_text(
-                f"🔗 <b>Link Detected!</b>\n\n{user.first_name}, you are not approved to send links.\nContact an admin to get approval.{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
-
-    async def anti18_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message or not update.message.text:
-            return
-        
-        chat = update.effective_chat
-        user = update.effective_user
-        
-        settings = await db.get_settings(chat.id)
-        if not settings.get('anti18', True):
-            return
-        
-        if await self.is_admin(context, chat.id, user.id):
-            return
-        
-        adult_keywords = ['porn', 'xxx', 'sex', 'nude', 'nsfw', '18+', 'adult', 'fuck', 'shit', 'bitch', 'ass']
-        if any(keyword in update.message.text.lower() for keyword in adult_keywords):
-            await context.bot.delete_message(chat.id, update.message.message_id)
-            await update.message.reply_text(
-                f"🔞 <b>18+ Content Detected!</b>\n\n{user.first_name}, this type of content is not allowed.{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
+        await update.message.reply_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
 
     # ────═◈═─ CALLBACK HANDLER ─═◈═────
     async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1958,13 +918,15 @@ Contact Owner to Buy:
             main_text = await self.get_main_menu_message(user, is_premium)
             
             keyboard = [
-                [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
-                [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
-                [InlineKeyboardButton("👥 sᴛᴀғғ", callback_data="staff"), InlineKeyboardButton("🔄 SG", callback_data="sg")],
-                [InlineKeyboardButton("📜 ʜɪsᴛᴏʀʏ", callback_data="history"), InlineKeyboardButton("💬 ᴄʜᴀᴛ", callback_data="chat")]
+                [InlineKeyboardButton("📊 Sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs", callback_data="settings")],
+                [InlineKeyboardButton("📖 Hᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ Aʙᴏᴜᴛ", callback_data="about")],
+                [InlineKeyboardButton("👥 Sᴛᴀғғ", callback_data="staff"), InlineKeyboardButton("🔄 SG", callback_data="sg")],
+                [InlineKeyboardButton("📜 Hɪsᴛᴏʀʏ", callback_data="history"), InlineKeyboardButton("💬 Cʜᴀᴛ", callback_data="chat")],
+                [InlineKeyboardButton("👑 Rᴏʟᴇs", callback_data="roles")],
+                [InlineKeyboardButton("🔗 Kɪᴅɴᴀᴘ Mᴇ - Aᴅᴅ Tᴏ Gʀᴏᴜᴘ", url=f"https://t.me/{context.bot.username}?startgroup=start")]
             ]
             if is_premium:
-                keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
+                keyboard.append([InlineKeyboardButton("💎 Pʀᴇᴍɪᴜᴍ", callback_data="premium")])
             
             try:
                 await query.edit_message_text(
@@ -1973,313 +935,258 @@ Contact Owner to Buy:
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except:
-                await query.message.reply_text(
-                    main_text,
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
+                pass
+        
+        elif data == "help":
+            help_text = f"""
+📖 <b>POWERFUL COMMANDS LIST</b> 📖
+
+<b>👑 Fᴏᴜɴᴅᴇʀ & Cᴏ-Fᴏᴜɴᴅᴇʀ:</b>
+/cᴏғᴏᴜɴᴅᴇʀ, /ᴜɴᴄᴏғᴏᴜɴᴅᴇʀ
+/ᴍᴏᴅ, /ᴜɴᴍᴏᴅ
+/ᴍᴜᴛᴇʀ, /ᴜɴᴍᴜᴛᴇʀ
+/ᴄʟᴇᴀɴᴇʀ, /ᴜɴᴄʟᴇᴀɴᴇʀ
+/ʜᴇʟᴘᴇʀ, /ᴜɴʜᴇʟᴘᴇʀ
+/ғʀᴇᴇ, /ᴜɴғʀᴇᴇ
+
+<b>👮 Aᴅᴍɪɴ & Mᴏᴅᴇʀᴀᴛᴏʀ:</b>
+/ʀᴇʟᴏᴀᴅ, /sᴇᴛᴛɪɴɢs
+/ʙᴀɴ, /ᴜɴʙᴀɴ, /ᴋɪᴄᴋ
+/ᴍᴜᴛᴇ, /ᴜɴᴍᴜᴛᴇ
+/ᴡᴀʀɴ, /ᴜɴᴡᴀʀɴ, /ᴡᴀʀɴs
+
+<b>📌 Pɪɴ Mᴇssᴀɢᴇs:</b>
+/ᴘɪɴ, /ᴜɴᴘɪɴ, /ᴘɪɴɴᴇᴅ
+/ᴇᴅɪᴛᴘɪɴ, /ᴅᴇʟᴘɪɴ
+
+<b>🗑️ Dᴇʟᴇᴛᴇ:</b>
+/ᴅᴇʟ, /ʟᴏɢᴅᴇʟ, /ᴘᴜʀɢᴇ
+
+<b>📊 Gᴇɴᴇʀᴀʟ:</b>
+/sᴛᴀʀᴛ, /ʜᴇʟᴘ, /ᴀʙᴏᴜᴛ
+/ᴘɪɴɢ, /sᴛᴀғғ
+/ɪɴꜰᴏ, /ɪɴꜰᴏᴘᴠᴛ, /ᴍᴇ
+/ɢᴇᴛᴜʀʟ, /sɢ, /ʜɪsᴛᴏʀʏ
+/ᴄʜᴀᴛ, /ғɪʟᴛᴇʀ, /ғɪʟᴛᴇʀs
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            try:
+                await query.edit_message_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+        
+        elif data == "about":
+            text = f"""
+⚡ <b>Aʙᴏᴜᴛ {Config.BOT_NAME}</b> ⚡
+
+────═◈═─ ✧◈✧ ─═◈═────
+🤖 <b>Nᴀᴍᴇ:</b> {Config.BOT_NAME}  
+📌 <b>ID:</b> {Config.BOT_USERNAME} 
+👑 <b>Oᴡɴᴇʀ:</b> {Config.OWNER_NAME} 
+📞 <b>Cᴏɴᴛᴀᴄᴛ:</b> {Config.OWNER_USERNAME} 
+────═◈═─ ✧◈✧ ─═◈═────
+
+💫 <b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>
+Tʜᴇ Uʟᴛɪᴍᴀᴛᴇ Gʀᴏᴜᴘ Mᴀɴᴀɢᴇᴍᴇɴᴛ Bᴏᴛ
+
+📢 <b>Vᴇʀsɪᴏɴ:</b> 3.0.0
+🔰 <b>Sᴛᴀᴛᴜs:</b> Aᴄᴛɪᴠᴇ
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+        
+        elif data == "staff":
+            await query.edit_message_text("👥 Uꜱᴇ /sᴛᴀғғ ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ!", parse_mode="HTML")
         
         elif data == "sg":
             await query.edit_message_text(
-                f"🔄 <b>SG - User History Tracking</b>\n\n"
-                f"Use /sg @username or reply to a user's message\n"
-                f"To view their complete history!\n\n"
-                f"📊 <b>Features:</b>\n"
-                f"├ Name Changes\n"
-                f"├ Username Changes\n"
-                f"├ Message Count\n"
-                f"└ Groups Joined{self.get_owner_credit()}",
+                f"🔄 <b>SG - Uꜱᴇʀ Hɪsᴛᴏʀʏ</b>\n\n"
+                f"Uꜱᴇ /sɢ @ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ\n"
+                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
                 parse_mode="HTML"
             )
         
         elif data == "history":
             await query.edit_message_text(
-                f"📜 <b>History Tracking</b>\n\n"
-                f"Use /history @username or reply to a user's message\n"
-                f"To view their complete change history!\n\n"
-                f"📊 <b>Tracks:</b>\n"
-                f"├ Every Name Change\n"
-                f"├ Every Username Change\n"
-                f"├ Timestamp of Changes\n"
-                f"└ Total Changes{self.get_owner_credit()}",
+                f"📜 <b>Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ</b>\n\n"
+                f"Uꜱᴇ /ʜɪsᴛᴏʀʏ @ᴜsᴇʀɴᴀᴍᴇ\n"
+                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ᴄʜᴀɴɢᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
                 parse_mode="HTML"
             )
         
         elif data == "chat":
             await query.edit_message_text(
-                f"💬 <b>Chat with me!</b>\n\n"
-                f"Send me any message and I'll respond!\n"
-                f"Try asking me about:\n"
-                f"• Your info\n"
-                f"• Group stats\n"
-                f"• Commands\n"
-                f"• Anything else!{self.get_owner_credit()}",
+                f"💬 <b>Cʜᴀᴛ ᴡɪᴛʜ ᴍᴇ!</b>\n\n"
+                f"Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!{self.get_owner_credit()}",
                 parse_mode="HTML"
             )
         
-        elif data == "staff":
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(
-                    f"👥 Use /staff to view staff list{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
-            except:
-                await query.message.reply_text(
-                    f"👥 Use /staff to view staff list{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
-        
-        elif data == "about":
-            text = f"""
-⚡ <b>About {Config.BOT_NAME}</b> ⚡
+        elif data == "roles":
+            roles_text = f"""
+👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>
 
-────═◈═─ ✧◈✧ ─═◈═────
-🤖 <b>Name:</b> {Config.BOT_NAME}  
-📌 <b>ID:</b> {Config.BOT_USERNAME} 
-👑 <b>Owner:</b> {Config.OWNER_NAME} 
-📞 <b>Contact:</b> {Config.OWNER_USERNAME} 
-────═◈═─ ✧◈✧ ─═◈═────
+<b>👑 Fᴏᴜɴᴅᴇʀ</b> - Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ, ᴀʟʟ ᴘᴏᴡᴇʀ
+<b>⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ</b> - Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ
+<b>👔 Aᴅᴍɪɴ</b> - Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ
+<b>👷 Mᴏᴅᴇʀᴀᴛᴏʀ</b> - Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs
+<b>🙊 Mᴜᴛᴇʀ</b> - Cᴀɴ ᴍᴜᴛᴇ ᴜsᴇʀs
+<b>🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ</b> - Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs
+<b>⛑ Hᴇʟᴘᴇʀ</b> - Sᴛᴀғғ ʟɪsᴛ ᴏɴʟʏ
+<b>🔓 Fʀᴇᴇ</b> - Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏ-ᴘᴜɴɪsʜᴍᴇɴᴛ
 
-💫 <b>Description:</b>
-The Ultimate Group Protection Bot
-
-⚙️ <b>Features:</b>
-╰┈➤ Anti-Spam
-╰┈➤ Anti-Link
-╰┈➤ Anti-18+
-╰┈➤ Warn System
-╰┈➤ Mute/Unmute
-╰┈➤ Ban/Kick
-╰┈➤ Pin/Unpin
-╰┈➤ Delete/Purge
-╰┈➤ Filters
-╰┈➤ SG (User History)
-╰┈➤ History Tracking
-╰┈➤ Smart Chat
-
-📢 <b>Version:</b> 3.0.0
-🔰 <b>Status:</b> Active
-
+Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
+/cᴏғᴏᴜɴᴅᴇʀ, /ᴍᴏᴅ, /ᴍᴜᴛᴇʀ, /ᴄʟᴇᴀɴᴇʀ, /ʜᴇʟᴘᴇʀ, /ғʀᴇᴇ
 {self.get_owner_credit()}
 """
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
+            keyboard = [
+                [InlineKeyboardButton("👑 Fᴏᴜɴᴅᴇʀ", callback_data="role_founder")],
+                [InlineKeyboardButton("⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ", callback_data="role_cofounder")],
+                [InlineKeyboardButton("👔 Aᴅᴍɪɴ", callback_data="role_admin")],
+                [InlineKeyboardButton("👷 Mᴏᴅᴇʀᴀᴛᴏʀ", callback_data="role_moderator")],
+                [InlineKeyboardButton("🙊 Mᴜᴛᴇʀ", callback_data="role_muter")],
+                [InlineKeyboardButton("🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ", callback_data="role_cleaner")],
+                [InlineKeyboardButton("⛑ Hᴇʟᴘᴇʀ", callback_data="role_helper")],
+                [InlineKeyboardButton("🔓 Fʀᴇᴇ", callback_data="role_free")],
+                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
+            ]
             try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+                await query.edit_message_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
             except:
-                await query.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+                pass
         
-        elif data == "help":
-            text = f"""
-📖 <b>Commands List</b> 📖
-
-<b>👑 Admin Commands:</b>
-╰┈➤ /warn @user - Warn user
-╰┈➤ /unwarn @user - Remove warn
-╰┈➤ /warns @user - Check warns
-╰┈➤ /mute @user - Mute user
-╰┈➤ /unmute @user - Unmute user
-╰┈➤ /kick @user - Kick user
-╰┈➤ /ban @user - Ban user
-╰┈➤ /unban @user - Unban user
-╰┈➤ /pin - Pin message
-╰┈➤ /unpin - Unpin
-╰┈➤ /del - Delete
-╰┈➤ /purge - Purge messages
-╰┈➤ /settings - Manage settings
-╰┈➤ /setrules - Set rules
-╰┈➤ /rules - View rules
-╰┈➤ /approve @user - Approve user
-╰┈➤ /filter keyword reply - Add filter
-╰┈➤ /stopfilter keyword - Remove filter
-╰┈➤ /filters - List filters
-
-<b>📊 General Commands:</b>
-╰┈➤ /start - Start bot
-╰┈➤ /help - Get help
-╰┈➤ /about - About bot
-╰┈➤ /ping - Check bot
-╰┈➤ /staff - View staff
-╰┈➤ /info @user - User info
-╰┈➤ /me - Your info
-╰┈➤ /sg @user - User history
-╰┈➤ /history @user - Full history
-╰┈➤ /chat - Chat with bot
-
-{self.get_owner_credit()}
-"""
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                await query.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-        
-        elif data == "stats":
-            if user_id != Config.OWNER_ID:
-                try:
-                    await query.edit_message_text(f"❌ Only owner can view stats!{self.get_owner_credit()}", parse_mode="HTML")
-                except:
-                    await query.message.reply_text(f"❌ Only owner can view stats!{self.get_owner_credit()}", parse_mode="HTML")
-                return
-            
-            users_count = db.users.count_documents({})
-            groups_count = db.groups.count_documents({})
-            warnings_count = db.warnings.count_documents({})
-            mutes_count = db.mutes.count_documents({})
-            premium_count = db.premium.count_documents({})
-            history_count = db.user_history.count_documents({})
-            
-            text = f"""
-📊 <b>Bot Statistics</b> 📊
-
-────═◈═─ ✧◈✧ ─═◈═────
-👥 Total Users: {users_count}  
-📍 Total Groups: {groups_count} 
-⚠️ Warnings: {warnings_count}   
-🔇 Active Mutes: {mutes_count} 
-💎 Premium Users: {premium_count}
-🔄 History Records: {history_count}
-────═◈═─ ✧◈✧ ─═◈═────
-🔥 <b>Bot Info:</b>
-╰┈➤ Name: {Config.BOT_NAME}
-╰┈➤ Version: 3.0.0
-╰┈➤ Owner: {Config.OWNER_NAME}
-⚡ <b>Status:</b> Online
-
-{self.get_owner_credit()}
-"""
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                await query.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+        elif data.startswith("role_"):
+            role_name = data.replace("role_", "").upper()
+            await query.edit_message_text(
+                f"👑 <b>{role_name} Rᴏʟᴇ</b>\n\n"
+                f"Tᴏ ᴀᴅᴅ ᴛʜɪs ʀᴏʟᴇ: /{role_name.lower()} @ᴜsᴇʀ\n"
+                f"Tᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ʀᴏʟᴇ: /ᴜɴ{role_name.lower()} @ᴜsᴇʀ\n\n"
+                f"<b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>\n"
+                f"{self.get_role_description(role_name)}{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
         
         elif data == "settings":
             keyboard = [
-                [InlineKeyboardButton("👋 Welcome", callback_data="set_welcome"), InlineKeyboardButton("👋 Goodbye", callback_data="set_goodbye")],
-                [InlineKeyboardButton("🛡️ Anti-Spam", callback_data="set_antispam"), InlineKeyboardButton("🔗 Anti-Link", callback_data="set_antilink")],
-                [InlineKeyboardButton("🔞 Anti-18+", callback_data="set_anti18")],
-                [InlineKeyboardButton("🔙 Back", callback_data="main_menu")]
+                [InlineKeyboardButton("👋 Wᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 Gᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
+                [InlineKeyboardButton("🛡️ Aɴᴛɪ-Sᴘᴀᴍ", callback_data="set_antispam"), InlineKeyboardButton("🔗 Aɴᴛɪ-Lɪɴᴋ", callback_data="set_antilink")],
+                [InlineKeyboardButton("🔞 Aɴᴛɪ-18+", callback_data="set_anti18")],
+                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
             ]
             try:
                 await query.edit_message_text(
-                    f"⚙️ <b>Settings Menu</b>\n\n{self.get_owner_credit()}",
+                    f"⚙️ <b>Sᴇᴛᴛɪɴɢs Mᴇɴᴜ</b>\n\n{self.get_owner_credit()}",
                     parse_mode="HTML",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except:
-                await query.message.reply_text(
-                    f"⚙️ <b>Settings Menu</b>\n\n{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
+                pass
         
-        elif data == "premium":
-            if is_premium:
-                text = f"""
-💎 <b>Premium Status</b> 💎
-✅ <b>You are a Premium User!</b>
-
-<b>Unlocked Features:</b>
-╰┈➤ Anti-Crash
-╰┈➤ Advanced Anti-Spam
-╰┈➤ Custom Welcome GIF
-╰┈➤ Private Logs
-╰┈➤ 24/7 Support
-╰┈➤ Advanced Analytics
-╰┈➤ Custom Commands
-
-{self.get_owner_credit()}
-"""
-            else:
-                text = f"""
-💎 <b>Premium Plan</b> 💎
-
-<b>Unlock Premium Features:</b>
-╰┈➤ Anti-Crash
-╰┈➤ Advanced Anti-Spam
-╰┈➤ Custom Welcome GIF
-╰┈➤ Private Logs
-╰┈➤ 24/7 Support
-╰┈➤ Advanced Analytics
-╰┈➤ Custom Commands
-
-<b>Price:</b> $5/month
-
-Contact Owner to Buy:
-📞 {Config.OWNER_USERNAME}
-
-{self.get_owner_credit()}
-"""
-            keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                await query.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-        
-        elif data.startswith("toggle_"):
-            setting = data.replace("toggle_", "")
+        elif data.startswith("set_"):
+            setting = data.replace("set_", "")
             chat_id = update.effective_chat.id
             settings = await db.get_settings(chat_id)
             current = settings.get(setting, True)
             await db.update_settings(chat_id, setting, not current)
             
             try:
-                await query.edit_message_text(f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}", parse_mode="HTML")
-            except:
-                await query.message.reply_text(f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}", parse_mode="HTML")
-            
-            await asyncio.sleep(1)
-            
-            keyboard = [
-                [InlineKeyboardButton("👋 Welcome", callback_data="set_welcome"), InlineKeyboardButton("👋 Goodbye", callback_data="set_goodbye")],
-                [InlineKeyboardButton("🛡️ Anti-Spam", callback_data="set_antispam"), InlineKeyboardButton("🔗 Anti-Link", callback_data="set_antilink")],
-                [InlineKeyboardButton("🔞 Anti-18+", callback_data="set_anti18")],
-                [InlineKeyboardButton("🔙 Back", callback_data="main_menu")]
-            ]
-            try:
                 await query.edit_message_text(
-                    f"⚙️ <b>Settings Menu</b>\n\n{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
+                    f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}",
+                    parse_mode="HTML"
                 )
             except:
-                await query.message.reply_text(
-                    f"⚙️ <b>Settings Menu</b>\n\n{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
+                pass
         
-        elif data in ["set_welcome", "set_goodbye", "set_antispam", "set_antilink", "set_anti18"]:
-            setting_map = {
-                "set_welcome": "welcome",
-                "set_goodbye": "goodbye",
-                "set_antispam": "antispam",
-                "set_antilink": "antilink",
-                "set_anti18": "anti18"
-            }
-            setting = setting_map.get(data, "welcome")
-            settings = await db.get_settings(update.effective_chat.id)
-            current = settings.get(setting, True)
-            keyboard = [
-                [InlineKeyboardButton(f"{'✅' if current else '❌'} Toggle", callback_data=f"toggle_{setting}")],
-                [InlineKeyboardButton("🔙 Back", callback_data="settings")]
-            ]
-            display_name = data.replace("set_", "").upper()
+        elif data == "stats":
+            if user_id != Config.OWNER_ID:
+                await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="HTML")
+                return
+            
+            users_count = db.users.count_documents({})
+            groups_count = db.groups.count_documents({})
+            warnings_count = db.warnings.count_documents({})
+            mutes_count = db.mutes.count_documents({})
+            
+            text = f"""
+📊 <b>Bᴏᴛ Sᴛᴀᴛɪsᴛɪᴄs</b> 📊
+
+────═◈═─ ✧◈✧ ─═◈═────
+👥 Tᴏᴛᴀʟ Uꜱᴇʀs: {users_count}  
+📍 Tᴏᴛᴀʟ Gʀᴏᴜᴘs: {groups_count} 
+⚠️ Wᴀʀɴɪɴɢs: {warnings_count}   
+🔇 Aᴄᴛɪᴠᴇ Mᴜᴛᴇs: {mutes_count} 
+────═◈═─ ✧◈✧ ─═◈═────
+🔥 <b>Bᴏᴛ Iɴғᴏ:</b>
+╰┈➤ Nᴀᴍᴇ: {Config.BOT_NAME}
+╰┈➤ Vᴇʀsɪᴏɴ: 3.0.0
+╰┈➤ Oᴡɴᴇʀ: {Config.OWNER_NAME}
+⚡ <b>Sᴛᴀᴛᴜs:</b> Oɴʟɪɴᴇ
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
             try:
-                await query.edit_message_text(
-                    f"{display_name}\n\nCurrent Status: {'✅ Enabled' if current else '❌ Disabled'}{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
             except:
-                await query.message.reply_text(
-                    f"{display_name}\n\nCurrent Status: {'✅ Enabled' if current else '❌ Disabled'}{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
+                pass
+        
+        elif data == "premium":
+            if is_premium:
+                text = f"""
+💎 <b>Pʀᴇᴍɪᴜᴍ Sᴛᴀᴛᴜs</b> 💎
+✅ <b>Yᴏᴜ ᴀʀᴇ ᴀ Pʀᴇᴍɪᴜᴍ Uꜱᴇʀ!</b>
+
+<b>Uɴʟᴏᴄᴋᴇᴅ Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ Aɴᴛɪ-Cʀᴀsʜ
+╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴛɪ-Sᴘᴀᴍ
+╰┈➤ Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ GɪF
+╰┈➤ Pʀɪᴠᴀᴛᴇ Lᴏɢs
+╰┈➤ 24/7 Sᴜᴘᴘᴏʀᴛ
+
+{self.get_owner_credit()}
+"""
+            else:
+                text = f"""
+💎 <b>Pʀᴇᴍɪᴜᴍ Pʟᴀɴ</b> 💎
+
+<b>Uɴʟᴏᴄᴋ Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ Aɴᴛɪ-Cʀᴀsʜ
+╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴛɪ-Sᴘᴀᴍ
+╰┈➤ Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ GɪF
+╰┈➤ Pʀɪᴠᴀᴛᴇ Lᴏɢs
+╰┈➤ 24/7 Sᴜᴘᴘᴏʀᴛ
+
+<b>Pʀɪᴄᴇ:</b> $5/ᴍᴏɴᴛʜ
+
+Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
+📞 {Config.OWNER_USERNAME}
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+
+    def get_role_description(self, role_name):
+        descriptions = {
+            "FOUNDER": "Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ ᴡɪᴛʜ ᴀʟʟ ᴘᴏᴡᴇʀs",
+            "CO-FOUNDER": "Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ ᴛᴏ ᴍᴀɴᴀɢᴇ sᴛᴀғғ",
+            "ADMIN": "Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ",
+            "MODERATOR": "Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs ᴡɪᴛʜ ᴄᴏᴍᴍᴀɴᴅs",
+            "MUTER": "Cᴀɴ ᴍᴜᴛᴇ ᴀɴᴅ ᴜɴᴍᴜᴛᴇ ᴜsᴇʀs",
+            "CLEANER": "Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs",
+            "HELPER": "Aᴘᴘᴇᴀʀs ɪɴ sᴛᴀғғ ʟɪsᴛ",
+            "FREE": "Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄ ᴘᴜɴɪsʜᴍᴇɴᴛ"
+        }
+        return descriptions.get(role_name, "")
 
     # ────═◈═─ ERROR HANDLER ─═◈═────
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -2288,8 +1195,7 @@ Contact Owner to Buy:
             if update and update.effective_chat:
                 await context.bot.send_message(
                     update.effective_chat.id,
-                    f"❌ <b>An error occurred!</b>\n"
-                    f"Error: <code>{str(context.error)[:100]}</code>{self.get_owner_credit()}",
+                    f"❌ <b>Error occurred!</b>\n<code>{str(context.error)[:100]}</code>{self.get_owner_credit()}",
                     parse_mode="HTML"
                 )
         except:
@@ -2320,15 +1226,26 @@ Contact Owner to Buy:
             self.app.add_handler(CommandHandler("filter", self.add_filter))
             self.app.add_handler(CommandHandler("stopfilter", self.remove_filter))
             self.app.add_handler(CommandHandler("filters", self.list_filters))
-            
-            # Welcome control commands
             self.app.add_handler(CommandHandler("enablewelcome", self.enable_welcome))
             self.app.add_handler(CommandHandler("disablewelcome", self.disable_welcome))
-            
-            # SG and History commands
             self.app.add_handler(CommandHandler("sg", self.sg_command))
             self.app.add_handler(CommandHandler("history", self.history_command))
             self.app.add_handler(CommandHandler("chat", self.chat_command))
+            self.app.add_handler(CommandHandler("roles", self.roles_menu))
+            
+            # Role management commands
+            self.app.add_handler(CommandHandler("cofounder", self.cofounder_command))
+            self.app.add_handler(CommandHandler("uncofounder", self.uncofounder_command))
+            self.app.add_handler(CommandHandler("mod", self.moderator_command))
+            self.app.add_handler(CommandHandler("unmod", self.unmoderator_command))
+            self.app.add_handler(CommandHandler("muter", self.muter_command))
+            self.app.add_handler(CommandHandler("unmuter", self.unmuter_command))
+            self.app.add_handler(CommandHandler("cleaner", self.cleaner_command))
+            self.app.add_handler(CommandHandler("uncleaner", self.uncleaner_command))
+            self.app.add_handler(CommandHandler("helper", self.helper_command))
+            self.app.add_handler(CommandHandler("unhelper", self.unhelper_command))
+            self.app.add_handler(CommandHandler("free", self.free_command))
+            self.app.add_handler(CommandHandler("unfree", self.unfree_command))
             
             # Moderation commands
             self.app.add_handler(CommandHandler("warn", self.warn_command))
@@ -2366,7 +1283,6 @@ Contact Owner to Buy:
             
             premium_print(f"ʙᴏᴛ {Config.BOT_NAME} ɪs ɴᴏᴡ ʀᴜɴɴɪɴɢ!", "⚡")
             premium_print(f"ᴏᴡɴᴇʀ: {Config.OWNER_NAME}", "👑")
-            premium_print(f"ʟᴏɢ ᴄʜᴀɴɴᴇʟ: {self.log_channel}", "📝")
             
             self.app.run_polling()
         except Exception as e:
