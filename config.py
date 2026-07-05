@@ -1,30 +1,26 @@
 import os
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class Config:
-    # ────═◈═─ BOT CONFIGURATION ─═◈═────
-    BOT_TOKEN = os.getenv("BOT_TOKEN", "")
+    # Bot Configuration
+    BOT_TOKEN = os.environ.get("BOT_TOKEN", "YOUR_BOT_TOKEN_HERE")
+    BOT_NAME = "Pikachu Protection Bot"
+    BOT_USERNAME = "@YourBotUsername"
     
-    # ────═◈═─ MONGODB ─═◈═────
-    MONGO_URI = os.getenv("MONGO_URI", "")
-    DB_NAME = os.getenv("DB_NAME", "pikachu_protection")
+    # Owner Configuration
+    OWNER_ID = int(os.environ.get("OWNER_ID", "123456789"))
+    OWNER_NAME = "Your Name"
+    OWNER_USERNAME = "@YourUsername"
     
-    # ────═◈═─ OWNER ─═◈═────
-    OWNER_ID = int(os.getenv("OWNER_ID", "7790607144"))
-    OWNER_NAME = os.getenv("OWNER_NAME", "⏤͟͞ 𝐂𝐑𝐀𝐙𝐘 𝐁𝐎𝐘 ᭄࿐")
-    OWNER_USERNAME = os.getenv("OWNER_USERNAME", "@CrazyyCore")
+    # Premium Users (List of user IDs)
+    PREMIUM_USERS = [123456789, 987654321]
     
-    # ────═◈═─ BOT INFO ─═◈═────
-    BOT_NAME = os.getenv("BOT_NAME", "༒ ᴘɪᴋᴀᴄʜᴜᴜ ༒")
-    BOT_USERNAME = os.getenv("BOT_USERNAME", "@Pikachu_Protection_Robot")
+    # Moderation Settings
+    MAX_WARNINGS = 3
+    MUTE_DURATION = 300  # Seconds
     
-    # ────═◈═─ PREMIUM USERS ─═◈═────
-    PREMIUM_USERS = [int(id.strip()) for id in os.getenv("PREMIUM_USERS", "7790607144").split(",") if id.strip()]
+    # Log Channel
+    LOG_CHANNEL = -1003424504397
     
-    # ────═◈═─ PROTECTION SETTINGS ─═◈═────
-    MAX_WARNINGS = int(os.getenv("MAX_WARNINGS", "3"))
-    MUTE_DURATION = int(os.getenv("MUTE_DURATION", "300"))
-    FLOOD_LIMIT = int(os.getenv("FLOOD_LIMIT", "5"))
-    LOG_CHANNEL = os.getenv("LOG_CHANNEL", "-1003424504397")
+    # Database
+    MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/")
+    DB_NAME = "pikachu_bot"
