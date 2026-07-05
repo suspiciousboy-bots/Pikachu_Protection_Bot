@@ -621,6 +621,36 @@ I'ᴍ ɴᴏᴛ ᴀ ʜᴜᴍᴀɴ...
             except Exception as e:
                 logger.error(f"Error processing member {member.id}: {e}")
 
+    # ────═◈═─ GOODBYE HANDLER ─═◈═────
+    async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message.left_chat_member:
+            return
+        
+        chat = update.effective_chat
+        settings = await db.get_settings(chat.id)
+        
+        if not settings.get('goodbye', True):
+            return
+        
+        member = update.message.left_chat_member
+        if member.is_bot:
+            return
+        
+        goodbye_msg = f"""
+💔 <b>Gᴏᴏᴅʙʏᴇ!</b> 💔
+
+<b>Nᴀᴍᴇ:</b> {member.first_name}
+📍 <b>Gʀᴏᴜᴘ:</b> {chat.title}
+
+😢 Wᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
+{self.get_owner_credit()}
+"""
+        await context.bot.send_message(
+            chat.id,
+            goodbye_msg,
+            parse_mode="HTML"
+        )
+
     # ────═◈═─ PREMIUM COMMAND ─═◈═────
     async def premium_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Show premium status and features"""
@@ -1378,36 +1408,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             except:
                 pass
 
-    # ────═◈═─ GOODBYE HANDLER ─═◈═────
-    async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message.left_chat_member:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('goodbye', True):
-            return
-        
-        member = update.message.left_chat_member
-        if member.is_bot:
-            return
-        
-        goodbye_msg = f"""
-💔 <b>Gᴏᴏᴅʙʏᴇ!</b> 💔
-
-<b>Nᴀᴍᴇ:</b> {member.first_name}
-📍 <b>Gʀᴏᴜᴘ:</b> {chat.title}
-
-😢 Wᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
-{self.get_owner_credit()}
-"""
-        await context.bot.send_message(
-            chat.id,
-            goodbye_msg,
-            parse_mode="HTML"
-        )
-
     # ────═◈═─ FILTER COMMANDS ─═◈═────
     async def add_filter(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
@@ -1650,15 +1650,896 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         except Exception as e:
             await update.message.reply_text(f"❌ Error: {str(e)}")
 
-    # ────═◈═─ MODERATION COMMANDS ─═◈═────
-    # ... (All moderation commands - warn, unwarn, warns, delwarn, resetwarns, mute, unmute, kick, ban, unban, approve, unapprove)
-    # ... (These are already in your existing code)
+    # ────═◈═─ WARN COMMAND ─═◈═────
+    async def warn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Warn a user"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_mod(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴡᴀʀɴ!")
+            return
+        
+        if not context.args and not update.message.reply_to_message:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
+            return
+        
+        target = None
+        if update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        
+        if target.is_bot:
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴡᴀʀɴ ʙᴏᴛs!")
+            return
+        
+        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "Nᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+        
+        await db.add_warning(target.id, chat.id, reason, user.id)
+        warnings = await db.get_warnings(target.id, chat.id)
+        warn_count = len(warnings)
+        max_warns = Config.MAX_WARNINGS
+        
+        warn_msg = f"""
+⚠️ <b>Wᴀʀɴɪɴɢ!</b> ⚠️
 
-    # ────═◈═─ ANTI-SPAM/LINK/18+ HANDLERS ─═◈═────
-    # ... (These are already in your existing code)
+────═◈═─ ✧◈✧ ─═◈═────
+👤 {target.first_name}
+📊 Wᴀʀɴ: {warn_count}/{max_warns}
+📝 Rᴇᴀsᴏɴ: {reason}
+────═◈═─ ✧◈✧ ─═◈═────
+{self.get_owner_credit()}
+"""
+        await update.message.reply_text(warn_msg, parse_mode="HTML")
+        
+        await self.log_action(chat.id, f"⚠️ <b>Wᴀʀɴ</b> {target.first_name} ({warn_count}/{max_warns}) ʙʏ {user.first_name} - {reason}")
+        
+        if warn_count >= max_warns:
+            mute_duration = Config.MUTE_DURATION
+            await db.add_mute(target.id, chat.id, mute_duration, "Exceeded warn limit", user.id)
+            try:
+                await context.bot.restrict_chat_member(
+                    chat.id,
+                    target.id,
+                    ChatPermissions(can_send_messages=False)
+                )
+                mute_msg = f"""
+🔇 <b>Aᴜᴛᴏ-Mᴜᴛᴇᴅ!</b> 🔇
+
+────═◈═─ ✧◈✧ ─═◈═────
+👤 {target.first_name}
+⏱️ {mute_duration}s
+📝 Rᴇᴀsᴏɴ: Exceeded warn limit
+────═◈═─ ✧◈✧ ─═◈═────
+{self.get_owner_credit()}
+"""
+                await update.message.reply_text(mute_msg, parse_mode="HTML")
+            except:
+                pass
+
+    # ────═◈═─ UNWARN COMMAND ─═◈═────
+    async def unwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Remove warnings from a user"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʀᴇᴍᴏᴠᴇ ᴡᴀʀɴs!")
+            return
+        
+        if not context.args and not update.message.reply_to_message:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        target = None
+        if update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        
+        warnings = await db.get_warnings(target.id, chat.id)
+        if warnings:
+            await db.clear_warnings(target.id, chat.id)
+            await update.message.reply_text(f"✅ <b>Rᴇᴍᴏᴠᴇᴅ ᴀʟʟ ᴡᴀʀɴs ғᴏʀ {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
+            await self.log_action(chat.id, f"✅ <b>Uɴᴡᴀʀɴ</b> {target.first_name} ʙʏ {user.first_name}")
+        else:
+            await update.message.reply_text(f"ℹ️ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴs!{self.get_owner_credit()}", parse_mode="HTML")
+
+    # ────═◈═─ WARNS COMMAND ─═◈═────
+    async def warns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Check warnings of a user"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        chat = update.effective_chat
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            target = update.effective_user
+        
+        warnings = await db.get_warnings(target.id, chat.id)
+        
+        if not warnings:
+            await update.message.reply_text(f"✅ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴɪɴɢs!{self.get_owner_credit()}", parse_mode="HTML")
+            return
+        
+        warn_text = f"⚠️ <b>Wᴀʀɴɪɴɢs ғᴏʀ {target.first_name}:</b>\n\n"
+        for i, warn in enumerate(warnings, 1):
+            warn_text += f"└ {i}. {warn['reason']}\n"
+        warn_text += self.get_owner_credit()
+        
+        await update.message.reply_text(warn_text, parse_mode="HTML")
+
+    # ────═◈═─ DELWARN COMMAND ─═◈═────
+    async def delwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Delete message and warn user"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜsᴇ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ!")
+            return
+        
+        if not update.message.reply_to_message:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
+            return
+        
+        target = update.message.reply_to_message.from_user
+        await context.bot.delete_message(chat.id, update.message.reply_to_message.message_id)
+        await context.bot.delete_message(chat.id, update.message.message_id)
+        await db.add_warning(target.id, chat.id, "Deleted message", user.id)
+        warnings = await db.get_warnings(target.id, chat.id)
+        
+        await update.message.reply_text(f"⚠️ <b>Dᴇʟᴇᴛᴇᴅ ᴍᴇssᴀɢᴇ & ᴡᴀʀɴᴇᴅ {target.first_name}!</b> ({len(warnings)}/{Config.MAX_WARNINGS}){self.get_owner_credit()}", parse_mode="HTML")
+
+    # ────═◈═─ RESETWARNS COMMAND ─═◈═────
+    async def reset_warns(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Reset all warnings of a user"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʀᴇsᴇᴛ ᴡᴀʀɴs!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        await db.clear_warnings(target.id, chat.id)
+        await update.message.reply_text(f"✅ <b>Rᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴs ғᴏʀ {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
+
+    # ────═◈═─ MUTE COMMAND ─═◈═────
+    async def mute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Mute a user"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_mod(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴍᴜᴛᴇ!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        if target.is_bot:
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴍᴜᴛᴇ ʙᴏᴛs!")
+            return
+        
+        duration = Config.MUTE_DURATION
+        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "Nᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+        
+        try:
+            if len(context.args) > 1 and context.args[1].isdigit():
+                duration = int(context.args[1])
+                reason = " ".join(context.args[2:]) if len(context.args) > 2 else "Nᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+            
+            await db.add_mute(target.id, chat.id, duration, reason, user.id)
+            await context.bot.restrict_chat_member(
+                chat.id,
+                target.id,
+                ChatPermissions(can_send_messages=False)
+            )
+            
+            mute_msg = f"""
+🔇 <b>Mᴜᴛᴇᴅ!</b> 🔇
+
+────═◈═─ ✧◈✧ ─═◈═────
+👤 {target.first_name}
+⏱️ {duration}s
+📝 Rᴇᴀsᴏɴ: {reason}
+────═◈═─ ✧◈✧ ─═◈═────
+{self.get_owner_credit()}
+"""
+            await update.message.reply_text(mute_msg, parse_mode="HTML")
+            await self.log_action(chat.id, f"🔇 <b>Mᴜᴛᴇ</b> {target.first_name} ({duration}s) ʙʏ {user.first_name} - {reason}")
+            
+            asyncio.create_task(self.auto_unmute(context, chat.id, target.id, duration))
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
+
+    # ────═◈═─ AUTO UNMUTE ─═◈═────
+    async def auto_unmute(self, context, chat_id, user_id, duration):
+        """Auto unmute after duration"""
+        await asyncio.sleep(duration)
+        try:
+            await db.remove_mute(user_id, chat_id)
+            await context.bot.restrict_chat_member(
+                chat_id,
+                user_id,
+                ChatPermissions(
+                    can_send_messages=True,
+                    can_send_media_messages=True,
+                    can_send_polls=True,
+                    can_send_other_messages=True,
+                    can_add_web_page_previews=True
+                )
+            )
+        except:
+            pass
+
+    # ────═◈═─ UNMUTE COMMAND ─═◈═────
+    async def unmute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Unmute a user"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_mod(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴍᴜᴛᴇ!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        await db.remove_mute(target.id, chat.id)
+        try:
+            await context.bot.restrict_chat_member(
+                chat.id,
+                target.id,
+                ChatPermissions(
+                    can_send_messages=True,
+                    can_send_media_messages=True,
+                    can_send_polls=True,
+                    can_send_other_messages=True,
+                    can_add_web_page_previews=True
+                )
+            )
+            await update.message.reply_text(f"🔊 <b>Uɴᴍᴜᴛᴇᴅ {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
+            await self.log_action(chat.id, f"🔊 <b>Uɴᴍᴜᴛᴇ</b> {target.first_name} ʙʏ {user.first_name}")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
+
+    # ────═◈═─ KICK COMMAND ─═◈═────
+    async def kick_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Kick a user from the group"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_mod(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴋɪᴄᴋ!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        if target.is_bot:
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴋɪᴄᴋ ʙᴏᴛs!")
+            return
+        
+        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "Nᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+        
+        try:
+            await context.bot.ban_chat_member(chat.id, target.id)
+            await context.bot.unban_chat_member(chat.id, target.id)
+            await update.message.reply_text(f"👢 <b>Kɪᴄᴋᴇᴅ {target.first_name}!</b>\n📝 Rᴇᴀsᴏɴ: {reason}{self.get_owner_credit()}", parse_mode="HTML")
+            await self.log_action(chat.id, f"👢 <b>Kɪᴄᴋ</b> {target.first_name} ʙʏ {user.first_name} - {reason}")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
+
+    # ────═◈═─ BAN COMMAND ─═◈═────
+    async def ban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Ban a user from the group"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʙᴀɴ!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        if target.is_bot:
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ʙᴀɴ ʙᴏᴛs!")
+            return
+        
+        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "Nᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+        
+        try:
+            await context.bot.ban_chat_member(chat.id, target.id)
+            await update.message.reply_text(f"🚫 <b>Bᴀɴɴᴇᴅ {target.first_name}!</b>\n📝 Rᴇᴀsᴏɴ: {reason}{self.get_owner_credit()}", parse_mode="HTML")
+            await self.log_action(chat.id, f"🚫 <b>Bᴀɴ</b> {target.first_name} ʙʏ {user.first_name} - {reason}")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
+
+    # ────═◈═─ UNBAN COMMAND ─═◈═────
+    async def unban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Unban a user from the group"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴʙᴀɴ!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ!")
+            return
+        
+        try:
+            await context.bot.unban_chat_member(chat.id, target.id)
+            await update.message.reply_text(f"✅ <b>Uɴʙᴀɴɴᴇᴅ {target.first_name}!</b>{self.get_owner_credit()}", parse_mode="HTML")
+            await self.log_action(chat.id, f"✅ <b>Uɴʙᴀɴ</b> {target.first_name} ʙʏ {user.first_name}")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
+
+    # ────═◈═─ APPROVE COMMAND ─═◈═────
+    async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Approve a user to send links"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴀᴘᴘʀᴏᴠᴇ!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        await db.approve_user(target.id, chat.id)
+        await update.message.reply_text(f"✅ <b>Aᴘᴘʀᴏᴠᴇᴅ</b> {target.first_name}!\n🔗 Nᴏᴡ Yᴏᴜ Aʀᴇ Fʀᴇᴇ.{self.get_owner_credit()}", parse_mode="HTML")
+        await self.log_action(chat.id, f"✅ <b>Aᴘᴘʀᴏᴠᴇ</b> {target.first_name} ʙʏ {user.first_name}")
+
+    # ────═◈═─ UNAPPROVE COMMAND ─═◈═────
+    async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Unapprove a user from sending links"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴀᴘᴘʀᴏᴠᴇ!")
+            return
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            return
+        
+        await db.unapprove_user(target.id, chat.id)
+        await update.message.reply_text(f"❌ <b>Uɴᴀᴘᴘʀᴏᴠᴇᴅ</b> {target.first_name}!\n🔗 Nᴏ ᴍᴏʀᴇ ʟɪɴᴋs.{self.get_owner_credit()}", parse_mode="HTML")
+        await self.log_action(chat.id, f"❌ <b>Uɴᴀᴘᴘʀᴏᴠᴇ</b> {target.first_name} ʙʏ {user.first_name}")
+
+    # ────═◈═─ ANTI-SPAM HANDLER ─═◈═────
+    async def antispam_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle spam detection"""
+        if not update.message or not update.message.text:
+            return
+        
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        settings = await db.get_settings(chat.id)
+        if not settings.get('antispam', True):
+            return
+        
+        if await self.is_admin(context, chat.id, user.id):
+            return
+        
+        if not context.user_data.get('last_message_time'):
+            context.user_data['last_message_time'] = []
+        
+        current_time = datetime.now().timestamp()
+        context.user_data['last_message_time'].append(current_time)
+        
+        if len(context.user_data['last_message_time']) > 10:
+            context.user_data['last_message_time'] = context.user_data['last_message_time'][-10:]
+        
+        if len(context.user_data['last_message_time']) >= 5:
+            time_diff = current_time - context.user_data['last_message_time'][-5]
+            if time_diff < 5:
+                await context.bot.delete_message(chat.id, update.message.message_id)
+                warnings = await db.get_warnings(user.id, chat.id)
+                warn_count = len(warnings)
+                if warn_count < Config.MAX_WARNINGS:
+                    await db.add_warning(user.id, chat.id, "Spamming", "Bot")
+                    await update.message.reply_text(f"⚠️ {user.first_name} ᴡᴀʀɴᴇᴅ ғᴏʀ sᴘᴀᴍ! ({warn_count+1}/{Config.MAX_WARNINGS})")
+
+    # ────═◈═─ ANTI-LINK HANDLER ─═◈═────
+    async def antilink_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle link detection"""
+        if not update.message or not update.message.text:
+            return
+        
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        settings = await db.get_settings(chat.id)
+        if not settings.get('antilink', False):
+            return
+        
+        if await self.is_admin(context, chat.id, user.id):
+            return
+        
+        is_approved = await db.is_approved(user.id, chat.id)
+        if is_approved:
+            return
+        
+        url_pattern = re.compile(r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+])|[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}')
+        if url_pattern.search(update.message.text):
+            await context.bot.delete_message(chat.id, update.message.message_id)
+            await update.message.reply_text(
+                f"🔗 <b>Lɪɴᴋ Dᴇᴛᴇᴄᴛᴇᴅ!</b>\n\n{user.first_name}, ʏᴏᴜ ᴀʀᴇ ɴᴏᴛ ᴀᴘᴘʀᴏᴠᴇᴅ ᴛᴏ sᴇɴᴅ ʟɪɴᴋs.\nCᴏɴᴛᴀᴄᴛ ᴀɴ ᴀᴅᴍɪɴ ᴛᴏ ɢᴇᴛ ᴀᴘᴘʀᴏᴠᴀʟ.{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+
+    # ────═◈═─ ANTI-18+ HANDLER ─═◈═────
+    async def anti18_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle adult content detection"""
+        if not update.message or not update.message.text:
+            return
+        
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        settings = await db.get_settings(chat.id)
+        if not settings.get('anti18', True):
+            return
+        
+        if await self.is_admin(context, chat.id, user.id):
+            return
+        
+        adult_keywords = ['porn', 'xxx', 'sex', 'nude', 'nsfw', '18+', 'adult', 'fuck', 'shit', 'bitch', 'ass']
+        if any(keyword in update.message.text.lower() for keyword in adult_keywords):
+            await context.bot.delete_message(chat.id, update.message.message_id)
+            await update.message.reply_text(
+                f"🔞 <b>18+ Cᴏɴᴛᴇɴᴛ Dᴇᴛᴇᴄᴛᴇᴅ!</b>\n\n{user.first_name}, ᴛʜɪs ᴛʏᴘᴇ ᴏғ ᴄᴏɴᴛᴇɴᴛ ɪs ɴᴏᴛ ᴀʟʟᴏᴡᴇᴅ.{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
 
     # ────═◈═─ CALLBACK HANDLER ─═◈═────
-    # ... (This is already in your existing code)
+    async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        query = update.callback_query
+        await query.answer()
+        
+        data = query.data
+        user_id = update.effective_user.id
+        is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
+        
+        if data == "main_menu":
+            user = update.effective_user
+            main_text = await self.get_main_menu_message(user, is_premium)
+            
+            keyboard = [
+                [InlineKeyboardButton("📊 Sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs", callback_data="settings")],
+                [InlineKeyboardButton("📖 Hᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ Aʙᴏᴜᴛ", callback_data="about")],
+                [InlineKeyboardButton("👥 Sᴛᴀғғ", callback_data="staff"), InlineKeyboardButton("🔄 SG", callback_data="sg")],
+                [InlineKeyboardButton("📜 Hɪsᴛᴏʀʏ", callback_data="history"), InlineKeyboardButton("💬 Cʜᴀᴛ", callback_data="chat")],
+                [InlineKeyboardButton("👑 Rᴏʟᴇs", callback_data="roles")],
+                [InlineKeyboardButton("🔗 Kɪᴅɴᴀᴘ Mᴇ - Aᴅᴅ Tᴏ Gʀᴏᴜᴘ", url=f"https://t.me/{context.bot.username}?startgroup=start")]
+            ]
+            if is_premium:
+                keyboard.append([InlineKeyboardButton("💎 Pʀᴇᴍɪᴜᴍ", callback_data="premium")])
+            
+            try:
+                await query.edit_message_text(
+                    main_text,
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                pass
+        
+        elif data == "help":
+            help_text = f"""
+📖 <b>POWERFUL COMMANDS LIST</b> 📖
+
+<b>👑 Fᴏᴜɴᴅᴇʀ & Cᴏ-Fᴏᴜɴᴅᴇʀ:</b>
+/cᴏғᴏᴜɴᴅᴇʀ, /ᴜɴᴄᴏғᴏᴜɴᴅᴇʀ
+/ᴍᴏᴅ, /ᴜɴᴍᴏᴅ
+/ᴍᴜᴛᴇʀ, /ᴜɴᴍᴜᴛᴇʀ
+/ᴄʟᴇᴀɴᴇʀ, /ᴜɴᴄʟᴇᴀɴᴇʀ
+/ʜᴇʟᴘᴇʀ, /ᴜɴʜᴇʟᴘᴇʀ
+/ғʀᴇᴇ, /ᴜɴғʀᴇᴇ
+
+<b>👮 Aᴅᴍɪɴ & Mᴏᴅᴇʀᴀᴛᴏʀ:</b>
+/ʀᴇʟᴏᴀᴅ, /sᴇᴛᴛɪɴɢs
+/ʙᴀɴ, /ᴜɴʙᴀɴ, /ᴋɪᴄᴋ
+/ᴍᴜᴛᴇ, /ᴜɴᴍᴜᴛᴇ
+/ᴡᴀʀɴ, /ᴜɴᴡᴀʀɴ, /ᴡᴀʀɴs
+
+<b>📌 Pɪɴ Mᴇssᴀɢᴇs:</b>
+/ᴘɪɴ, /ᴜɴᴘɪɴ, /ᴘɪɴɴᴇᴅ
+/ᴇᴅɪᴛᴘɪɴ, /ᴅᴇʟᴘɪɴ
+
+<b>🗑️ Dᴇʟᴇᴛᴇ:</b>
+/ᴅᴇʟ, /ʟᴏɢᴅᴇʟ, /ᴘᴜʀɢᴇ
+
+<b>📊 Gᴇɴᴇʀᴀʟ:</b>
+/sᴛᴀʀᴛ, /ʜᴇʟᴘ, /ᴀʙᴏᴜᴛ
+/ᴘɪɴɢ, /sᴛᴀғғ
+/ɪɴꜰᴏ, /ɪɴꜰᴏᴘᴠᴛ, /ᴍᴇ
+/ɢᴇᴛᴜʀʟ, /sɢ, /ʜɪsᴛᴏʀʏ
+/ᴄʜᴀᴛ, /ғɪʟᴛᴇʀ, /ғɪʟᴛᴇʀs
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            try:
+                await query.edit_message_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+        
+        elif data == "about":
+            text = f"""
+⚡ <b>Aʙᴏᴜᴛ {Config.BOT_NAME}</b> ⚡
+
+────═◈═─ ✧◈✧ ─═◈═────
+🤖 <b>Nᴀᴍᴇ:</b> {Config.BOT_NAME}  
+📌 <b>ID:</b> {Config.BOT_USERNAME} 
+👑 <b>Oᴡɴᴇʀ:</b> {Config.OWNER_NAME} 
+📞 <b>Cᴏɴᴛᴀᴄᴛ:</b> {Config.OWNER_USERNAME} 
+────═◈═─ ✧◈✧ ─═◈═────
+
+💫 <b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>
+Tʜᴇ Uʟᴛɪᴍᴀᴛᴇ Gʀᴏᴜᴘ Mᴀɴᴀɢᴇᴍᴇɴᴛ Bᴏᴛ
+
+📢 <b>Vᴇʀsɪᴏɴ:</b> 3.0.0
+🔰 <b>Sᴛᴀᴛᴜs:</b> Aᴄᴛɪᴠᴇ
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+        
+        elif data == "staff":
+            await query.edit_message_text("👥 Uꜱᴇ /sᴛᴀғғ ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ!", parse_mode="HTML")
+        
+        elif data == "sg":
+            await query.edit_message_text(
+                f"🔄 <b>SG - Uꜱᴇʀ Hɪsᴛᴏʀʏ</b>\n\n"
+                f"Uꜱᴇ /sɢ @ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ\n"
+                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+        
+        elif data == "history":
+            await query.edit_message_text(
+                f"📜 <b>Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ</b>\n\n"
+                f"Uꜱᴇ /ʜɪsᴛᴏʀʏ @ᴜsᴇʀɴᴀᴍᴇ\n"
+                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ᴄʜᴀɴɢᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+        
+        elif data == "chat":
+            await query.edit_message_text(
+                f"💬 <b>Cʜᴀᴛ ᴡɪᴛʜ ᴍᴇ!</b>\n\n"
+                f"Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+        
+        elif data == "roles":
+            roles_text = f"""
+👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>
+
+<b>👑 Fᴏᴜɴᴅᴇʀ</b> - Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ, ᴀʟʟ ᴘᴏᴡᴇʀ
+<b>⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ</b> - Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ
+<b>👔 Aᴅᴍɪɴ</b> - Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ
+<b>👷 Mᴏᴅᴇʀᴀᴛᴏʀ</b> - Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs
+<b>🙊 Mᴜᴛᴇʀ</b> - Cᴀɴ ᴍᴜᴛᴇ ᴜsᴇʀs
+<b>🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ</b> - Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs
+<b>⛑ Hᴇʟᴘᴇʀ</b> - Sᴛᴀғғ ʟɪsᴛ ᴏɴʟʏ
+<b>🔓 Fʀᴇᴇ</b> - Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏ-ᴘᴜɴɪsʜᴍᴇɴᴛ
+
+Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
+/cᴏғᴏᴜɴᴅᴇʀ, /ᴍᴏᴅ, /ᴍᴜᴛᴇʀ, /ᴄʟᴇᴀɴᴇʀ, /ʜᴇʟᴘᴇʀ, /ғʀᴇᴇ
+{self.get_owner_credit()}
+"""
+            keyboard = [
+                [InlineKeyboardButton("👑 Fᴏᴜɴᴅᴇʀ", callback_data="role_founder")],
+                [InlineKeyboardButton("⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ", callback_data="role_cofounder")],
+                [InlineKeyboardButton("👔 Aᴅᴍɪɴ", callback_data="role_admin")],
+                [InlineKeyboardButton("👷 Mᴏᴅᴇʀᴀᴛᴏʀ", callback_data="role_moderator")],
+                [InlineKeyboardButton("🙊 Mᴜᴛᴇʀ", callback_data="role_muter")],
+                [InlineKeyboardButton("🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ", callback_data="role_cleaner")],
+                [InlineKeyboardButton("⛑ Hᴇʟᴘᴇʀ", callback_data="role_helper")],
+                [InlineKeyboardButton("🔓 Fʀᴇᴇ", callback_data="role_free")],
+                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
+            ]
+            try:
+                await query.edit_message_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+        
+        elif data.startswith("role_"):
+            role_name = data.replace("role_", "").upper()
+            await query.edit_message_text(
+                f"👑 <b>{role_name} Rᴏʟᴇ</b>\n\n"
+                f"Tᴏ ᴀᴅᴅ ᴛʜɪs ʀᴏʟᴇ: /{role_name.lower()} @ᴜsᴇʀ\n"
+                f"Tᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ʀᴏʟᴇ: /ᴜɴ{role_name.lower()} @ᴜsᴇʀ\n\n"
+                f"<b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>\n"
+                f"{self.get_role_description(role_name)}{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+        
+        elif data == "settings":
+            keyboard = [
+                [InlineKeyboardButton("👋 Wᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 Gᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
+                [InlineKeyboardButton("🛡️ Aɴᴛɪ-Sᴘᴀᴍ", callback_data="set_antispam"), InlineKeyboardButton("🔗 Aɴᴛɪ-Lɪɴᴋ", callback_data="set_antilink")],
+                [InlineKeyboardButton("🔞 Aɴᴛɪ-18+", callback_data="set_anti18")],
+                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
+            ]
+            try:
+                await query.edit_message_text(
+                    f"⚙️ <b>Sᴇᴛᴛɪɴɢs Mᴇɴᴜ</b>\n\n{self.get_owner_credit()}",
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                pass
+        
+        elif data.startswith("set_"):
+            setting = data.replace("set_", "")
+            chat_id = update.effective_chat.id
+            settings = await db.get_settings(chat_id)
+            current = settings.get(setting, True)
+            await db.update_settings(chat_id, setting, not current)
+            
+            try:
+                await query.edit_message_text(
+                    f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}",
+                    parse_mode="HTML"
+                )
+            except:
+                pass
+        
+        elif data == "stats":
+            if user_id != Config.OWNER_ID:
+                await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="HTML")
+                return
+            
+            users_count = db.users.count_documents({})
+            groups_count = db.groups.count_documents({})
+            warnings_count = db.warnings.count_documents({})
+            mutes_count = db.mutes.count_documents({})
+            
+            text = f"""
+📊 <b>Bᴏᴛ Sᴛᴀᴛɪsᴛɪᴄs</b> 📊
+
+────═◈═─ ✧◈✧ ─═◈═────
+👥 Tᴏᴛᴀʟ Uꜱᴇʀs: {users_count}  
+📍 Tᴏᴛᴀʟ Gʀᴏᴜᴘs: {groups_count} 
+⚠️ Wᴀʀɴɪɴɢs: {warnings_count}   
+🔇 Aᴄᴛɪᴠᴇ Mᴜᴛᴇs: {mutes_count} 
+────═◈═─ ✧◈✧ ─═◈═────
+🔥 <b>Bᴏᴛ Iɴғᴏ:</b>
+╰┈➤ Nᴀᴍᴇ: {Config.BOT_NAME}
+╰┈➤ Vᴇʀsɪᴏɴ: 3.0.0
+╰┈➤ Oᴡɴᴇʀ: {Config.OWNER_NAME}
+⚡ <b>Sᴛᴀᴛᴜs:</b> Oɴʟɪɴᴇ
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+        
+        elif data == "premium":
+            if is_premium:
+                text = f"""
+💎 <b>Pʀᴇᴍɪᴜᴍ Sᴛᴀᴛᴜs</b> 💎
+✅ <b>Yᴏᴜ ᴀʀᴇ ᴀ Pʀᴇᴍɪᴜᴍ Uꜱᴇʀ!</b>
+
+<b>Uɴʟᴏᴄᴋᴇᴅ Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ Aɴᴛɪ-Cʀᴀsʜ
+╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴛɪ-Sᴘᴀᴍ
+╰┈➤ Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ GɪF
+╰┈➤ Pʀɪᴠᴀᴛᴇ Lᴏɢs
+╰┈➤ 24/7 Sᴜᴘᴘᴏʀᴛ
+╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴀʟʏᴛɪᴄs
+╰┈➤ Cᴜsᴛᴏᴍ Cᴏᴍᴍᴀɴᴅs
+
+{self.get_owner_credit()}
+"""
+            else:
+                text = f"""
+💎 <b>Pʀᴇᴍɪᴜᴍ Pʟᴀɴ</b> 💎
+
+<b>Uɴʟᴏᴄᴋ Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ Aɴᴛɪ-Cʀᴀsʜ
+╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴛɪ-Sᴘᴀᴍ
+╰┈➤ Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ GɪF
+╰┈➤ Pʀɪᴠᴀᴛᴇ Lᴏɢs
+╰┈➤ 24/7 Sᴜᴘᴘᴏʀᴛ
+╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴀʟʏᴛɪᴄs
+╰┈➤ Cᴜsᴛᴏᴍ Cᴏᴍᴍᴀɴᴅs
+
+<b>Pʀɪᴄᴇ:</b> $5/ᴍᴏɴᴛʜ
+
+Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
+📞 {Config.OWNER_USERNAME}
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                pass
+
+    def get_role_description(self, role_name):
+        descriptions = {
+            "FOUNDER": "Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ ᴡɪᴛʜ ᴀʟʟ ᴘᴏᴡᴇʀs",
+            "CO-FOUNDER": "Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ ᴛᴏ ᴍᴀɴᴀɢᴇ sᴛᴀғғ",
+            "ADMIN": "Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ",
+            "MODERATOR": "Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs ᴡɪᴛʜ ᴄᴏᴍᴍᴀɴᴅs",
+            "MUTER": "Cᴀɴ ᴍᴜᴛᴇ ᴀɴᴅ ᴜɴᴍᴜᴛᴇ ᴜsᴇʀs",
+            "CLEANER": "Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs",
+            "HELPER": "Aᴘᴘᴇᴀʀs ɪɴ sᴛᴀғғ ʟɪsᴛ",
+            "FREE": "Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄ ᴘᴜɴɪsʜᴍᴇɴᴛ"
+        }
+        return descriptions.get(role_name, "")
 
     # ────═◈═─ ERROR HANDLER ─═◈═────
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
