@@ -153,7 +153,7 @@ class PikachuProtectionBot:
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
-    # ────═◈═─ WELCOME HANDLER ─═◈═────
+    # ────═◈═─ UPDATED WELCOME HANDLER ─═◈═────
     async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.message.new_chat_members:
             return
@@ -178,10 +178,10 @@ class PikachuProtectionBot:
             # ────═◈═─ GET USER DETAILS ─═◈═────
             try:
                 user_full = await context.bot.get_chat(member.id)
-                user_bio = getattr(user_full, 'bio', 'N/A')
+                user_bio = getattr(user_full, 'bio', 'No bio set')
                 user_id = member.id
                 user_name = member.first_name or "N/A"
-                user_username = f"@{member.username}" if member.username else "N/A"
+                user_username = f"@{member.username}" if member.username else "No username"
                 
                 # ────═◈═─ GET PROFILE PHOTO ─═◈═────
                 photos = await context.bot.get_user_profile_photos(member.id, limit=1)
@@ -193,33 +193,27 @@ class PikachuProtectionBot:
                 try:
                     chat_member = await context.bot.get_chat_member(chat.id, member.id)
                     if chat_member.status == 'creator':
-                        role = "👑 Oᴡɴᴇʀ"
+                        role = "👑 Owner"
                     elif chat_member.status == 'administrator':
-                        role = "👔 Aᴅᴍɪɴ"
+                        role = "👔 Admin"
                     else:
-                        role = "👤 Mᴇᴍʙᴇʀ"
+                        role = "👤 Member"
                 except:
-                    role = "👤 Mᴇᴍʙᴇʀ"
+                    role = "👤 Member"
                 
-                # ────═◈═─ SIMPLE WELCOME MESSAGE ─═◈═────
+                # ────═◈═─ SIMPLE WELCOME MESSAGE (UPDATED FORMAT) ─═◈═────
                 welcome_msg = f"""
-**WELCOME TO THE PARTY!**
+<b>WELCOME TO THE PARTY!</b>
 
----
+<b>NAME:</b> <code>{user_name}</code>
+<b>ID:</b> <code>{user_id}</code>
+<b>USERNAME:</b> <code>{user_username}</code>
+<b>BIO:</b> <i>{user_bio[:100] if user_bio != 'No bio set' else 'No bio set'}</i>
 
-**ɴᴀᴍᴇ:** {user_name}
-**ɪᴅ:** `{user_id}`
-**ᴜsᴇʀɴᴀᴍᴇ:** {user_username}
-**ʙɪᴏ:** {user_bio[:100] if user_bio != 'N/A' else 'N/A'}
+<b>GROUP:</b> {chat.title}
+<b>TOTAL MEMBERS:</b> {member_count}
+<b>STATUS:</b> 👤 Member
 
----
-
-**ɢʀᴏᴜᴘ:** {chat.title}
-**ᴍᴇᴍʙᴇʀs:** {member_count}
-**ʀᴏʟᴇ:** {role}
-
-🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
-{self.get_footer()}
 """
                 
                 # ────═◈═─ SEND WELCOME WITH PROFILE PHOTO ─═◈═────
@@ -228,34 +222,36 @@ class PikachuProtectionBot:
                         chat.id,
                         photo=photo_file_id,
                         caption=welcome_msg,
-                        parse_mode="Markdown"
+                        parse_mode="HTML"
                     )
                 else:
                     await context.bot.send_message(
                         chat.id,
                         welcome_msg,
-                        parse_mode="Markdown"
+                        parse_mode="HTML"
                     )
                     
             except Exception as e:
                 logger.error(f"Welcome handler error: {e}")
                 # ────═◈═─ FALLBACK WELCOME ─═◈═────
                 fallback_msg = f"""
-**WELCOME TO THE PARTY!**
+<b>WELCOME TO THE PARTY!</b>
 
----
+<b>NAME:</b> <code>{member.first_name}</code>
+<b>ID:</b> <code>{member.id}</code>
+<b>USERNAME:</b> <code>@{member.username if member.username else 'No username'}</code>
+<b>BIO:</b> <i>No bio set</i>
 
-**ɴᴀᴍᴇ:** {member.first_name}
-📍 **ɢʀᴏᴜᴘ:** {chat.title}
-👥 **ᴍᴇᴍʙᴇʀs:** {member_count}
+<b>GROUP:</b> {chat.title}
+<b>TOTAL MEMBERS:</b> {member_count}
+<b>STATUS:</b> 👤 Member
 
-🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
-{self.get_footer()}
+
 """
                 await context.bot.send_message(
                     chat.id,
                     fallback_msg,
-                    parse_mode="Markdown"
+                    parse_mode="HTML"
                 )
 
     # ────═◈═─ GOODBYE HANDLER ─═◈═────
