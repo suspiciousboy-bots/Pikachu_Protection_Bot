@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 ⚡ PIKACHU X PROTECTION BOT - ULTIMATE GROUP MANAGEMENT ⚡
-More Powerful Than Any Bot
 """
 
 import os
@@ -15,27 +14,7 @@ import psutil
 import platform
 import time
 from datetime import datetime, timedelta
-from flask import Flask
 from typing import Dict, List, Optional, Any
-
-# ────═◈═─ FLASK WEB SERVER ─═◈═────
-flask_app = Flask(__name__)
-
-@flask_app.route('/')
-def home():
-    return "⚡ Pikachu Protection Bot is running!"
-
-@flask_app.route('/health')
-def health():
-    return "OK", 200
-
-def run_web():
-    port = int(os.environ.get("PORT", 8080))
-    flask_app.run(host='0.0.0.0', port=port, debug=False)
-
-threading.Thread(target=run_web, daemon=True).start()
-print("🌐 Web server started")
-# ──────────────────────────────────────────────────
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions, User, ChatMember
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
@@ -52,7 +31,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 db = Database()
-LOG_CHANNEL = -1003424504397
 
 # ────═◈═─ FANCY TEXT CONVERTER ─═◈═────
 def fancy_text(text):
@@ -82,7 +60,7 @@ class PikachuProtectionBot:
     def __init__(self):
         self.app = None
         self.user_message_cache = {}
-        self.log_channel = LOG_CHANNEL
+        self.log_channel = Config.LOG_CHANNEL
         self.start_time = datetime.now()
         self.bot_added_groups = {}
         premium_print(f"ʙᴏᴛ ɪɴɪᴛɪᴀʟɪᴢɪɴɢ: {Config.BOT_NAME}", "🚀")
@@ -97,26 +75,17 @@ class PikachuProtectionBot:
         except:
             return False
 
-    async def is_owner(self, context, chat_id, user_id):
+    async def is_mod(self, context, chat_id, user_id):
         try:
             member = await context.bot.get_chat_member(chat_id, user_id)
-            return member.status == 'creator'
-        except:
-            return False
-
-    async def is_founder(self, context, chat_id, user_id):
-        try:
-            member = await context.bot.get_chat_member(chat_id, user_id)
-            return member.status == 'creator'
+            return member.status in ['administrator', 'creator']
         except:
             return False
 
     async def get_user_role(self, user_id, chat_id):
-        """Get user's role in the group"""
         role_data = await db.get_user_role(user_id, chat_id)
         if role_data:
             return role_data.get('role', 'Member')
-        
         try:
             member = await self.app.bot.get_chat_member(chat_id, user_id)
             if member.status == 'creator':
@@ -126,22 +95,6 @@ class PikachuProtectionBot:
         except:
             pass
         return 'Member'
-
-    async def is_mod(self, context, chat_id, user_id):
-        """Check if user has moderator permissions"""
-        role = await self.get_user_role(user_id, chat_id)
-        mod_roles = ['Founder', 'Co-Founder', 'Admin', 'Moderator', 'Muter']
-        return role in mod_roles
-
-    async def is_cleaner(self, context, chat_id, user_id):
-        role = await self.get_user_role(user_id, chat_id)
-        cleaner_roles = ['Founder', 'Co-Founder', 'Admin', 'Chat Cleaner']
-        return role in cleaner_roles
-
-    async def is_free(self, context, chat_id, user_id):
-        role = await self.get_user_role(user_id, chat_id)
-        free_roles = ['Founder', 'Co-Founder', 'Admin', 'Moderator', 'Muter', 'Free']
-        return role in free_roles
 
     async def log_action(self, chat_id, message):
         if self.log_channel:
@@ -158,7 +111,6 @@ class PikachuProtectionBot:
 
     # ────═◈═─ CHECK BOT ADDED ─═◈═────
     async def check_bot_added(self, chat_id):
-        """Check if bot is added to the group"""
         try:
             bot_member = await self.app.bot.get_chat_member(chat_id, self.app.bot.id)
             if bot_member.status in ['administrator', 'creator', 'member']:
@@ -168,13 +120,11 @@ class PikachuProtectionBot:
         return False
 
     async def bot_added_checker(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Check if bot is added and send warning if not"""
         chat = update.effective_chat
         if chat.type not in ['group', 'supergroup']:
             return
         
         chat_id = chat.id
-        
         is_added = await self.check_bot_added(chat_id)
         
         if not is_added:
@@ -218,7 +168,6 @@ Tᴏ ᴜsᴇ ᴍʏ ᴘᴏᴡᴇʀғᴜʟ ғᴇᴀᴛᴜʀᴇs,
 
     # ────═◈═─ USER ROLE MANAGEMENT ─═◈═────
     async def set_user_role(self, update: Update, context: ContextTypes.DEFAULT_TYPE, role: str, action: str):
-        """Set or remove user role"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -434,44 +383,6 @@ Nᴏ ʜɪsᴛᴏʀʏ ʀᴇᴄᴏʀᴅᴇᴅ ʏᴇᴛ!
         
         await update.message.reply_text(msg, parse_mode="HTML")
 
-    # ────═◈═─ MAIN MENU ─═◈═────
-    async def get_main_menu_message(self, user, is_premium):
-        user_stats = await db.get_user_stats(user.id)
-        history_count = len(await db.get_user_history(user.id))
-        
-        return f"""
-╔═══════════════════════════════════╗
-║  ⚡ <b>PIKACHU PROTECTION BOT</b> ⚡
-╚═══════════════════════════════════╝
-
-✨ <b>Hᴇʟʟᴏ {user.first_name}!</b> ✨
-
-I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ʙᴏᴛ!
-
-<b>📊 Yᴏᴜʀ Sᴛᴀᴛs:</b>
-╰┈➤ 👥 Gʀᴏᴜᴘs: {user_stats.get('groups', 0)}
-╰┈➤ 🔄 Nᴀᴍᴇ Cʜᴀɴɢᴇs: {history_count}
-╰┈➤ 📝 Tᴏᴛᴀʟ Mᴇssᴀɢᴇs: {user_stats.get('messages', 0)}
-
-<b>🔰 Pᴏᴡᴇʀғᴜʟ Fᴇᴀᴛᴜʀᴇs:</b>
-╰┈➤ 🛡️ Aɴᴛɪ-Sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
-╰┈➤ ⚠️ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ
-╰┈➤ 📌 Pɪɴ/Uɴᴘɪɴ/Dᴇʟᴇᴛᴇ/Pᴜʀɢᴇ
-╰┈➤ 👋 Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ/Gᴏᴏᴅʙʏᴇ
-╰┈➤ 👥 Aᴅᴠᴀɴᴄᴇᴅ Rᴏʟᴇs Sʏsᴛᴇᴍ
-╰┈➤ 📊 Sᴛᴀғғ Lɪsᴛ & Sᴛᴀᴛs
-╰┈➤ 📋 Cᴜsᴛᴏᴍ Rᴜʟᴇs
-╰┈➤ 🔄 SG (Uꜱᴇʀ Hɪsᴛᴏʀʏ)
-╰┈➤ 📜 Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ
-╰┈➤ 💬 Sᴍᴀʀᴛ Cʜᴀᴛ
-╰┈➤ 💎 Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs
-
-💎 <b>Pʀᴇᴍɪᴜᴍ Sᴛᴀᴛᴜs:</b> {'✅ Aᴄᴛɪᴠᴇ' if is_premium else '❌ Iɴᴀᴄᴛɪᴠᴇ'}
-
-📌 <b>Aᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!</b>
-{self.get_owner_credit()}
-"""
-
     # ────═◈═─ START COMMAND ─═◈═────
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
@@ -485,7 +396,30 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
             if not is_added:
                 return
         
-        welcome_text = await self.get_main_menu_message(user, is_premium)
+        welcome_text = f"""
+╔═══════════════════════════════════╗
+║  ⚡ <b>PIKACHU PROTECTION BOT</b> ⚡
+╚═══════════════════════════════════╝
+
+✨ <b>Hᴇʟʟᴏ {user.first_name}!</b> ✨
+
+I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ʙᴏᴛ!
+
+<b>🔰 Pᴏᴡᴇʀғᴜʟ Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ 🛡️ Aɴᴛɪ-Sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
+╰┈➤ ⚠️ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ
+╰┈➤ 📌 Pɪɴ/Uɴᴘɪɴ/Dᴇʟᴇᴛᴇ/Pᴜʀɢᴇ
+╰┈➤ 👋 Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ/Gᴏᴏᴅʙʏᴇ
+╰┈➤ 👥 Aᴅᴠᴀɴᴄᴇᴅ Rᴏʟᴇs Sʏsᴛᴇᴍ
+╰┈➤ 🔄 SG (Uꜱᴇʀ Hɪsᴛᴏʀʏ)
+╰┈➤ 📜 Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ
+╰┈➤ 💬 Sᴍᴀʀᴛ Cʜᴀᴛ
+
+💎 <b>Pʀᴇᴍɪᴜᴍ Sᴛᴀᴛᴜs:</b> {'✅ Aᴄᴛɪᴠᴇ' if is_premium else '❌ Iɴᴀᴄᴛɪᴠᴇ'}
+
+📌 <b>Aᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!</b>
+{self.get_owner_credit()}
+"""
         
         keyboard = [
             [InlineKeyboardButton("📊 Sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs", callback_data="settings")],
@@ -653,7 +587,6 @@ I'ᴍ ɴᴏᴛ ᴀ ʜᴜᴍᴀɴ...
 
     # ────═◈═─ PREMIUM COMMAND ─═◈═────
     async def premium_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show premium status and features"""
         user = update.effective_user
         is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
         
@@ -699,7 +632,6 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 
     # ────═◈═─ PING COMMAND ─═◈═────
     async def ping_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Check bot and system status"""
         try:
             cpu_usage = psutil.cpu_percent(interval=0.5)
             ram = psutil.virtual_memory()
@@ -754,7 +686,6 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 
     # ────═◈═─ STATS COMMAND ─═◈═────
     async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show bot statistics"""
         user = update.effective_user
         if user.id != Config.OWNER_ID:
             await update.message.reply_text(f"❌ Oɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!{self.get_owner_credit()}", parse_mode="HTML")
@@ -812,8 +743,8 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 ╰┈➤ /unfree @user - Rᴇᴍᴏᴠᴇ Fʀᴇᴇ Uꜱᴇʀ
 
 <b>👮 Aᴅᴍɪɴ & Mᴏᴅᴇʀᴀᴛᴏʀ Cᴏᴍᴍᴀɴᴅs:</b>
-╰┈➤ /reload - Rᴇʟᴏᴀᴅ ᴀᴅᴍɪɴs ʟɪsᴛ
-╰┈➤ /settings - Mᴀɴᴀɢᴇ ɢʀᴏᴜᴘ sᴇᴛᴛɪɴɢs
+╰┈➤ /reload - Rᴇʟᴏᴀᴅ ᴀᴅᴍɪɴs
+╰┈➤ /settings - Mᴀɴᴀɢᴇ sᴇᴛᴛɪɴɢs
 ╰┈➤ /ban @user - Bᴀɴ ᴜsᴇʀ
 ╰┈➤ /unban @user - Uɴʙᴀɴ ᴜsᴇʀ
 ╰┈➤ /kick @user - Kɪᴄᴋ ᴜsᴇʀ
@@ -829,8 +760,6 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 ╰┈➤ /pin - Pɪɴ ᴀ ᴍᴇssᴀɢᴇ
 ╰┈➤ /unpin - Uɴᴘɪɴ
 ╰┈➤ /pinned - Vɪᴇᴡ ᴘɪɴɴᴇᴅ
-╰┈➤ /editpin - Eᴅɪᴛ ᴘɪɴɴᴇᴅ
-╰┈➤ /delpin - Dᴇʟᴇᴛᴇ ᴘɪɴɴᴇᴅ
 
 <b>🗑️ Dᴇʟᴇᴛᴇ Cᴏᴍᴍᴀɴᴅs:</b>
 ╰┈➤ /del - Dᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ
@@ -850,8 +779,6 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 ╰┈➤ /sg @user - Uꜱᴇʀ ʜɪsᴛᴏʀʏ
 ╰┈➤ /history @user - Fᴜʟʟ ʜɪsᴛᴏʀʏ
 ╰┈➤ /chat - Cʜᴀᴛ ᴡɪᴛʜ ʙᴏᴛ
-╰┈➤ /filter - Aᴅᴅ ғɪʟᴛᴇʀ
-╰┈➤ /filters - Lɪsᴛ ғɪʟᴛᴇʀs
 
 <b>🔰 Mᴏᴅᴇʀᴀᴛᴏʀ Cᴏᴍᴍᴀɴᴅs:</b>
 ╰┈➤ /reload - Rᴇʟᴏᴀᴅ ᴀᴅᴍɪɴs
@@ -1153,7 +1080,6 @@ Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
 
     # ────═◈═─ SETTINGS COMMAND ─═◈═────
     async def settings_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Manage group settings"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1259,7 +1185,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ HISTORY COMMAND ─═◈═────
     async def history_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show user's complete change history"""
         chat = update.effective_chat
         
         target = None
@@ -1326,7 +1251,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ CHAT COMMAND ─═◈═────
     async def chat_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Interactive chat with the bot"""
         await update.message.reply_text(
             f"💬 <b>Cʜᴀᴛ ᴡɪᴛʜ ᴍᴇ!</b>\n\n"
             f"Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!\n"
@@ -1340,7 +1264,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ SMART CHAT HANDLER ─═◈═────
     async def smart_chat_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle chat messages with smart responses"""
         if not update.message or not update.message.text:
             return
         
@@ -1367,8 +1290,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             'love you': f"❤️ Lᴏᴠᴇ ʏᴏᴜ ᴛᴏᴏ, {user.first_name}!",
             'i love you': f"❤️ I ʟᴏᴠᴇ ʏᴏᴜ ᴛᴏᴏ, {user.first_name}!",
             'you are best': f"🌟 Tʜᴀɴᴋ ʏᴏᴜ, {user.first_name}! Yᴏᴜ'ʀᴇ ᴛʜᴇ ʙᴇsᴛ!",
-            'good bot': f"🤖 Tʜᴀɴᴋ ʏᴏᴜ, {user.first_name}! I ᴛʀʏ ᴍʏ ʙᴇsᴛ!",
-            'bad bot': f"😢 I'ᴍ sᴏʀʀʏ, {user.first_name}! I'ʟʟ ᴛʀʏ ʜᴀʀᴅᴇʀ!",
         }
         
         for key, response in responses.items():
@@ -1650,9 +1571,8 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         except Exception as e:
             await update.message.reply_text(f"❌ Error: {str(e)}")
 
-    # ────═◈═─ WARN COMMAND ─═◈═────
+    # ────═◈═─ MODERATION COMMANDS ─═◈═────
     async def warn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Warn a user"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1729,7 +1649,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ UNWARN COMMAND ─═◈═────
     async def unwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Remove warnings from a user"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1766,7 +1685,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ WARNS COMMAND ─═◈═────
     async def warns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Check warnings of a user"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1801,7 +1719,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ DELWARN COMMAND ─═◈═────
     async def delwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Delete message and warn user"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1827,7 +1744,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ RESETWARNS COMMAND ─═◈═────
     async def reset_warns(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Reset all warnings of a user"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1858,7 +1774,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ MUTE COMMAND ─═◈═────
     async def mute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Mute a user"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1922,7 +1837,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ AUTO UNMUTE ─═◈═────
     async def auto_unmute(self, context, chat_id, user_id, duration):
-        """Auto unmute after duration"""
         await asyncio.sleep(duration)
         try:
             await db.remove_mute(user_id, chat_id)
@@ -1942,7 +1856,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ UNMUTE COMMAND ─═◈═────
     async def unmute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Unmute a user"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1988,7 +1901,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ KICK COMMAND ─═◈═────
     async def kick_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Kick a user from the group"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -2030,7 +1942,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ BAN COMMAND ─═◈═────
     async def ban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Ban a user from the group"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -2071,7 +1982,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ UNBAN COMMAND ─═◈═────
     async def unban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Unban a user from the group"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -2104,7 +2014,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ APPROVE COMMAND ─═◈═────
     async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Approve a user to send links"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -2136,7 +2045,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ UNAPPROVE COMMAND ─═◈═────
     async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Unapprove a user from sending links"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -2168,7 +2076,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ ANTI-SPAM HANDLER ─═◈═────
     async def antispam_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle spam detection"""
         if not update.message or not update.message.text:
             return
         
@@ -2203,7 +2110,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ ANTI-LINK HANDLER ─═◈═────
     async def antilink_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle link detection"""
         if not update.message or not update.message.text:
             return
         
@@ -2231,7 +2137,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 
     # ────═◈═─ ANTI-18+ HANDLER ─═◈═────
     async def anti18_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle adult content detection"""
         if not update.message or not update.message.text:
             return
         
@@ -2264,7 +2169,30 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         
         if data == "main_menu":
             user = update.effective_user
-            main_text = await self.get_main_menu_message(user, is_premium)
+            main_text = f"""
+╔═══════════════════════════════════╗
+║  ⚡ <b>PIKACHU PROTECTION BOT</b> ⚡
+╚═══════════════════════════════════╝
+
+✨ <b>Hᴇʟʟᴏ {user.first_name}!</b> ✨
+
+I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴᴛ ʙᴏᴛ!
+
+<b>🔰 Pᴏᴡᴇʀғᴜʟ Fᴇᴀᴛᴜʀᴇs:</b>
+╰┈➤ 🛡️ Aɴᴛɪ-Sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
+╰┈➤ ⚠️ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ
+╰┈➤ 📌 Pɪɴ/Uɴᴘɪɴ/Dᴇʟᴇᴛᴇ/Pᴜʀɢᴇ
+╰┈➤ 👋 Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ/Gᴏᴏᴅʙʏᴇ
+╰┈➤ 👥 Aᴅᴠᴀɴᴄᴇᴅ Rᴏʟᴇs Sʏsᴛᴇᴍ
+╰┈➤ 🔄 SG (Uꜱᴇʀ Hɪsᴛᴏʀʏ)
+╰┈➤ 📜 Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ
+╰┈➤ 💬 Sᴍᴀʀᴛ Cʜᴀᴛ
+
+💎 <b>Pʀᴇᴍɪᴜᴍ Sᴛᴀᴛᴜs:</b> {'✅ Aᴄᴛɪᴠᴇ' if is_premium else '❌ Iɴᴀᴄᴛɪᴠᴇ'}
+
+📌 <b>Aᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!</b>
+{self.get_owner_credit()}
+"""
             
             keyboard = [
                 [InlineKeyboardButton("📊 Sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs", callback_data="settings")],
