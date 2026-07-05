@@ -86,21 +86,18 @@ class Database:
     async def increment_user_messages(self, user_id, chat_id):
         """Increment user's message count and track group"""
         try:
-            # Increment user messages
             self.users.update_one(
                 {"user_id": user_id},
                 {"$inc": {"messages": 1}},
                 upsert=True
             )
             
-            # Track group membership
             self.groups.update_one(
                 {"chat_id": chat_id},
                 {"$addToSet": {"members": user_id}},
                 upsert=True
             )
             
-            # Track message in group
             self.messages.insert_one({
                 "user_id": user_id,
                 "chat_id": chat_id,
@@ -193,9 +190,6 @@ class Database:
             role_data = self.user_roles.find_one({"user_id": user_id, "chat_id": chat_id})
             if role_data:
                 return role_data.get("role", "Member")
-            
-            # Check if user is group admin/owner via Telegram API
-            # This is handled in the bot class
             return "Member"
         except Exception as e:
             logger.error(f"Error getting role for {user_id}: {e}")
@@ -209,7 +203,6 @@ class Database:
                 {"chat_id": chat_id, "role": {"$in": staff_roles}}
             ))
             
-            # Add user details for each staff member
             for member in staff:
                 user = self.users.find_one({"user_id": member["user_id"]})
                 if user:
@@ -279,7 +272,6 @@ class Database:
                 "timestamp": datetime.now()
             })
             
-            # Update user's warn count
             self.users.update_one(
                 {"user_id": user_id},
                 {"$inc": {"warns": 1}},
@@ -306,7 +298,6 @@ class Database:
         try:
             result = self.warnings.delete_many({"user_id": user_id, "chat_id": chat_id})
             
-            # Reset user's warn count
             self.users.update_one(
                 {"user_id": user_id},
                 {"$set": {"warns": 0}},
@@ -365,7 +356,6 @@ class Database:
             if not mute:
                 return False
             
-            # Check if mute expired
             expires = mute.get("expires")
             if expires and datetime.now() > expires:
                 await self.remove_mute(user_id, chat_id)
@@ -374,6 +364,53 @@ class Database:
             return True
         except Exception as e:
             logger.error(f"Error checking mute for {user_id}: {e}")
+            return False
+
+    # ────═◈═─ PREMIUM METHODS ─═◈═────
+    
+    async def is_premium(self, user_id):
+        """Check if user is premium"""
+        try:
+            premium = self.premium.find_one({"user_id": user_id})
+            if not premium:
+                return False
+            
+            expires = premium.get("expires")
+            if expires and datetime.now() > expires:
+                await self.remove_premium(user_id)
+                return False
+            
+            return True
+        except Exception as e:
+            logger.error(f"Error checking premium for {user_id}: {e}")
+            return False
+
+    async def add_premium(self, user_id, duration_days=30):
+        """Add premium user"""
+        try:
+            self.premium.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {
+                        "premium": True,
+                        "added": datetime.now(),
+                        "expires": datetime.now() + timedelta(days=duration_days)
+                    }
+                },
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error adding premium for {user_id}: {e}")
+            return False
+
+    async def remove_premium(self, user_id):
+        """Remove premium user"""
+        try:
+            result = self.premium.delete_one({"user_id": user_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error removing premium for {user_id}: {e}")
             return False
 
     # ────═◈═─ FILTER METHODS ─═◈═────
@@ -408,15 +445,6 @@ class Database:
         except Exception as e:
             logger.error(f"Error getting filters for {chat_id}: {e}")
             return []
-
-    async def get_filter(self, chat_id, keyword):
-        """Get specific filter"""
-        try:
-            filter_data = self.filters.find_one({"chat_id": chat_id, "keyword": keyword.lower()})
-            return filter_data
-        except Exception as e:
-            logger.error(f"Error getting filter for {chat_id}: {e}")
-            return None
 
     # ────═◈═─ RULES METHODS ─═◈═────
     
@@ -474,54 +502,6 @@ class Database:
             logger.error(f"Error checking approval for {user_id}: {e}")
             return False
 
-    # ────═◈═─ PREMIUM METHODS ─═◈═────
-    
-    async def add_premium(self, user_id):
-        """Add premium user"""
-        try:
-            self.premium.update_one(
-                {"user_id": user_id},
-                {
-                    "$set": {
-                        "premium": True,
-                        "added": datetime.now(),
-                        "expires": datetime.now() + timedelta(days=30)
-                    }
-                },
-                upsert=True
-            )
-            return True
-        except Exception as e:
-            logger.error(f"Error adding premium for {user_id}: {e}")
-            return False
-
-    async def remove_premium(self, user_id):
-        """Remove premium user"""
-        try:
-            result = self.premium.delete_one({"user_id": user_id})
-            return result.deleted_count > 0
-        except Exception as e:
-            logger.error(f"Error removing premium for {user_id}: {e}")
-            return False
-
-    async def is_premium(self, user_id):
-        """Check if user is premium"""
-        try:
-            premium = self.premium.find_one({"user_id": user_id})
-            if not premium:
-                return False
-            
-            # Check if premium expired
-            expires = premium.get("expires")
-            if expires and datetime.now() > expires:
-                await self.remove_premium(user_id)
-                return False
-            
-            return True
-        except Exception as e:
-            logger.error(f"Error checking premium for {user_id}: {e}")
-            return False
-
     # ────═◈═─ GROUP STATS METHODS ─═◈═────
     
     async def get_group_stats(self, chat_id):
@@ -535,7 +515,6 @@ class Database:
                     "active_users": 0
                 }
             
-            # Get active users (sent message in last 7 days)
             week_ago = datetime.now() - timedelta(days=7)
             active_users = self.messages.distinct(
                 "user_id",
@@ -550,29 +529,6 @@ class Database:
         except Exception as e:
             logger.error(f"Error getting group stats for {chat_id}: {e}")
             return {"members": 0, "messages": 0, "active_users": 0}
-
-    # ────═◈═─ CLEANUP METHODS ─═◈═────
-    
-    async def cleanup_expired_mutes(self):
-        """Remove expired mutes"""
-        try:
-            expired = self.mutes.find({"expires": {"$lt": datetime.now()}})
-            for mute in expired:
-                await self.remove_mute(mute["user_id"], mute["chat_id"])
-            return True
-        except Exception as e:
-            logger.error(f"Error cleaning up expired mutes: {e}")
-            return False
-
-    async def cleanup_old_history(self, days=30):
-        """Remove old history entries"""
-        try:
-            cutoff = datetime.now() - timedelta(days=days)
-            result = self.user_history.delete_many({"timestamp": {"$lt": cutoff.isoformat()}})
-            return result.deleted_count
-        except Exception as e:
-            logger.error(f"Error cleaning up old history: {e}")
-            return 0
 
     # ────═◈═─ BOT STATS METHODS ─═◈═────
     
@@ -593,63 +549,19 @@ class Database:
             logger.error(f"Error getting bot stats: {e}")
             return {}
 
-    # ────═◈═─ INACTIVE USERS ─═◈═────
+    # ────═◈═─ CLEANUP METHODS ─═◈═────
     
-    async def get_inactive_users(self, chat_id, days=7):
-        """Get inactive users in a group"""
+    async def cleanup_expired_mutes(self):
+        """Remove expired mutes"""
         try:
-            cutoff = datetime.now() - timedelta(days=days)
-            active_users = self.messages.distinct(
-                "user_id",
-                {"chat_id": chat_id, "timestamp": {"$gte": cutoff}}
-            )
-            
-            group = self.groups.find_one({"chat_id": chat_id})
-            if not group:
-                return []
-            
-            all_users = group.get("members", [])
-            inactive = [user for user in all_users if user not in active_users]
-            
-            return inactive
+            expired = self.mutes.find({"expires": {"$lt": datetime.now()}})
+            for mute in expired:
+                await self.remove_mute(mute["user_id"], mute["chat_id"])
+            return True
         except Exception as e:
-            logger.error(f"Error getting inactive users for {chat_id}: {e}")
-            return []
+            logger.error(f"Error cleaning up expired mutes: {e}")
+            return False
 
-    # ────═◈═─ MESSAGE STATS ─═◈═────
-    
-    async def get_message_stats(self, chat_id, days=7):
-        """Get message statistics for a group"""
-        try:
-            cutoff = datetime.now() - timedelta(days=days)
-            
-            pipeline = [
-                {"$match": {"chat_id": chat_id, "timestamp": {"$gte": cutoff}}},
-                {"$group": {
-                    "_id": "$user_id",
-                    "count": {"$sum": 1}
-                }},
-                {"$sort": {"count": -1}},
-                {"$limit": 10}
-            ]
-            
-            top_users = list(self.messages.aggregate(pipeline))
-            
-            total_messages = self.messages.count_documents({
-                "chat_id": chat_id,
-                "timestamp": {"$gte": cutoff}
-            })
-            
-            return {
-                "total": total_messages,
-                "top_users": top_users
-            }
-        except Exception as e:
-            logger.error(f"Error getting message stats for {chat_id}: {e}")
-            return {"total": 0, "top_users": []}
-
-    # ────═◈═─ CLOSE CONNECTION ─═◈═────
-    
     def close(self):
         """Close database connection"""
         try:
