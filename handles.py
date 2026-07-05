@@ -1,236 +1,632 @@
-from telegram import Update, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, CallbackContext
-from telegram.constants import ParseMode
-import asyncio
-import datetime
-import re
+"""
+Database Module for Pikachu Protection Bot
+Handles all database operations using MongoDB
+"""
 
+import pymongo
+from datetime import datetime, timedelta
 from config import Config
-from database import Database
-from utils import Utils
-from keyboards import Keyboards
+import logging
 
-db = Database()
-utils = Utils()
+logger = logging.getLogger(__name__)
 
-class Handlers:
-    
-    @staticmethod
-    async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle /start command"""
-        user = update.effective_user
-        
-        # Check premium status
-        is_premium = await db.check_premium(user.id)
-        
-        # Add user to database
-        await db.add_user(user.id, user.username, user.first_name)
-        
-        welcome_text = f"""
-✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ {Config.BOT_NAME}** ✨
-
-────═◈═─ ✧◈✧ ─═◈═────
-  🤖 ʙᴏᴛ: {Config.BOT_NAME}  
-  👤 ᴜsᴇʀ: {user.first_name} 
-  💎 ᴘʀᴇᴍɪᴜᴍ: { '✅ ᴀᴄᴛɪᴠᴇ' if is_premium else '❌ ɪɴᴀᴄᴛɪᴠᴇ' } 
-✦•····················•✦
-
-🌟 **ғᴇᴀᴛᴜʀᴇs:**  
-╰┈➤ ᴡᴇʟᴄᴏᴍᴇ/ɢᴏᴏᴅʙʏᴇ  
-╰┈➤ ᴀɴᴛɪ-sᴘᴀᴍ  
-╰┈➤ ᴀɴᴛɪ-ʟɪɴᴋ  
-╰┈➤ ᴡᴀʀɴ/ᴍᴜᴛᴇ/ʙᴀɴ/ᴋɪᴄᴋ  
-╰┈➤ ᴘʀᴇᴍɪᴜᴍ ғᴇᴀᴛᴜʀᴇs  
-
-👑 **ᴏᴡɴᴇʀ:**  
-╰┈➤ {Config.OWNER_NAME} ({Config.OWNER_USERNAME})
-
-📢 **ᴜsᴇ /help ғᴏʀ ᴄᴏᴍᴍᴀɴᴅs**
-"""
-        
-        keyboard = Keyboards.main_menu(is_premium)
-        
-        await update.message.reply_text(
-            welcome_text,
-            parse_mode=ParseMode.HTML,
-            reply_markup=keyboard
-        )
-    
-    @staticmethod
-    async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle /help command"""
-        help_text = """
-📖 **ᴄᴏᴍᴍᴀɴᴅ ʟɪsᴛ** 📖
-
-╔═══════════════════════════╗
-
-**👑 ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs:**
-
-╰┈➤ /warn @username - ᴡᴀʀɴ ᴜsᴇʀ  
-╰┈➤ /warns @username - ᴄʜᴇᴄᴋ ᴡᴀʀɴs  
-╰┈➤ /resetwarns @username - ʀᴇsᴇᴛ ᴡᴀʀɴs  
-╰┈➤ /mute @username - ᴍᴜᴛᴇ ᴜsᴇʀ  
-╰┈➤ /unmute @username - ᴜɴᴍᴜᴛᴇ ᴜsᴇʀ  
-╰┈➤ /kick @username - ᴋɪᴄᴋ ᴜsᴇʀ  
-╰┈➤ /ban @username - ʙᴀɴ ᴜsᴇʀ  
-╰┈➤ /unban @username - ᴜɴʙᴀɴ ᴜsᴇʀ  
-╰┈➤ /settings - ᴄʜᴀɴɢᴇ sᴇᴛᴛɪɴɢs  
-
-**📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
-
-╰┈➤ /start - sᴛᴀʀᴛ ʙᴏᴛ  
-╰┈➤ /help - ɢᴇᴛ ʜᴇʟᴘ  
-╰┈➤ /stats - ʙᴏᴛ sᴛᴀᴛs  
-╰┈➤ /about - ᴀʙᴏᴜᴛ ʙᴏᴛ  
-
-**💎 ᴘʀᴇᴍɪᴜᴍ ᴄᴏᴍᴍᴀɴᴅs:**
-
-╰┈➤ /premium - ᴄʜᴇᴄᴋ ᴘʀᴇᴍɪᴜᴍ  
-╰┈➤ /activate - ᴀᴄᴛɪᴠᴀᴛᴇ ᴘʀᴇᴍɪᴜᴍ  
-
-╚═══════════════════════════╝
-
-🔥 ᴘᴏᴡᴇʀᴇᴅ ʙʏ {Config.BOT_NAME}
-"""
-        await update.message.reply_text(help_text, parse_mode=ParseMode.HTML)
-    
-    @staticmethod
-    async def welcome_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle new member join"""
-        if not update.message.new_chat_members:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('welcome', True):
-            return
-        
-        for member in update.message.new_chat_members:
-            if member.is_bot:
-                continue
-            
-            # Add user to db
-            await db.add_user(member.id, member.username, member.first_name)
-            
-            # Get group info
-            try:
-                member_count = await context.bot.get_chat_member_count(chat.id)
-            except:
-                member_count = "?"
-            
-            welcome_msg = f"""
-👋 <b>ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ {chat.title}!</b>
-
-<b>ᴜsᴇʀ:</b> {member.first_name}
-<b>ᴍᴇᴍʙᴇʀs:</b> {member_count}
-
-🌟 <b>ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}</b>
-"""
-            
-            # Send welcome message
-            await context.bot.send_message(
-                chat.id,
-                welcome_msg,
-                parse_mode=ParseMode.HTML
-            )
-    
-    @staticmethod
-    async def goodbye_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle member leaving"""
-        if not update.message.left_chat_member:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('goodbye', True):
-            return
-        
-        member = update.message.left_chat_member
-        if member.is_bot:
-            return
-        
-        goodbye_msg = f"""
-💔 <b>ɢᴏᴏᴅʙʏᴇ!</b> 💔
-
-<b>ᴜsᴇʀ:</b> {member.first_name}
-📍 <b>ɢʀᴏᴜᴘ:</b> {chat.title}
-
-😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
-"""
-        await context.bot.send_message(
-            chat.id,
-            goodbye_msg,
-            parse_mode=ParseMode.HTML
-        )
-    
-    @staticmethod
-    async def warn_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle /warn command"""
-        if not update.effective_chat.type in ['group', 'supergroup']:
-            return
-        
-        user = update.effective_user
-        chat = update.effective_chat
-        
-        # Check admin permission
+class Database:
+    def __init__(self):
+        """Initialize database connection and collections"""
         try:
-            member = await context.bot.get_chat_member(chat.id, user.id)
-            if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴡᴀʀɴ!")
-                return
-        except:
-            return
-        
-        if not context.args and not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
-            return
-        
-        # Get target user
-        target = None
-        if update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-                return
-        
-        if not target:
-            return
-        
-        if target.is_bot:
-            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ᴡᴀʀɴ ʙᴏᴛs!")
-            return
-        
-        # Get reason
-        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "ɴᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
-        
-        # Add warning
-        await db.add_warning(target.id, chat.id, reason, user.id)
-        
-        # Get warning count
-        warnings = await db.get_warnings(target.id, chat.id)
-        warn_count = len(warnings)
-        
-        # Get settings
-        settings = await db.get_settings(chat.id)
-        max_warns = settings.get('warn_limit', 3)
-        
-        # Send warning message
-        warn_msg = f"""
-⚠️ <b>ᴡᴀʀɴɪɴɢ!</b> ⚠️
+            self.client = pymongo.MongoClient(Config.MONGO_URI)
+            self.db = self.client[Config.DB_NAME]
+            
+            # Collections
+            self.users = self.db.users
+            self.groups = self.db.groups
+            self.warnings = self.db.warnings
+            self.mutes = self.db.mutes
+            self.premium = self.db.premium
+            self.user_history = self.db.user_history
+            self.filters = self.db.filters
+            self.settings = self.db.settings
+            self.rules = self.db.rules
+            self.approved = self.db.approved
+            self.user_roles = self.db.user_roles
+            self.messages = self.db.messages
+            
+            # Create indexes for better performance
+            self.users.create_index("user_id", unique=True)
+            self.groups.create_index("chat_id", unique=True)
+            self.user_history.create_index([("user_id", pymongo.ASCENDING), ("timestamp", pymongo.DESCENDING)])
+            self.warnings.create_index([("user_id", pymongo.ASCENDING), ("chat_id", pymongo.ASCENDING)])
+            self.mutes.create_index([("user_id", pymongo.ASCENDING), ("chat_id", pymongo.ASCENDING)])
+            self.user_roles.create_index([("user_id", pymongo.ASCENDING), ("chat_id", pymongo.ASCENDING)])
+            self.filters.create_index([("chat_id", pymongo.ASCENDING), ("keyword", pymongo.ASCENDING)], unique=True)
+            
+            logger.info("Database initialized successfully")
+        except Exception as e:
+            logger.error(f"Database initialization error: {e}")
+            raise
 
-<b>ᴜsᴇʀ:</b> {target.first_name}
-<b>ᴡᴀʀɴ:</b> {warn_count}/{max_warns}
-<b>ʀᴇᴀsᴏɴ:</b> {reason}
-"""
-        
-        await update.message.reply_text(warn_msg, parse_mode=ParseMode.HTML)
-        
-        # Check if user should be muted/banned
-        if warn_count >= max_warns:
-            await update.message.reply_text(f"⚠️ {target.first_name} ʜᴀs ʀᴇᴀᴄʜᴇᴅ ᴛʜᴇ ᴡᴀʀɴ ʟɪᴍɪᴛ! ᴛʜᴇʏ ᴡɪʟʟ ʙᴇ ᴍᴜᴛᴇᴅ.", parse_mode=ParseMode.HTML)
+    # ────═◈═─ USER METHODS ─═◈═────
+    
+    async def add_user(self, user_id, username, first_name):
+        """Add or update user in database"""
+        try:
+            self.users.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {
+                        "username": username,
+                        "first_name": first_name,
+                        "last_seen": datetime.now()
+                    },
+                    "$inc": {"groups": 1}
+                },
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error adding user {user_id}: {e}")
+            return False
+
+    async def get_user_stats(self, user_id):
+        """Get user statistics"""
+        try:
+            user = self.users.find_one({"user_id": user_id})
+            if user:
+                return {
+                    "messages": user.get("messages", 0),
+                    "groups": user.get("groups", 0),
+                    "warns": user.get("warns", 0),
+                    "last_seen": user.get("last_seen")
+                }
+            return {"messages": 0, "groups": 0, "warns": 0}
+        except Exception as e:
+            logger.error(f"Error getting user stats for {user_id}: {e}")
+            return {"messages": 0, "groups": 0, "warns": 0}
+
+    async def increment_user_messages(self, user_id, chat_id):
+        """Increment user's message count and track group"""
+        try:
+            # Increment user messages
+            self.users.update_one(
+                {"user_id": user_id},
+                {"$inc": {"messages": 1}},
+                upsert=True
+            )
+            
+            # Track group membership
+            self.groups.update_one(
+                {"chat_id": chat_id},
+                {"$addToSet": {"members": user_id}},
+                upsert=True
+            )
+            
+            # Track message in group
+            self.messages.insert_one({
+                "user_id": user_id,
+                "chat_id": chat_id,
+                "timestamp": datetime.now()
+            })
+            return True
+        except Exception as e:
+            logger.error(f"Error incrementing messages for {user_id}: {e}")
+            return False
+
+    async def get_user_message_count(self, user_id):
+        """Get total messages sent by user"""
+        try:
+            user = self.users.find_one({"user_id": user_id})
+            return user.get("messages", 0) if user else 0
+        except Exception as e:
+            logger.error(f"Error getting message count for {user_id}: {e}")
+            return 0
+
+    # ────═◈═─ USER HISTORY METHODS ─═◈═────
+    
+    async def add_user_history(self, user_id, data):
+        """Add user history entry"""
+        try:
+            entry = {
+                "user_id": user_id,
+                "first_name": data.get("first_name", ""),
+                "last_name": data.get("last_name", ""),
+                "username": data.get("username", ""),
+                "timestamp": datetime.now().isoformat()
+            }
+            self.user_history.insert_one(entry)
+            return True
+        except Exception as e:
+            logger.error(f"Error adding user history for {user_id}: {e}")
+            return False
+
+    async def get_user_history(self, user_id):
+        """Get user's full history"""
+        try:
+            history = list(self.user_history.find(
+                {"user_id": user_id}
+            ).sort("timestamp", pymongo.DESCENDING))
+            return history
+        except Exception as e:
+            logger.error(f"Error getting user history for {user_id}: {e}")
+            return []
+
+    async def get_user_history_count(self, user_id):
+        """Get count of user history entries"""
+        try:
+            return self.user_history.count_documents({"user_id": user_id})
+        except Exception as e:
+            logger.error(f"Error getting history count for {user_id}: {e}")
+            return 0
+
+    # ────═◈═─ USER ROLE METHODS ─═◈═────
+    
+    async def set_user_role(self, user_id, chat_id, role):
+        """Set user role in a group"""
+        try:
+            self.user_roles.update_one(
+                {"user_id": user_id, "chat_id": chat_id},
+                {
+                    "$set": {
+                        "role": role,
+                        "updated": datetime.now()
+                    }
+                },
+                upsert=True
+            )
+            logger.info(f"Role {role} set for user {user_id} in chat {chat_id}")
+            return True
+        except Exception as e:
+            logger.error(f"Error setting role for {user_id}: {e}")
+            return False
+
+    async def remove_user_role(self, user_id, chat_id):
+        """Remove user role"""
+        try:
+            result = self.user_roles.delete_one({"user_id": user_id, "chat_id": chat_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error removing role for {user_id}: {e}")
+            return False
+
+    async def get_user_role(self, user_id, chat_id):
+        """Get user role in a group"""
+        try:
+            role_data = self.user_roles.find_one({"user_id": user_id, "chat_id": chat_id})
+            if role_data:
+                return role_data.get("role", "Member")
+            return "Member"
+        except Exception as e:
+            logger.error(f"Error getting role for {user_id}: {e}")
+            return "Member"
+
+    async def get_all_staff(self, chat_id):
+        """Get all staff members for a group"""
+        try:
+            staff_roles = ['Founder', 'Co-Founder', 'Admin', 'Moderator', 'Muter', 'Chat Cleaner', 'Helper', 'Free']
+            staff = list(self.user_roles.find(
+                {"chat_id": chat_id, "role": {"$in": staff_roles}}
+            ))
+            
+            for member in staff:
+                user = self.users.find_one({"user_id": member["user_id"]})
+                if user:
+                    member["first_name"] = user.get("first_name", "Unknown")
+                    member["username"] = user.get("username", "")
+            
+            return staff
+        except Exception as e:
+            logger.error(f"Error getting staff for {chat_id}: {e}")
+            return []
+
+    # ────═◈═─ GROUP SETTINGS METHODS ─═◈═────
+    
+    async def get_settings(self, chat_id):
+        """Get group settings"""
+        try:
+            settings = self.settings.find_one({"chat_id": chat_id})
+            if not settings:
+                settings = {
+                    "chat_id": chat_id,
+                    "welcome": True,
+                    "goodbye": True,
+                    "antispam": True,
+                    "antilink": False,
+                    "anti18": True,
+                    "warn_limit": 3,
+                    "admins": []
+                }
+                self.settings.insert_one(settings)
+            return settings
+        except Exception as e:
+            logger.error(f"Error getting settings for {chat_id}: {e}")
+            return {
+                "chat_id": chat_id,
+                "welcome": True,
+                "goodbye": True,
+                "antispam": True,
+                "antilink": False,
+                "anti18": True,
+                "warn_limit": 3,
+                "admins": []
+            }
+
+    async def update_settings(self, chat_id, key, value):
+        """Update group settings"""
+        try:
+            self.settings.update_one(
+                {"chat_id": chat_id},
+                {"$set": {key: value}},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error updating settings for {chat_id}: {e}")
+            return False
+
+    # ────═◈═─ WARNING METHODS ─═◈═────
+    
+    async def add_warning(self, user_id, chat_id, reason, admin_id):
+        """Add a warning to user"""
+        try:
+            self.warnings.insert_one({
+                "user_id": user_id,
+                "chat_id": chat_id,
+                "reason": reason,
+                "admin_id": admin_id,
+                "timestamp": datetime.now()
+            })
+            
+            # Update user's warn count
+            self.users.update_one(
+                {"user_id": user_id},
+                {"$inc": {"warns": 1}},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error adding warning for {user_id}: {e}")
+            return False
+
+    async def get_warnings(self, user_id, chat_id):
+        """Get user's warnings"""
+        try:
+            warnings = list(self.warnings.find(
+                {"user_id": user_id, "chat_id": chat_id}
+            ).sort("timestamp", pymongo.DESCENDING))
+            return warnings
+        except Exception as e:
+            logger.error(f"Error getting warnings for {user_id}: {e}")
+            return []
+
+    async def clear_warnings(self, user_id, chat_id):
+        """Clear all warnings for user"""
+        try:
+            result = self.warnings.delete_many({"user_id": user_id, "chat_id": chat_id})
+            self.users.update_one(
+                {"user_id": user_id},
+                {"$set": {"warns": 0}},
+                upsert=True
+            )
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error clearing warnings for {user_id}: {e}")
+            return False
+
+    async def get_warning_count(self, user_id, chat_id):
+        """Get number of warnings for user"""
+        try:
+            return self.warnings.count_documents({"user_id": user_id, "chat_id": chat_id})
+        except Exception as e:
+            logger.error(f"Error getting warning count for {user_id}: {e}")
+            return 0
+
+    # ────═◈═─ MUTE METHODS ─═◈═────
+    
+    async def add_mute(self, user_id, chat_id, duration, reason, admin_id):
+        """Mute a user"""
+        try:
+            expires = datetime.now() + timedelta(seconds=duration)
+            self.mutes.update_one(
+                {"user_id": user_id, "chat_id": chat_id},
+                {
+                    "$set": {
+                        "duration": duration,
+                        "reason": reason,
+                        "admin_id": admin_id,
+                        "timestamp": datetime.now(),
+                        "expires": expires
+                    }
+                },
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error muting user {user_id}: {e}")
+            return False
+
+    async def remove_mute(self, user_id, chat_id):
+        """Unmute a user"""
+        try:
+            result = self.mutes.delete_one({"user_id": user_id, "chat_id": chat_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error removing mute for {user_id}: {e}")
+            return False
+
+    async def is_muted(self, user_id, chat_id):
+        """Check if user is muted"""
+        try:
+            mute = self.mutes.find_one({"user_id": user_id, "chat_id": chat_id})
+            if not mute:
+                return False
+            expires = mute.get("expires")
+            if expires and datetime.now() > expires:
+                await self.remove_mute(user_id, chat_id)
+                return False
+            return True
+        except Exception as e:
+            logger.error(f"Error checking mute for {user_id}: {e}")
+            return False
+
+    # ────═◈═─ FILTER METHODS ─═◈═────
+    
+    async def add_filter(self, chat_id, keyword, reply_text):
+        """Add a filter to group"""
+        try:
+            self.filters.update_one(
+                {"chat_id": chat_id, "keyword": keyword.lower()},
+                {"$set": {"reply_text": reply_text}},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error adding filter for {chat_id}: {e}")
+            return False
+
+    async def remove_filter(self, chat_id, keyword):
+        """Remove a filter from group"""
+        try:
+            result = self.filters.delete_one({"chat_id": chat_id, "keyword": keyword.lower()})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error removing filter for {chat_id}: {e}")
+            return False
+
+    async def get_filters(self, chat_id):
+        """Get all filters for group"""
+        try:
+            filters = list(self.filters.find({"chat_id": chat_id}))
+            return filters
+        except Exception as e:
+            logger.error(f"Error getting filters for {chat_id}: {e}")
+            return []
+
+    # ────═◈═─ RULES METHODS ─═◈═────
+    
+    async def set_rules(self, chat_id, rules):
+        """Set group rules"""
+        try:
+            self.rules.update_one(
+                {"chat_id": chat_id},
+                {"$set": {"rules": rules, "updated": datetime.now()}},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error setting rules for {chat_id}: {e}")
+            return False
+
+    async def get_rules(self, chat_id):
+        """Get group rules"""
+        try:
+            rule = self.rules.find_one({"chat_id": chat_id})
+            return rule.get("rules") if rule else None
+        except Exception as e:
+            logger.error(f"Error getting rules for {chat_id}: {e}")
+            return None
+
+    # ────═◈═─ APPROVE METHODS ─═◈═────
+    
+    async def approve_user(self, user_id, chat_id):
+        """Approve user to send links"""
+        try:
+            self.approved.update_one(
+                {"user_id": user_id, "chat_id": chat_id},
+                {"$set": {"approved": True, "timestamp": datetime.now()}},
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error approving user {user_id}: {e}")
+            return False
+
+    async def unapprove_user(self, user_id, chat_id):
+        """Unapprove user from sending links"""
+        try:
+            result = self.approved.delete_one({"user_id": user_id, "chat_id": chat_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error unapproving user {user_id}: {e}")
+            return False
+
+    async def is_approved(self, user_id, chat_id):
+        """Check if user is approved"""
+        try:
+            return bool(self.approved.find_one({"user_id": user_id, "chat_id": chat_id}))
+        except Exception as e:
+            logger.error(f"Error checking approval for {user_id}: {e}")
+            return False
+
+    # ────═◈═─ PREMIUM METHODS (ADDED) ─═◈═────
+    
+    async def add_premium(self, user_id):
+        """Add premium user"""
+        try:
+            self.premium.update_one(
+                {"user_id": user_id},
+                {
+                    "$set": {
+                        "premium": True,
+                        "added": datetime.now(),
+                        "expires": datetime.now() + timedelta(days=30)
+                    }
+                },
+                upsert=True
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Error adding premium for {user_id}: {e}")
+            return False
+
+    async def remove_premium(self, user_id):
+        """Remove premium user"""
+        try:
+            result = self.premium.delete_one({"user_id": user_id})
+            return result.deleted_count > 0
+        except Exception as e:
+            logger.error(f"Error removing premium for {user_id}: {e}")
+            return False
+
+    async def check_premium(self, user_id):
+        """Check if user is premium"""
+        try:
+            premium = self.premium.find_one({"user_id": user_id})
+            if not premium:
+                return False
+            expires = premium.get("expires")
+            if expires and datetime.now() > expires:
+                await self.remove_premium(user_id)
+                return False
+            return premium.get("premium", False)
+        except Exception as e:
+            logger.error(f"Error checking premium for {user_id}: {e}")
+            return False
+
+    async def is_premium(self, user_id):
+        """Check if user is premium (alias for check_premium)"""
+        return await self.check_premium(user_id)
+
+    # ────═◈═─ GROUP STATS METHODS ─═◈═────
+    
+    async def get_group_stats(self, chat_id):
+        """Get group statistics"""
+        try:
+            group = self.groups.find_one({"chat_id": chat_id})
+            if not group:
+                return {
+                    "members": 0,
+                    "messages": 0,
+                    "active_users": 0
+                }
+            week_ago = datetime.now() - timedelta(days=7)
+            active_users = self.messages.distinct(
+                "user_id",
+                {"chat_id": chat_id, "timestamp": {"$gte": week_ago}}
+            )
+            return {
+                "members": len(group.get("members", [])),
+                "messages": group.get("messages", 0),
+                "active_users": len(active_users)
+            }
+        except Exception as e:
+            logger.error(f"Error getting group stats for {chat_id}: {e}")
+            return {"members": 0, "messages": 0, "active_users": 0}
+
+    # ────═◈═─ CLEANUP METHODS ─═◈═────
+    
+    async def cleanup_expired_mutes(self):
+        """Remove expired mutes"""
+        try:
+            expired = self.mutes.find({"expires": {"$lt": datetime.now()}})
+            for mute in expired:
+                await self.remove_mute(mute["user_id"], mute["chat_id"])
+            return True
+        except Exception as e:
+            logger.error(f"Error cleaning up expired mutes: {e}")
+            return False
+
+    async def cleanup_old_history(self, days=30):
+        """Remove old history entries"""
+        try:
+            cutoff = datetime.now() - timedelta(days=days)
+            result = self.user_history.delete_many({"timestamp": {"$lt": cutoff.isoformat()}})
+            return result.deleted_count
+        except Exception as e:
+            logger.error(f"Error cleaning up old history: {e}")
+            return 0
+
+    # ────═◈═─ BOT STATS METHODS ─═◈═────
+    
+    async def get_bot_stats(self):
+        """Get bot statistics"""
+        try:
+            return {
+                "users": self.users.count_documents({}),
+                "groups": self.groups.count_documents({}),
+                "warnings": self.warnings.count_documents({}),
+                "mutes": self.mutes.count_documents({}),
+                "premium": self.premium.count_documents({}),
+                "history": self.user_history.count_documents({}),
+                "filters": self.filters.count_documents({}),
+                "messages": self.messages.count_documents({})
+            }
+        except Exception as e:
+            logger.error(f"Error getting bot stats: {e}")
+            return {}
+
+    # ────═◈═─ INACTIVE USERS ─═◈═────
+    
+    async def get_inactive_users(self, chat_id, days=7):
+        """Get inactive users in a group"""
+        try:
+            cutoff = datetime.now() - timedelta(days=days)
+            active_users = self.messages.distinct(
+                "user_id",
+                {"chat_id": chat_id, "timestamp": {"$gte": cutoff}}
+            )
+            group = self.groups.find_one({"chat_id": chat_id})
+            if not group:
+                return []
+            all_users = group.get("members", [])
+            inactive = [user for user in all_users if user not in active_users]
+            return inactive
+        except Exception as e:
+            logger.error(f"Error getting inactive users for {chat_id}: {e}")
+            return []
+
+    # ────═◈═─ MESSAGE STATS ─═◈═────
+    
+    async def get_message_stats(self, chat_id, days=7):
+        """Get message statistics for a group"""
+        try:
+            cutoff = datetime.now() - timedelta(days=days)
+            pipeline = [
+                {"$match": {"chat_id": chat_id, "timestamp": {"$gte": cutoff}}},
+                {"$group": {
+                    "_id": "$user_id",
+                    "count": {"$sum": 1}
+                }},
+                {"$sort": {"count": -1}},
+                {"$limit": 10}
+            ]
+            top_users = list(self.messages.aggregate(pipeline))
+            total_messages = self.messages.count_documents({
+                "chat_id": chat_id,
+                "timestamp": {"$gte": cutoff}
+            })
+            return {
+                "total": total_messages,
+                "top_users": top_users
+            }
+        except Exception as e:
+            logger.error(f"Error getting message stats for {chat_id}: {e}")
+            return {"total": 0, "top_users": []}
+
+    # ────═◈═─ CLOSE CONNECTION ─═◈═────
+    
+    def close(self):
+        """Close database connection"""
+        try:
+            self.client.close()
+            logger.info("Database connection closed")
+        except Exception as e:
+            logger.error(f"Error closing database connection: {e}")
