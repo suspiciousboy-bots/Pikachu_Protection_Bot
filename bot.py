@@ -101,43 +101,43 @@ class PikachuProtectionBot:
         return f"\n\n:⧽ ʙʏ » {Config.OWNER_NAME}"
 
     # ────═◈═─ START COMMAND ─═◈═────
-    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        await db.add_user(user.id, user.username, user.first_name)
-        
-        is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
-        
-        welcome_text = f"""
-⚡ **ᴘɪᴋᴀᴄʜᴜ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ** ⚡
-
+async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    await db.add_user(user.id, user.username, user.first_name)
+    
+    is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
+    
+    welcome_text = f"""
 ✨ **ʜᴇʟʟᴏ {user.first_name}!** ✨
 
-ɪ ᴀᴍ ᴀ ᴘᴏᴡᴇʀғᴜʟ ɢʀᴏᴜᴘ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ!
+👋 **ɪ ᴀᴍ {Config.BOT_NAME}** 🤖
 
-**🔰 ғᴇᴀᴛᴜʀᴇs:**
-╰┈➤ 🛡️ Aɴᴛɪ-sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
-╰┈➤ ⚠️ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ
-╰┈➤ 📌 Pɪɴ/Uɴᴘɪɴ/Dᴇʟᴇᴛᴇ/Pᴜʀɢᴇ
-╰┈➤ 👋 Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ/Gᴏᴏᴅʙʏᴇ
-╰┈➤ 📊 Sᴛᴀғғ Lɪsᴛ & Sᴛᴀᴛs
-╰┈➤ 📋 Cᴜsᴛᴏᴍ Rᴜʟᴇs
-╰┈➤ 💎 Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs
+**ʜɪɢʜʟɪɢʜᴛs:**
+─────────────────────────────
+- 🛡️ Sᴍᴀʀᴛ Aɴᴛɪ-Sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
+- 🔒 Aᴅᴀᴘᴛɪᴠᴇ Lᴏᴄᴋ Sʏsᴛᴇᴍ (URLs, Mᴇᴅɪᴀ, Lᴀɴɢᴜᴀɢᴇ & ᴍᴏʀᴇ)
+- ⚙️ Mᴏᴅᴜʟᴀʀ & Sᴄᴀʟᴀʙʟᴇ Pʀᴏᴛᴇᴄᴛɪᴏɴ
+- 🎨 Sʟᴇᴇᴋ UI ᴡɪᴛʜ Iɴʟɪɴᴇ Cᴏɴᴛʀᴏʟs
+─────────────────────────────
+
+» **ᴍᴏʀᴇ ɴᴇᴡ ғᴇᴀᴛᴜʀᴇs ᴄᴏᴍɪɴɢ sᴏᴏɴ ...**
 
 💎 **ᴘʀᴇᴍɪᴜᴍ sᴛᴀᴛᴜs:** {'✅ ᴀᴄᴛɪᴠᴇ' if is_premium else '❌ ɪɴᴀᴄᴛɪᴠᴇ'}
 
-📌 **ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!**
+📢 **ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ:** @CrazyyCore
+🆘 **sᴜᴘᴘᴏʀᴛ:** https://t.me/+Fgx6_JRTLkFjMjE1
 {self.get_footer()}
 """
-        
-        keyboard = [
-            [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
-            [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
-            [InlineKeyboardButton("👥 sᴛᴀғғ", callback_data="staff")]
-        ]
-        if is_premium:
-            keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
-        
-        await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+    
+    keyboard = [
+        [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
+        [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
+        [InlineKeyboardButton("👥 sᴛᴀғғ", callback_data="staff")]
+    ]
+    if is_premium:
+        keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
+    
+    await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
 
     # ────═◈═─ HELP COMMAND ─═◈═────
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
