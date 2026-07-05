@@ -153,88 +153,126 @@ class PikachuProtectionBot:
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
-    # ────═◈═─ UPDATED WELCOME HANDLER ─═◈═────
+    # ────═◈═─ UPDATED WELCOME HANDLER WITH FIXES ─═◈═────
     async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle new members joining the group with enhanced error handling."""
+        
+        # Check if there are new members
         if not update.message.new_chat_members:
             return
         
         chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
+        chat_id = chat.id
+        chat_title = chat.title or "Unknown Group"
         
-        if not settings.get('welcome', True):
-            return
+        # Log for debugging
+        logger.info(f"Welcome handler triggered in {chat_title} ({chat_id})")
         
+        # Check if welcome is enabled for this group
+        try:
+            settings = await db.get_settings(chat_id)
+            if not settings.get('welcome', True):
+                logger.info(f"Welcome disabled for {chat_title}")
+                return
+        except Exception as e:
+            logger.error(f"Error getting settings for {chat_id}: {e}")
+            # Continue anyway - better to try than fail silently
+        
+        # Process each new member
         for member in update.message.new_chat_members:
+            # Skip bots
             if member.is_bot:
+                logger.info(f"Skipping bot: {member.first_name}")
                 continue
             
-            await db.add_user(member.id, member.username, member.first_name)
-            
             try:
-                member_count = await context.bot.get_chat_member_count(chat.id)
-            except:
-                member_count = "?"
-            
-            # ────═◈═─ GET USER DETAILS ─═◈═────
-            try:
-                user_full = await context.bot.get_chat(member.id)
-                user_bio = getattr(user_full, 'bio', 'No bio set')
-                user_id = member.id
-                user_name = member.first_name or "N/A"
-                user_username = f"@{member.username}" if member.username else "No username"
+                # Add user to database
+                await db.add_user(member.id, member.username, member.first_name)
+                logger.info(f"Processing new member: {member.first_name} ({member.id})")
+                
+                # ────═◈═─ GET MEMBER COUNT ─═◈═────
+                try:
+                    member_count = await context.bot.get_chat_member_count(chat_id)
+                except Exception as e:
+                    logger.error(f"Error getting member count: {e}")
+                    member_count = "?"
+                
+                # ────═◈═─ GET USER DETAILS ─═◈═────
+                try:
+                    user_full = await context.bot.get_chat(member.id)
+                    user_bio = getattr(user_full, 'bio', 'No bio set')
+                    user_name = member.first_name or "N/A"
+                    user_username = f"@{member.username}" if member.username else "No username"
+                except Exception as e:
+                    logger.error(f"Error getting user details for {member.id}: {e}")
+                    user_name = member.first_name or "N/A"
+                    user_username = "No username"
+                    user_bio = "No bio set"
                 
                 # ────═◈═─ GET PROFILE PHOTO ─═◈═────
-                photos = await context.bot.get_user_profile_photos(member.id, limit=1)
                 photo_file_id = None
-                if photos.total_count > 0:
-                    photo_file_id = photos.photos[0][-1].file_id
-                
-                # ────═◈═─ GET ROLE ─═◈═────
                 try:
-                    chat_member = await context.bot.get_chat_member(chat.id, member.id)
+                    photos = await context.bot.get_user_profile_photos(member.id, limit=1)
+                    if photos.total_count > 0:
+                        photo_file_id = photos.photos[0][-1].file_id
+                        logger.info(f"Profile photo found for {member.id}")
+                except Exception as e:
+                    logger.warning(f"Could not fetch profile photo for {member.id}: {e}")
+                
+                # ────═◈═─ GET ROLE/STATUS ─═◈═────
+                role = "👤 Member"
+                try:
+                    chat_member = await context.bot.get_chat_member(chat_id, member.id)
                     if chat_member.status == 'creator':
                         role = "👑 Owner"
                     elif chat_member.status == 'administrator':
                         role = "👔 Admin"
                     else:
                         role = "👤 Member"
-                except:
-                    role = "👤 Member"
+                    logger.info(f"Role for {member.first_name}: {role}")
+                except Exception as e:
+                    logger.warning(f"Could not get role for {member.id}: {e}")
+                    # Use default role
                 
-                # ────═◈═─ SIMPLE WELCOME MESSAGE (UPDATED FORMAT) ─═◈═────
+                # ────═◈═─ BUILD WELCOME MESSAGE ─═◈═────
                 welcome_msg = f"""
 <b>WELCOME TO THE PARTY!</b>
 
 <b>NAME:</b> <code>{user_name}</code>
-<b>ID:</b> <code>{user_id}</code>
+<b>ID:</b> <code>{member.id}</code>
 <b>USERNAME:</b> <code>{user_username}</code>
 <b>BIO:</b> <i>{user_bio[:100] if user_bio != 'No bio set' else 'No bio set'}</i>
 
-<b>GROUP:</b> {chat.title}
+<b>GROUP:</b> {chat_title}
 <b>TOTAL MEMBERS:</b> {member_count}
-<b>STATUS:</b> 👤 Member
+<b>STATUS:</b> {role}
 
+You won't leave me, right...?
+I'm not a human...
 """
                 
-                # ────═◈═─ SEND WELCOME WITH PROFILE PHOTO ─═◈═────
-                if photo_file_id:
-                    await context.bot.send_photo(
-                        chat.id,
-                        photo=photo_file_id,
-                        caption=welcome_msg,
-                        parse_mode="HTML"
-                    )
-                else:
-                    await context.bot.send_message(
-                        chat.id,
-                        welcome_msg,
-                        parse_mode="HTML"
-                    )
-                    
-            except Exception as e:
-                logger.error(f"Welcome handler error: {e}")
-                # ────═◈═─ FALLBACK WELCOME ─═◈═────
-                fallback_msg = f"""
+                # ────═◈═─ SEND WELCOME MESSAGE ─═◈═────
+                try:
+                    if photo_file_id:
+                        await context.bot.send_photo(
+                            chat_id,
+                            photo=photo_file_id,
+                            caption=welcome_msg,
+                            parse_mode="HTML"
+                        )
+                        logger.info(f"Welcome photo sent to {chat_title} for {member.first_name}")
+                    else:
+                        await context.bot.send_message(
+                            chat_id,
+                            welcome_msg,
+                            parse_mode="HTML"
+                        )
+                        logger.info(f"Welcome text sent to {chat_title} for {member.first_name}")
+                except Exception as e:
+                    logger.error(f"Error sending welcome message: {e}")
+                    # Try sending a simpler message as last resort
+                    try:
+                        simple_msg = f"""
 <b>WELCOME TO THE PARTY!</b>
 
 <b>NAME:</b> <code>{member.first_name}</code>
@@ -242,17 +280,117 @@ class PikachuProtectionBot:
 <b>USERNAME:</b> <code>@{member.username if member.username else 'No username'}</code>
 <b>BIO:</b> <i>No bio set</i>
 
-<b>GROUP:</b> {chat.title}
+<b>GROUP:</b> {chat_title}
 <b>TOTAL MEMBERS:</b> {member_count}
 <b>STATUS:</b> 👤 Member
 
-
+You won't leave me, right...?
+I'm not a human...
 """
-                await context.bot.send_message(
-                    chat.id,
-                    fallback_msg,
-                    parse_mode="HTML"
-                )
+                        await context.bot.send_message(chat_id, simple_msg, parse_mode="HTML")
+                        logger.info(f"Simple welcome sent to {chat_title}")
+                    except Exception as e2:
+                        logger.error(f"Failed to send even simple welcome message: {e2}")
+                
+            except Exception as e:
+                logger.error(f"Error processing member {member.id}: {e}")
+                # Try to send a very basic welcome message
+                try:
+                    basic_msg = f"Welcome {member.first_name}! 🎉"
+                    await context.bot.send_message(chat_id, basic_msg)
+                except:
+                    pass
+
+    # ────═◈═─ ENABLE WELCOME COMMAND ─═◈═────
+    async def enable_welcome(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Enable welcome messages for the group."""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ This command only works in groups!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Only admins can enable welcome!")
+            return
+        
+        await db.update_settings(chat.id, "welcome", True)
+        await update.message.reply_text(f"✅ **Welcome messages enabled for this group!**\n\n{self.get_footer()}", parse_mode="Markdown")
+
+    # ────═◈═─ DISABLE WELCOME COMMAND ─═◈═────
+    async def disable_welcome(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Disable welcome messages for the group."""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ This command only works in groups!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Only admins can disable welcome!")
+            return
+        
+        await db.update_settings(chat.id, "welcome", False)
+        await update.message.reply_text(f"❌ **Welcome messages disabled for this group!**\n\n{self.get_footer()}", parse_mode="Markdown")
+
+    # ────═◈═─ TEST WELCOME COMMAND ─═◈═────
+    async def test_welcome(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Test the welcome message for the current group."""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ This command only works in groups!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ Only admins can test welcome!")
+            return
+        
+        # Simulate welcome for the admin
+        try:
+            member_count = await context.bot.get_chat_member_count(chat.id)
+            photos = await context.bot.get_user_profile_photos(user.id, limit=1)
+            photo_file_id = photos.photos[0][-1].file_id if photos.total_count > 0 else None
+            
+            # Get user's role
+            try:
+                chat_member = await context.bot.get_chat_member(chat.id, user.id)
+                if chat_member.status == 'creator':
+                    role = "👑 Owner"
+                elif chat_member.status == 'administrator':
+                    role = "👔 Admin"
+                else:
+                    role = "👤 Member"
+            except:
+                role = "👤 Member"
+            
+            test_msg = f"""
+<b>TEST WELCOME MESSAGE</b>
+
+<b>NAME:</b> <code>{user.first_name}</code>
+<b>ID:</b> <code>{user.id}</code>
+<b>USERNAME:</b> <code>@{user.username if user.username else 'No username'}</code>
+<b>BIO:</b> <i>Test message</i>
+
+<b>GROUP:</b> {chat.title}
+<b>TOTAL MEMBERS:</b> {member_count}
+<b>STATUS:</b> {role}
+
+You won't leave me, right...?
+I'm not a human...
+"""
+            
+            if photo_file_id:
+                await context.bot.send_photo(chat.id, photo=photo_file_id, caption=test_msg, parse_mode="HTML")
+            else:
+                await context.bot.send_message(chat.id, test_msg, parse_mode="HTML")
+                
+            await update.message.reply_text("✅ **Test welcome message sent!**")
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)}")
 
     # ────═◈═─ GOODBYE HANDLER ─═◈═────
     async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -317,6 +455,9 @@ class PikachuProtectionBot:
 ╰┈➤ /filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ - ᴀᴅᴅ ᴀ ғɪʟᴛᴇʀ
 ╰┈➤ /stopfilter ᴋᴇʏᴡᴏʀᴅ - ʀᴇᴍᴏᴠᴇ ᴀ ғɪʟᴛᴇʀ
 ╰┈➤ /filters - ʟɪsᴛ ᴀʟʟ ғɪʟᴛᴇʀs
+╰┈➤ /enablewelcome - ᴇɴᴀʙʟᴇ ᴡᴇʟᴄᴏᴍᴇ
+╰┈➤ /disablewelcome - ᴅɪsᴀʙʟᴇ ᴡᴇʟᴄᴏᴍᴇ
+╰┈➤ /testwelcome - ᴛᴇsᴛ ᴡᴇʟᴄᴏᴍᴇ
 
 **📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
 
@@ -1686,6 +1827,9 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ /filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ - ᴀᴅᴅ ғɪʟᴛᴇʀ
 ╰┈➤ /stopfilter ᴋᴇʏᴡᴏʀᴅ - ʀᴇᴍᴏᴠᴇ ғɪʟᴛᴇʀ
 ╰┈➤ /filters - ʟɪsᴛ ғɪʟᴛᴇʀs
+╰┈➤ /enablewelcome - ᴇɴᴀʙʟᴇ ᴡᴇʟᴄᴏᴍᴇ
+╰┈➤ /disablewelcome - ᴅɪsᴀʙʟᴇ ᴡᴇʟᴄᴏᴍᴇ
+╰┈➤ /testwelcome - ᴛᴇsᴛ ᴡᴇʟᴄᴏᴍᴇ
 
 **📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
 ╰┈➤ /start - sᴛᴀʀᴛ ʙᴏᴛ
@@ -1905,6 +2049,11 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             self.app.add_handler(CommandHandler("filter", self.add_filter))
             self.app.add_handler(CommandHandler("stopfilter", self.remove_filter))
             self.app.add_handler(CommandHandler("filters", self.list_filters))
+            
+            # Welcome control commands
+            self.app.add_handler(CommandHandler("enablewelcome", self.enable_welcome))
+            self.app.add_handler(CommandHandler("disablewelcome", self.disable_welcome))
+            self.app.add_handler(CommandHandler("testwelcome", self.test_welcome))
             
             # Moderation commands
             self.app.add_handler(CommandHandler("warn", self.warn_command))
