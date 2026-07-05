@@ -96,7 +96,7 @@ class PikachuProtectionBot:
                 pass
 
     def get_footer(self):
-        return f"\n\n⚡ <b>Powered by {Config.OWNER_NAME}</b> ⚡"
+        return f"\n\n╰┈➤ <b>Created by {Config.OWNER_NAME}</b>"
 
     def get_owner_credit(self):
         return f"\n\n<b>👑 Created by: {Config.OWNER_NAME}</b>"
@@ -143,6 +143,103 @@ class PikachuProtectionBot:
                 
         except Exception as e:
             logger.error(f"Error tracking user history: {e}")
+
+    # ────═◈═─ SG COMMAND (User History) ─═◈═────
+    async def sg_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Show user's complete history (SG - User History Tracking)"""
+        chat = update.effective_chat
+        
+        target = None
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+            except:
+                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                return
+        elif update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+        else:
+            target = update.effective_user
+        
+        if not target:
+            await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+            return
+        
+        # Get user history
+        history = await db.get_user_history(target.id)
+        user_stats = await db.get_user_stats(target.id)
+        
+        if not history:
+            msg = f"""
+📋 <b>HISTORY FOR {target.id}</b>
+
+<b>Names</b>
+No history recorded yet!
+
+<b>Usernames</b>
+No history recorded yet!
+
+{self.get_footer()}
+"""
+            await update.message.reply_text(msg, parse_mode="HTML")
+            return
+        
+        # Separate names and usernames
+        names = []
+        usernames = []
+        
+        for entry in history:
+            timestamp = entry.get('timestamp', 'Unknown')
+            try:
+                dt = datetime.fromisoformat(timestamp)
+                timestamp = dt.strftime("[%d/%m/%y %H:%M:%S]")
+            except:
+                pass
+            
+            name = entry.get('first_name', 'Unknown')
+            username = entry.get('username', '')
+            
+            names.append({
+                'timestamp': timestamp,
+                'name': name
+            })
+            
+            if username:
+                usernames.append({
+                    'timestamp': timestamp,
+                    'username': f"@{username}"
+                })
+        
+        # Build the message
+        msg = f"""
+📋 <b>HISTORY FOR {target.id}</b>
+
+<b>Names</b>
+"""
+        
+        # Add names (numbered)
+        for i, entry in enumerate(names, 1):
+            msg += f"{i:02d}. {entry['timestamp']} {entry['name']}\n"
+        
+        msg += f"\n<b>Usernames</b>\n"
+        
+        # Add usernames (numbered)
+        if usernames:
+            for i, entry in enumerate(usernames, 1):
+                username_display = entry['username'] if entry['username'] else '(empty)'
+                msg += f"{i}. {entry['timestamp']} {username_display}\n"
+        else:
+            msg += "No username history recorded!\n"
+        
+        # Add stats
+        msg += f"\n📊 <b>Total Name Changes:</b> {len(names)}"
+        msg += f"\n📊 <b>Total Username Changes:</b> {len(usernames)}"
+        msg += f"\n📊 <b>Total Messages:</b> {user_stats.get('messages', 0)}"
+        
+        msg += self.get_footer()
+        
+        await update.message.reply_text(msg, parse_mode="HTML")
 
     # ────═◈═─ MAIN MENU MESSAGE ─═◈═────
     async def get_main_menu_message(self, user, is_premium):
@@ -321,79 +418,6 @@ I'm not a human...
                     
             except Exception as e:
                 logger.error(f"Error processing member {member.id}: {e}")
-
-    # ────═◈═─ SG COMMAND (User History) ─═◈═────
-    async def sg_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show user's complete history (SG - User History Tracking)"""
-        chat = update.effective_chat
-        
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                await update.message.reply_text("❌ User not found!")
-                return
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            target = update.effective_user
-        
-        if not target:
-            await update.message.reply_text("❌ User not found!")
-            return
-        
-        # Get user history
-        history = await db.get_user_history(target.id)
-        user_stats = await db.get_user_stats(target.id)
-        
-        if not history:
-            msg = f"""
-🔄 <b>SG - USER HISTORY</b>
-
-👤 <b>User:</b> {target.first_name}
-🆔 <b>ID:</b> <code>{target.id}</code>
-📛 <b>Username:</b> @{target.username if target.username else 'None'}
-
-📊 <b>No history recorded yet!</b>
-{self.get_owner_credit()}
-"""
-            await update.message.reply_text(msg, parse_mode="HTML")
-            return
-        
-        # Build history message
-        msg = f"""
-🔄 <b>SG - USER HISTORY TRACKING</b>
-
-👤 <b>User:</b> {target.first_name}
-🆔 <b>ID:</b> <code>{target.id}</code>
-📛 <b>Current Username:</b> @{target.username if target.username else 'None'}
-📊 <b>Total Changes:</b> {len(history)}
-
-<b>📜 HISTORY LOG:</b>
-"""
-        
-        for i, entry in enumerate(history[-10:], 1):  # Show last 10 changes
-            timestamp = entry.get('timestamp', 'Unknown')
-            try:
-                dt = datetime.fromisoformat(timestamp)
-                timestamp = dt.strftime("%Y-%m-%d %H:%M")
-            except:
-                pass
-            
-            name = entry.get('first_name', 'Unknown')
-            username = entry.get('username', 'None')
-            msg += f"\n{i}. 📝 <b>{timestamp}</b>\n   👤 {name}\n   📛 @{username}"
-        
-        if len(history) > 10:
-            msg += f"\n\n... and {len(history) - 10} more changes"
-        
-        msg += f"\n\n📊 <b>Total Messages:</b> {user_stats.get('messages', 0)}"
-        msg += f"\n📊 <b>Groups Joined:</b> {user_stats.get('groups', 0)}"
-        msg += self.get_owner_credit()
-        
-        await update.message.reply_text(msg, parse_mode="HTML")
 
     # ────═◈═─ HISTORY COMMAND ─═◈═────
     async def history_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
