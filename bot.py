@@ -1212,7 +1212,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             return
         
         await db.approve_user(target.id, chat.id)
-        await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ ᴄᴀɴ sᴇɴᴅ ʟɪɴᴋs.\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ Yᴏᴜʀ Aʀᴇ Fʀᴇᴇ.\n{self.get_footer()}", parse_mode="Markdown")
         await self.log_action(chat.id, f"✅ **ᴀᴘᴘʀᴏᴠᴇ** {target.first_name} ʙʏ {user.first_name}")
 
     async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
