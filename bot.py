@@ -7,16 +7,12 @@ import os
 import sys
 import asyncio
 import logging
-import threading
 import re
-import json
 import psutil
-import platform
-import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Any
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions, User, ChatMember
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions, User
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from telegram.constants import ParseMode
 
@@ -31,21 +27,6 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 db = Database()
-
-# ────═◈═─ FANCY TEXT CONVERTER ─═◈═────
-def fancy_text(text):
-    """Convert text to fancy Unicode style"""
-    fancy_chars = {
-        'A': 'ᴀ', 'B': 'ʙ', 'C': 'ᴄ', 'D': 'ᴅ', 'E': 'ᴇ', 'F': 'ғ', 'G': 'ɢ',
-        'H': 'ʜ', 'I': 'ɪ', 'J': 'ᴊ', 'K': 'ᴋ', 'L': 'ʟ', 'M': 'ᴍ', 'N': 'ɴ',
-        'O': 'ᴏ', 'P': 'ᴘ', 'Q': 'ǫ', 'R': 'ʀ', 'S': 's', 'T': 'ᴛ', 'U': 'ᴜ',
-        'V': 'ᴠ', 'W': 'ᴡ', 'X': 'x', 'Y': 'ʏ', 'Z': 'ᴢ',
-        'a': 'ᴀ', 'b': 'ʙ', 'c': 'ᴄ', 'd': 'ᴅ', 'e': 'ᴇ', 'f': 'ғ', 'g': 'ɢ',
-        'h': 'ʜ', 'i': 'ɪ', 'j': 'ᴊ', 'k': 'ᴋ', 'l': 'ʟ', 'm': 'ᴍ', 'n': 'ɴ',
-        'o': 'ᴏ', 'p': 'ᴘ', 'q': 'ǫ', 'r': 'ʀ', 's': 's', 't': 'ᴛ', 'u': 'ᴜ',
-        'v': 'ᴠ', 'w': 'ᴡ', 'x': 'x', 'y': 'ʏ', 'z': 'ᴢ'
-    }
-    return ''.join(fancy_chars.get(char, char) for char in text)
 
 def premium_print(message, symbol="⚡"):
     border = "═" * 50
@@ -2158,7 +2139,7 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
                 parse_mode="HTML"
             )
 
-    # ────═◈═─ CALLBACK HANDLER ─═◈═────
+    # ────═◈═─ CALLBACK HANDLER (FIXED) ─═◈═────
     async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -2167,6 +2148,7 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         user_id = update.effective_user.id
         is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
         
+        # Handle main menu
         if data == "main_menu":
             user = update.effective_user
             main_text = f"""
@@ -2193,7 +2175,6 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
 📌 <b>Aᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!</b>
 {self.get_owner_credit()}
 """
-            
             keyboard = [
                 [InlineKeyboardButton("📊 Sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs", callback_data="settings")],
                 [InlineKeyboardButton("📖 Hᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ Aʙᴏᴜᴛ", callback_data="about")],
@@ -2205,181 +2186,14 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
             if is_premium:
                 keyboard.append([InlineKeyboardButton("💎 Pʀᴇᴍɪᴜᴍ", callback_data="premium")])
             
-            try:
-                await query.edit_message_text(
-                    main_text,
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
-            except:
-                pass
-        
-        elif data == "help":
-            help_text = f"""
-📖 <b>POWERFUL COMMANDS LIST</b> 📖
-
-<b>👑 Fᴏᴜɴᴅᴇʀ & Cᴏ-Fᴏᴜɴᴅᴇʀ:</b>
-/cᴏғᴏᴜɴᴅᴇʀ, /ᴜɴᴄᴏғᴏᴜɴᴅᴇʀ
-/ᴍᴏᴅ, /ᴜɴᴍᴏᴅ
-/ᴍᴜᴛᴇʀ, /ᴜɴᴍᴜᴛᴇʀ
-/ᴄʟᴇᴀɴᴇʀ, /ᴜɴᴄʟᴇᴀɴᴇʀ
-/ʜᴇʟᴘᴇʀ, /ᴜɴʜᴇʟᴘᴇʀ
-/ғʀᴇᴇ, /ᴜɴғʀᴇᴇ
-
-<b>👮 Aᴅᴍɪɴ & Mᴏᴅᴇʀᴀᴛᴏʀ:</b>
-/ʀᴇʟᴏᴀᴅ, /sᴇᴛᴛɪɴɢs
-/ʙᴀɴ, /ᴜɴʙᴀɴ, /ᴋɪᴄᴋ
-/ᴍᴜᴛᴇ, /ᴜɴᴍᴜᴛᴇ
-/ᴡᴀʀɴ, /ᴜɴᴡᴀʀɴ, /ᴡᴀʀɴs
-
-<b>📌 Pɪɴ Mᴇssᴀɢᴇs:</b>
-/ᴘɪɴ, /ᴜɴᴘɪɴ, /ᴘɪɴɴᴇᴅ
-/ᴇᴅɪᴛᴘɪɴ, /ᴅᴇʟᴘɪɴ
-
-<b>🗑️ Dᴇʟᴇᴛᴇ:</b>
-/ᴅᴇʟ, /ʟᴏɢᴅᴇʟ, /ᴘᴜʀɢᴇ
-
-<b>📊 Gᴇɴᴇʀᴀʟ:</b>
-/sᴛᴀʀᴛ, /ʜᴇʟᴘ, /ᴀʙᴏᴜᴛ
-/ᴘɪɴɢ, /sᴛᴀғғ
-/ɪɴꜰᴏ, /ɪɴꜰᴏᴘᴠᴛ, /ᴍᴇ
-/ɢᴇᴛᴜʀʟ, /sɢ, /ʜɪsᴛᴏʀʏ
-/ᴄʜᴀᴛ, /ғɪʟᴛᴇʀ, /ғɪʟᴛᴇʀs
-
-{self.get_owner_credit()}
-"""
-            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                pass
-        
-        elif data == "about":
-            text = f"""
-⚡ <b>Aʙᴏᴜᴛ {Config.BOT_NAME}</b> ⚡
-
-────═◈═─ ✧◈✧ ─═◈═────
-🤖 <b>Nᴀᴍᴇ:</b> {Config.BOT_NAME}  
-📌 <b>ID:</b> {Config.BOT_USERNAME} 
-👑 <b>Oᴡɴᴇʀ:</b> {Config.OWNER_NAME} 
-📞 <b>Cᴏɴᴛᴀᴄᴛ:</b> {Config.OWNER_USERNAME} 
-────═◈═─ ✧◈✧ ─═◈═────
-
-💫 <b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>
-Tʜᴇ Uʟᴛɪᴍᴀᴛᴇ Gʀᴏᴜᴘ Mᴀɴᴀɢᴇᴍᴇɴᴛ Bᴏᴛ
-
-📢 <b>Vᴇʀsɪᴏɴ:</b> 3.0.0
-🔰 <b>Sᴛᴀᴛᴜs:</b> Aᴄᴛɪᴠᴇ
-
-{self.get_owner_credit()}
-"""
-            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                pass
-        
-        elif data == "staff":
-            await query.edit_message_text("👥 Uꜱᴇ /sᴛᴀғғ ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ!", parse_mode="HTML")
-        
-        elif data == "sg":
             await query.edit_message_text(
-                f"🔄 <b>SG - Uꜱᴇʀ Hɪsᴛᴏʀʏ</b>\n\n"
-                f"Uꜱᴇ /sɢ @ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ\n"
-                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
-                parse_mode="HTML"
+                main_text,
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
-        
-        elif data == "history":
-            await query.edit_message_text(
-                f"📜 <b>Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ</b>\n\n"
-                f"Uꜱᴇ /ʜɪsᴛᴏʀʏ @ᴜsᴇʀɴᴀᴍᴇ\n"
-                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ᴄʜᴀɴɢᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
-        
-        elif data == "chat":
-            await query.edit_message_text(
-                f"💬 <b>Cʜᴀᴛ ᴡɪᴛʜ ᴍᴇ!</b>\n\n"
-                f"Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
-        
-        elif data == "roles":
-            roles_text = f"""
-👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>
+            return
 
-<b>👑 Fᴏᴜɴᴅᴇʀ</b> - Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ, ᴀʟʟ ᴘᴏᴡᴇʀ
-<b>⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ</b> - Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ
-<b>👔 Aᴅᴍɪɴ</b> - Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ
-<b>👷 Mᴏᴅᴇʀᴀᴛᴏʀ</b> - Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs
-<b>🙊 Mᴜᴛᴇʀ</b> - Cᴀɴ ᴍᴜᴛᴇ ᴜsᴇʀs
-<b>🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ</b> - Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs
-<b>⛑ Hᴇʟᴘᴇʀ</b> - Sᴛᴀғғ ʟɪsᴛ ᴏɴʟʏ
-<b>🔓 Fʀᴇᴇ</b> - Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏ-ᴘᴜɴɪsʜᴍᴇɴᴛ
-
-Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
-/cᴏғᴏᴜɴᴅᴇʀ, /ᴍᴏᴅ, /ᴍᴜᴛᴇʀ, /ᴄʟᴇᴀɴᴇʀ, /ʜᴇʟᴘᴇʀ, /ғʀᴇᴇ
-{self.get_owner_credit()}
-"""
-            keyboard = [
-                [InlineKeyboardButton("👑 Fᴏᴜɴᴅᴇʀ", callback_data="role_founder")],
-                [InlineKeyboardButton("⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ", callback_data="role_cofounder")],
-                [InlineKeyboardButton("👔 Aᴅᴍɪɴ", callback_data="role_admin")],
-                [InlineKeyboardButton("👷 Mᴏᴅᴇʀᴀᴛᴏʀ", callback_data="role_moderator")],
-                [InlineKeyboardButton("🙊 Mᴜᴛᴇʀ", callback_data="role_muter")],
-                [InlineKeyboardButton("🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ", callback_data="role_cleaner")],
-                [InlineKeyboardButton("⛑ Hᴇʟᴘᴇʀ", callback_data="role_helper")],
-                [InlineKeyboardButton("🔓 Fʀᴇᴇ", callback_data="role_free")],
-                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
-            ]
-            try:
-                await query.edit_message_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                pass
-        
-        elif data.startswith("role_"):
-            role_name = data.replace("role_", "").upper()
-            await query.edit_message_text(
-                f"👑 <b>{role_name} Rᴏʟᴇ</b>\n\n"
-                f"Tᴏ ᴀᴅᴅ ᴛʜɪs ʀᴏʟᴇ: /{role_name.lower()} @ᴜsᴇʀ\n"
-                f"Tᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ʀᴏʟᴇ: /ᴜɴ{role_name.lower()} @ᴜsᴇʀ\n\n"
-                f"<b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>\n"
-                f"{self.get_role_description(role_name)}{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
-        
-        elif data == "settings":
-            keyboard = [
-                [InlineKeyboardButton("👋 Wᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 Gᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
-                [InlineKeyboardButton("🛡️ Aɴᴛɪ-Sᴘᴀᴍ", callback_data="set_antispam"), InlineKeyboardButton("🔗 Aɴᴛɪ-Lɪɴᴋ", callback_data="set_antilink")],
-                [InlineKeyboardButton("🔞 Aɴᴛɪ-18+", callback_data="set_anti18")],
-                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
-            ]
-            try:
-                await query.edit_message_text(
-                    f"⚙️ <b>Sᴇᴛᴛɪɴɢs Mᴇɴᴜ</b>\n\n{self.get_owner_credit()}",
-                    parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
-                )
-            except:
-                pass
-        
-        elif data.startswith("set_"):
-            setting = data.replace("set_", "")
-            chat_id = update.effective_chat.id
-            settings = await db.get_settings(chat_id)
-            current = settings.get(setting, True)
-            await db.update_settings(chat_id, setting, not current)
-            
-            try:
-                await query.edit_message_text(
-                    f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}",
-                    parse_mode="HTML"
-                )
-            except:
-                pass
-        
+        # Handle Stats
         elif data == "stats":
             if user_id != Config.OWNER_ID:
                 await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="HTML")
@@ -2408,11 +2222,190 @@ Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
 {self.get_owner_credit()}
 """
             keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                pass
-        
+            await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            return
+
+        # Handle Settings
+        elif data == "settings":
+            keyboard = [
+                [InlineKeyboardButton("👋 Wᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 Gᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
+                [InlineKeyboardButton("🛡️ Aɴᴛɪ-Sᴘᴀᴍ", callback_data="set_antispam"), InlineKeyboardButton("🔗 Aɴᴛɪ-Lɪɴᴋ", callback_data="set_antilink")],
+                [InlineKeyboardButton("🔞 Aɴᴛɪ-18+", callback_data="set_anti18")],
+                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
+            ]
+            await query.edit_message_text(
+                f"⚙️ <b>Sᴇᴛᴛɪɴɢs Mᴇɴᴜ</b>\n\n{self.get_owner_credit()}",
+                parse_mode="HTML",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return
+
+        # Handle Help
+        elif data == "help":
+            help_text = f"""
+📖 <b>POWERFUL COMMANDS LIST</b> 📖
+
+<b>👑 Fᴏᴜɴᴅᴇʀ & Cᴏ-Fᴏᴜɴᴅᴇʀ:</b>
+/cᴏғᴏᴜɴᴅᴇʀ, /ᴜɴᴄᴏғᴏᴜɴᴅᴇʀ
+/ᴍᴏᴅ, /ᴜɴᴍᴏᴅ
+/ᴍᴜᴛᴇʀ, /ᴜɴᴍᴜᴛᴇʀ
+/ᴄʟᴇᴀɴᴇʀ, /ᴜɴᴄʟᴇᴀɴᴇʀ
+/ʜᴇʟᴘᴇʀ, /ᴜɴʜᴇʟᴘᴇʀ
+/ғʀᴇᴇ, /ᴜɴғʀᴇᴇ
+
+<b>👮 Aᴅᴍɪɴ & Mᴏᴅᴇʀᴀᴛᴏʀ:</b>
+/ʀᴇʟᴏᴀᴅ, /sᴇᴛᴛɪɴɢs
+/ʙᴀɴ, /ᴜɴʙᴀɴ, /ᴋɪᴄᴋ
+/ᴍᴜᴛᴇ, /ᴜɴᴍᴜᴛᴇ
+/ᴡᴀʀɴ, /ᴜɴᴡᴀʀɴ, /ᴡᴀʀɴs
+
+<b>📌 Pɪɴ Mᴇssᴀɢᴇs:</b>
+/ᴘɪɴ, /ᴜɴᴘɪɴ, /ᴘɪɴɴᴇᴅ
+
+<b>🗑️ Dᴇʟᴇᴛᴇ:</b>
+/ᴅᴇʟ, /ʟᴏɢᴅᴇʟ, /ᴘᴜʀɢᴇ
+
+<b>📊 Gᴇɴᴇʀᴀʟ:</b>
+/sᴛᴀʀᴛ, /ʜᴇʟᴘ, /ᴀʙᴏᴜᴛ
+/ᴘɪɴɢ, /sᴛᴀғғ
+/ɪɴꜰᴏ, /ɪɴꜰᴏᴘᴠᴛ, /ᴍᴇ
+/ɢᴇᴛᴜʀʟ, /sɢ, /ʜɪsᴛᴏʀʏ
+/ᴄʜᴀᴛ, /ғɪʟᴛᴇʀ, /ғɪʟᴛᴇʀs
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            await query.edit_message_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            return
+
+        # Handle About
+        elif data == "about":
+            text = f"""
+⚡ <b>Aʙᴏᴜᴛ {Config.BOT_NAME}</b> ⚡
+
+────═◈═─ ✧◈✧ ─═◈═────
+🤖 <b>Nᴀᴍᴇ:</b> {Config.BOT_NAME}  
+📌 <b>ID:</b> {Config.BOT_USERNAME} 
+👑 <b>Oᴡɴᴇʀ:</b> {Config.OWNER_NAME} 
+📞 <b>Cᴏɴᴛᴀᴄᴛ:</b> {Config.OWNER_USERNAME} 
+────═◈═─ ✧◈✧ ─═◈═────
+
+💫 <b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>
+Tʜᴇ Uʟᴛɪᴍᴀᴛᴇ Gʀᴏᴜᴘ Mᴀɴᴀɢᴇᴍᴇɴᴛ Bᴏᴛ
+
+📢 <b>Vᴇʀsɪᴏɴ:</b> 3.0.0
+🔰 <b>Sᴛᴀᴛᴜs:</b> Aᴄᴛɪᴠᴇ
+
+{self.get_owner_credit()}
+"""
+            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+            await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            return
+
+        # Handle Staff
+        elif data == "staff":
+            await query.edit_message_text("👥 Uꜱᴇ /sᴛᴀғғ ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ!", parse_mode="HTML")
+            return
+
+        # Handle SG
+        elif data == "sg":
+            await query.edit_message_text(
+                f"🔄 <b>SG - Uꜱᴇʀ Hɪsᴛᴏʀʏ</b>\n\n"
+                f"Uꜱᴇ /sɢ @ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ\n"
+                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+            return
+
+        # Handle History
+        elif data == "history":
+            await query.edit_message_text(
+                f"📜 <b>Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ</b>\n\n"
+                f"Uꜱᴇ /ʜɪsᴛᴏʀʏ @ᴜsᴇʀɴᴀᴍᴇ\n"
+                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ᴄʜᴀɴɢᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+            return
+
+        # Handle Chat
+        elif data == "chat":
+            await query.edit_message_text(
+                f"💬 <b>Cʜᴀᴛ ᴡɪᴛʜ ᴍᴇ!</b>\n\n"
+                f"Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+            return
+
+        # Handle Roles
+        elif data == "roles":
+            roles_text = f"""
+👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>
+
+<b>👑 Fᴏᴜɴᴅᴇʀ</b> - Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ, ᴀʟʟ ᴘᴏᴡᴇʀ
+<b>⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ</b> - Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ
+<b>👔 Aᴅᴍɪɴ</b> - Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ
+<b>👷 Mᴏᴅᴇʀᴀᴛᴏʀ</b> - Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs
+<b>🙊 Mᴜᴛᴇʀ</b> - Cᴀɴ ᴍᴜᴛᴇ ᴜsᴇʀs
+<b>🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ</b> - Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs
+<b>⛑ Hᴇʟᴘᴇʀ</b> - Sᴛᴀғғ ʟɪsᴛ ᴏɴʟʏ
+<b>🔓 Fʀᴇᴇ</b> - Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏ-ᴘᴜɴɪsʜᴍᴇɴᴛ
+
+Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
+/cᴏғᴏᴜɴᴅᴇʀ, /ᴍᴏᴅ, /ᴍᴜᴛᴇʀ, /ᴄʟᴇᴀɴᴇʀ, /ʜᴇʟᴘᴇʀ, /ғʀᴇᴇ
+{self.get_owner_credit()}
+"""
+            keyboard = [
+                [InlineKeyboardButton("👑 Fᴏᴜɴᴅᴇʀ", callback_data="role_founder")],
+                [InlineKeyboardButton("⚜️ Cᴏ-Fᴏᴜɴᴅᴇʀ", callback_data="role_cofounder")],
+                [InlineKeyboardButton("👔 Aᴅᴍɪɴ", callback_data="role_admin")],
+                [InlineKeyboardButton("👷 Mᴏᴅᴇʀᴀᴛᴏʀ", callback_data="role_moderator")],
+                [InlineKeyboardButton("🙊 Mᴜᴛᴇʀ", callback_data="role_muter")],
+                [InlineKeyboardButton("🛃 Cʜᴀᴛ Cʟᴇᴀɴᴇʀ", callback_data="role_cleaner")],
+                [InlineKeyboardButton("⛑ Hᴇʟᴘᴇʀ", callback_data="role_helper")],
+                [InlineKeyboardButton("🔓 Fʀᴇᴇ", callback_data="role_free")],
+                [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
+            ]
+            await query.edit_message_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            return
+
+        # Handle Role buttons (role_founder, role_cofounder, etc.)
+        elif data.startswith("role_"):
+            role_name = data.replace("role_", "").upper()
+            descriptions = {
+                "FOUNDER": "Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ ᴡɪᴛʜ ᴀʟʟ ᴘᴏᴡᴇʀs",
+                "CO-FOUNDER": "Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ ᴛᴏ ᴍᴀɴᴀɢᴇ sᴛᴀғғ",
+                "ADMIN": "Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ",
+                "MODERATOR": "Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs ᴡɪᴛʜ ᴄᴏᴍᴍᴀɴᴅs",
+                "MUTER": "Cᴀɴ ᴍᴜᴛᴇ ᴀɴᴅ ᴜɴᴍᴜᴛᴇ ᴜsᴇʀs",
+                "CLEANER": "Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs",
+                "HELPER": "Aᴘᴘᴇᴀʀs ɪɴ sᴛᴀғғ ʟɪsᴛ",
+                "FREE": "Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄ ᴘᴜɴɪsʜᴍᴇɴᴛ"
+            }
+            desc = descriptions.get(role_name, "")
+            await query.edit_message_text(
+                f"👑 <b>{role_name} Rᴏʟᴇ</b>\n\n"
+                f"Tᴏ ᴀᴅᴅ ᴛʜɪs ʀᴏʟᴇ: /{role_name.lower()} @ᴜsᴇʀ\n"
+                f"Tᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ʀᴏʟᴇ: /ᴜɴ{role_name.lower()} @ᴜsᴇʀ\n\n"
+                f"<b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>\n{desc}{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+            return
+
+        # Handle Settings toggles
+        elif data.startswith("set_"):
+            setting = data.replace("set_", "")
+            chat_id = update.effective_chat.id
+            settings = await db.get_settings(chat_id)
+            current = settings.get(setting, True)
+            await db.update_settings(chat_id, setting, not current)
+            
+            await query.edit_message_text(
+                f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}",
+                parse_mode="HTML"
+            )
+            return
+
+        # Handle Premium
         elif data == "premium":
             if is_premium:
                 text = f"""
@@ -2425,9 +2418,6 @@ Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
 ╰┈➤ Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ GɪF
 ╰┈➤ Pʀɪᴠᴀᴛᴇ Lᴏɢs
 ╰┈➤ 24/7 Sᴜᴘᴘᴏʀᴛ
-╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴀʟʏᴛɪᴄs
-╰┈➤ Cᴜsᴛᴏᴍ Cᴏᴍᴍᴀɴᴅs
-
 {self.get_owner_credit()}
 """
             else:
@@ -2440,8 +2430,6 @@ Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
 ╰┈➤ Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ GɪF
 ╰┈➤ Pʀɪᴠᴀᴛᴇ Lᴏɢs
 ╰┈➤ 24/7 Sᴜᴘᴘᴏʀᴛ
-╰┈➤ Aᴅᴠᴀɴᴄᴇᴅ Aɴᴀʟʏᴛɪᴄs
-╰┈➤ Cᴜsᴛᴏᴍ Cᴏᴍᴍᴀɴᴅs
 
 <b>Pʀɪᴄᴇ:</b> $5/ᴍᴏɴᴛʜ
 
@@ -2451,23 +2439,8 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 {self.get_owner_credit()}
 """
             keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
-            except:
-                pass
-
-    def get_role_description(self, role_name):
-        descriptions = {
-            "FOUNDER": "Gʀᴏᴜᴘ ᴄʀᴇᴀᴛᴏʀ ᴡɪᴛʜ ᴀʟʟ ᴘᴏᴡᴇʀs",
-            "CO-FOUNDER": "Aᴅᴍɪɴ ᴡɪᴛʜ ᴇxᴛʀᴀ ᴘᴏᴡᴇʀ ᴛᴏ ᴍᴀɴᴀɢᴇ sᴛᴀғғ",
-            "ADMIN": "Gʀᴏᴜᴘ ᴀᴅᴍɪɴɪsᴛʀᴀᴛᴏʀ",
-            "MODERATOR": "Cᴀɴ ᴍᴏᴅᴇʀᴀᴛᴇ ᴜsᴇʀs ᴡɪᴛʜ ᴄᴏᴍᴍᴀɴᴅs",
-            "MUTER": "Cᴀɴ ᴍᴜᴛᴇ ᴀɴᴅ ᴜɴᴍᴜᴛᴇ ᴜsᴇʀs",
-            "CLEANER": "Cᴀɴ ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇs",
-            "HELPER": "Aᴘᴘᴇᴀʀs ɪɴ sᴛᴀғғ ʟɪsᴛ",
-            "FREE": "Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄ ᴘᴜɴɪsʜᴍᴇɴᴛ"
-        }
-        return descriptions.get(role_name, "")
+            await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            return
 
     # ────═◈═─ ERROR HANDLER ─═◈═────
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
