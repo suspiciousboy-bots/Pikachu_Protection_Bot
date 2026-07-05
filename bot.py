@@ -189,10 +189,6 @@ class PikachuProtectionBot:
                 if photos.total_count > 0:
                     photo_file_id = photos.photos[0][-1].file_id
                 
-                # ────═◈═─ GET RULES ─═◈═────
-                rules = await db.get_rules(chat.id)
-                rules_text = f"\n📋 **ʀᴜʟᴇs:**\n{rules}" if rules else ""
-                
                 # ────═◈═─ GET ROLE ─═◈═────
                 try:
                     chat_member = await context.bot.get_chat_member(chat.id, member.id)
@@ -205,15 +201,8 @@ class PikachuProtectionBot:
                 except:
                     role = "👤 Mᴇᴍʙᴇʀ"
                 
-                # ────═◈═─ WELCOME MESSAGE ─═◈═────
+                # ────═◈═─ SIMPLE WELCOME MESSAGE ─═◈═────
                 welcome_msg = f"""
-✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
-
-You won't leave me, right...?
-I'm not a human...
-
----
-
 **WELCOME TO THE PARTY!**
 
 ---
@@ -221,20 +210,19 @@ I'm not a human...
 **ɴᴀᴍᴇ:** {user_name}
 **ɪᴅ:** `{user_id}`
 **ᴜsᴇʀɴᴀᴍᴇ:** {user_username}
-**ʙɪᴏ:** {user_bio[:150] if user_bio != 'N/A' else 'N/A'}
+**ʙɪᴏ:** {user_bio[:100] if user_bio != 'N/A' else 'N/A'}
 
 ---
 
 **ɢʀᴏᴜᴘ:** {chat.title}
 **ᴍᴇᴍʙᴇʀs:** {member_count}
 **ʀᴏʟᴇ:** {role}
-{rules_text}
 
 🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
 {self.get_footer()}
 """
                 
-                # ────═◈═─ SEND WELCOME WITH PHOTO ─═◈═────
+                # ────═◈═─ SEND WELCOME WITH PROFILE PHOTO ─═◈═────
                 if photo_file_id:
                     await context.bot.send_photo(
                         chat.id,
@@ -253,13 +241,6 @@ I'm not a human...
                 logger.error(f"Welcome handler error: {e}")
                 # ────═◈═─ FALLBACK WELCOME ─═◈═────
                 fallback_msg = f"""
-✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
-
-You won't leave me, right...?
-I'm not a human...
-
----
-
 **WELCOME TO THE PARTY!**
 
 ---
@@ -294,10 +275,6 @@ I'm not a human...
         
         goodbye_msg = f"""
 💔 **ɢᴏᴏᴅʙʏᴇ!** 💔
-
-You left me... 😢
-
----
 
 **ɴᴀᴍᴇ:** {member.first_name}
 📍 **ɢʀᴏᴜᴘ:** {chat.title}
