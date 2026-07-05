@@ -91,7 +91,33 @@ class PikachuProtectionBot:
                 pass
 
     def get_footer(self):
-        return f"\n\n:⧽ ʙʏ » {Config.OWNER_NAME}"
+        return f":⧽ ʙʏ » {Config.OWNER_NAME}"
+
+    # ────═◈═─ MAIN MENU MESSAGE ─═◈═────
+    async def get_main_menu_message(self, user, is_premium):
+        return f"""
+⚡ **ᴘɪᴋᴀᴄʜᴜ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ** ⚡
+
+✨ **ʜᴇʟʟᴏ {user.first_name}!** ✨
+
+ɪ ᴀᴍ ᴀ ᴘᴏᴡᴇʀғᴜʟ ɢʀᴏᴜᴘ ᴘʀᴏᴛᴇᴄᴛɪᴏɴ ʙᴏᴛ!
+
+**🔰 ғᴇᴀᴛᴜʀᴇs:**
+╰┈➤ 🛡️ Aɴᴛɪ-sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
+╰┈➤ ⚠️ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ
+╰┈➤ 📌 Pɪɴ/Uɴᴘɪɴ/Dᴇʟᴇᴛᴇ/Pᴜʀɢᴇ
+╰┈➤ 👋 Cᴜsᴛᴏᴍ Wᴇʟᴄᴏᴍᴇ/Gᴏᴏᴅʙʏᴇ
+╰┈➤ 📊 Sᴛᴀғғ Lɪsᴛ & Sᴛᴀᴛs
+╰┈➤ 📋 Cᴜsᴛᴏᴍ Rᴜʟᴇs
+╰┈➤ 💎 Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs
+
+💎 **ᴘʀᴇᴍɪᴜᴍ sᴛᴀᴛᴜs:** {'✅ ᴀᴄᴛɪᴠᴇ' if is_premium else '❌ ɪɴᴀᴄᴛɪᴠᴇ'}
+
+📌 **ᴀᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!**
+
+
+{self.get_footer()}
+"""
 
     # ────═◈═─ START COMMAND ─═◈═────
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -100,27 +126,7 @@ class PikachuProtectionBot:
         
         is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
         
-        welcome_text = f"""
-✨ **ʜᴇʟʟᴏ {user.first_name}!** ✨
-
-👋 **ɪ ᴀᴍ {Config.BOT_NAME}** 🤖
-
-**ʜɪɢʜʟɪɢʜᴛs:**
-─────────────────────────────
-- 🛡️ Sᴍᴀʀᴛ Aɴᴛɪ-Sᴘᴀᴍ & Lɪɴᴋ Sʜɪᴇʟᴅ
-- 🔒 Aᴅᴀᴘᴛɪᴠᴇ Lᴏᴄᴋ Sʏsᴛᴇᴍ (URLs, Mᴇᴅɪᴀ, Lᴀɴɢᴜᴀɢᴇ & ᴍᴏʀᴇ)
-- ⚙️ Mᴏᴅᴜʟᴀʀ & Sᴄᴀʟᴀʙʟᴇ Pʀᴏᴛᴇᴄᴛɪᴏɴ
-- 🎨 Sʟᴇᴇᴋ UI ᴡɪᴛʜ Iɴʟɪɴᴇ Cᴏɴᴛʀᴏʟs
-─────────────────────────────
-
-» **ᴍᴏʀᴇ ɴᴇᴡ ғᴇᴀᴛᴜʀᴇs ᴄᴏᴍɪɴɢ sᴏᴏɴ ...**
-
-💎 **ᴘʀᴇᴍɪᴜᴍ sᴛᴀᴛᴜs:** {'✅ ᴀᴄᴛɪᴠᴇ' if is_premium else '❌ ɪɴᴀᴄᴛɪᴠᴇ'}
-
-📢 **ᴜᴘᴅᴀᴛᴇ ᴄʜᴀɴɴᴇʟ:** @CrazyyCore
-🆘 **sᴜᴘᴘᴏʀᴛ:** https://t.me/+Fgx6_JRTLkFjMjE1
-{self.get_footer()}
-"""
+        welcome_text = await self.get_main_menu_message(user, is_premium)
         
         keyboard = [
             [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
@@ -130,7 +136,22 @@ class PikachuProtectionBot:
         if is_premium:
             keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
         
-        await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+        photo_url = "https://i.ibb.co/7NT4SDXy/file-124.jpg"
+        
+        try:
+            await update.message.reply_photo(
+                photo=photo_url,
+                caption=welcome_text,
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        except Exception as e:
+            logger.error(f"Photo send failed: {e}")
+            await update.message.reply_text(
+                welcome_text,
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
 
     # ────═◈═─ HELP COMMAND ─═◈═────
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -189,6 +210,7 @@ class PikachuProtectionBot:
 ╚═══════════════════════════════════════╝
 
 🔥 ᴘᴏᴡᴇʀᴇᴅ ʙʏ {Config.BOT_NAME}
+
 {self.get_footer()}
 """
         keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
@@ -220,7 +242,7 @@ class PikachuProtectionBot:
         reply_text = args[1]
         
         await db.add_filter(chat.id, keyword, reply_text)
-        await update.message.reply_text(f"✅ **ғɪʟᴛᴇʀ ᴀᴅᴅᴇᴅ!**\n\n📌 **ᴋᴇʏᴡᴏʀᴅ:** `{keyword}`\n📝 **ʀᴇᴘʟʏ:** {reply_text}\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"✅ **ғɪʟᴛᴇʀ ᴀᴅᴅᴇᴅ!**\n\n📌 **ᴋᴇʏᴡᴏʀᴅ:** `{keyword}`\n📝 **ʀᴇᴘʟʏ:** {reply_text}\n\n{self.get_footer()}", parse_mode="Markdown")
 
     async def remove_filter(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
@@ -240,7 +262,7 @@ class PikachuProtectionBot:
         
         keyword = context.args[0].lower()
         await db.remove_filter(chat.id, keyword)
-        await update.message.reply_text(f"✅ **ғɪʟᴛᴇʀ ʀᴇᴍᴏᴠᴇᴅ!**\n\n📌 **ᴋᴇʏᴡᴏʀᴅ:** `{keyword}`\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"✅ **ғɪʟᴛᴇʀ ʀᴇᴍᴏᴠᴇᴅ!**\n\n📌 **ᴋᴇʏᴡᴏʀᴅ:** `{keyword}`\n\n{self.get_footer()}", parse_mode="Markdown")
 
     async def list_filters(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
@@ -251,7 +273,7 @@ class PikachuProtectionBot:
         filters = await db.get_filters(chat.id)
         
         if not filters:
-            await update.message.reply_text(f"ℹ️ **ɴᴏ ғɪʟᴛᴇʀs sᴇᴛ ɪɴ ᴛʜɪs ɢʀᴏᴜᴘ!**\n\nᴜsᴇ `/filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ` ᴛᴏ ᴀᴅᴅ ᴏɴᴇ.\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"ℹ️ **ɴᴏ ғɪʟᴛᴇʀs sᴇᴛ ɪɴ ᴛʜɪs ɢʀᴏᴜᴘ!**\n\nᴜsᴇ `/filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ` ᴛᴏ ᴀᴅᴅ ᴏɴᴇ.\n\n{self.get_footer()}", parse_mode="Markdown")
             return
         
         filter_text = "📋 **ᴀᴄᴛɪᴠᴇ ғɪʟᴛᴇʀs:**\n\n"
@@ -259,7 +281,7 @@ class PikachuProtectionBot:
             filter_text += f"├ **{f['keyword']}** → {f['reply_text'][:50]}...\n"
         
         filter_text += f"\n📊 **ᴛᴏᴛᴀʟ:** {len(filters)} ғɪʟᴛᴇʀs"
-        filter_text += self.get_footer()
+        filter_text += f"\n\n{self.get_footer()}"
         
         await update.message.reply_text(filter_text, parse_mode="Markdown")
 
@@ -290,7 +312,7 @@ class PikachuProtectionBot:
         chat = update.effective_chat
         msg = update.message.reply_to_message
         link = f"https://t.me/{chat.username}/{msg.message_id}" if chat.username else f"https://t.me/c/{str(chat.id)[4:]}/{msg.message_id}"
-        await update.message.reply_text(f"🔗 **ᴍᴇssᴀɢᴇ ʟɪɴᴋ:**\n{link}\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"🔗 **ᴍᴇssᴀɢᴇ ʟɪɴᴋ:**\n{link}\n\n{self.get_footer()}", parse_mode="Markdown")
 
     # ────═◈═─ INFO COMMAND ─═◈═────
     async def info_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -326,6 +348,7 @@ class PikachuProtectionBot:
 📝 **ʙɪᴏ:** {bio[:100] if bio != 'N/A' else 'N/A'}
 🔰 **sᴛᴀᴛᴜs:** {status}
 ────═◈═─ ✧◈✧ ─═◈═────
+
 {self.get_footer()}
 """
             await update.message.reply_text(info_text, parse_mode="Markdown")
@@ -363,10 +386,11 @@ class PikachuProtectionBot:
 📛 **ᴜsᴇʀɴᴀᴍᴇ:** @{target.username if target.username else 'N/A'}
 📝 **ʙɪᴏ:** {bio[:100] if bio != 'N/A' else 'N/A'}
 ────═◈═─ ✧◈✧ ─═◈═────
+
 {self.get_footer()}
 """
             await context.bot.send_message(update.effective_user.id, info_text, parse_mode="Markdown")
-            await update.message.reply_text(f"✅ **ɪɴғᴏʀᴍᴀᴛɪᴏɴ sᴇɴᴛ ɪɴ ᴘʀɪᴠᴀᴛᴇ!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"✅ **ɪɴғᴏʀᴍᴀᴛɪᴏɴ sᴇɴᴛ ɪɴ ᴘʀɪᴠᴀᴛᴇ!**\n\n{self.get_footer()}", parse_mode="Markdown")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
@@ -388,6 +412,7 @@ class PikachuProtectionBot:
 ⚠️ **ᴡᴀʀɴs:** {len(warnings)}
 📋 **ʀᴜʟᴇs:** {rules[:100] if rules else 'N/A'}
 ────═◈═─ ✧◈✧ ─═◈═────
+
 {self.get_footer()}
 """
         await update.message.reply_text(me_text, parse_mode="Markdown")
@@ -411,7 +436,7 @@ class PikachuProtectionBot:
         
         try:
             await context.bot.pin_chat_message(chat.id, update.message.reply_to_message.message_id)
-            await update.message.reply_text(f"📌 **ᴘɪɴɴᴇᴅ!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"📌 **ᴘɪɴɴᴇᴅ!**\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"📌 **ᴘɪɴɴᴇᴅ** ʙʏ {user.first_name}")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
@@ -430,7 +455,7 @@ class PikachuProtectionBot:
         
         try:
             await context.bot.unpin_chat_message(chat.id)
-            await update.message.reply_text(f"📌 **ᴜɴᴘɪɴɴᴇᴅ!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"📌 **ᴜɴᴘɪɴɴᴇᴅ!**\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"📌 **ᴜɴᴘɪɴɴᴇᴅ** ʙʏ {user.first_name}")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
@@ -441,11 +466,11 @@ class PikachuProtectionBot:
             pinned = await context.bot.get_chat(chat.id)
             if pinned.pinned_message:
                 link = f"https://t.me/{chat.username}/{pinned.pinned_message.message_id}" if chat.username else f"https://t.me/c/{str(chat.id)[4:]}/{pinned.pinned_message.message_id}"
-                await update.message.reply_text(f"📌 **ᴄᴜʀʀᴇɴᴛ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ:**\n{link}\n{self.get_footer()}", parse_mode="Markdown")
+                await update.message.reply_text(f"📌 **ᴄᴜʀʀᴇɴᴛ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ:**\n{link}\n\n{self.get_footer()}", parse_mode="Markdown")
             else:
-                await update.message.reply_text(f"📌 **ɴᴏ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ!**\n{self.get_footer()}", parse_mode="Markdown")
+                await update.message.reply_text(f"📌 **ɴᴏ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ!**\n\n{self.get_footer()}", parse_mode="Markdown")
         except:
-            await update.message.reply_text(f"❌ ᴜɴᴀʙʟᴇ ᴛᴏ ғᴇᴛᴄʜ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ!\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"❌ ᴜɴᴀʙʟᴇ ᴛᴏ ғᴇᴛᴄʜ ᴘɪɴɴᴇᴅ ᴍᴇssᴀɢᴇ!\n\n{self.get_footer()}", parse_mode="Markdown")
 
     # ────═◈═─ DELETE/PURGE COMMANDS ─═◈═────
     async def del_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -501,7 +526,7 @@ class PikachuProtectionBot:
             await self.log_action(chat.id, log_msg)
             await context.bot.delete_message(chat.id, msg.message_id)
             await context.bot.delete_message(chat.id, update.message.message_id)
-            await update.message.reply_text(f"✅ **ᴅᴇʟᴇᴛᴇᴅ ᴀɴᴅ ʟᴏɢɢᴇᴅ!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"✅ **ᴅᴇʟᴇᴛᴇᴅ ᴀɴᴅ ʟᴏɢɢᴇᴅ!**\n\n{self.get_footer()}", parse_mode="Markdown")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
@@ -534,7 +559,7 @@ class PikachuProtectionBot:
                 except:
                     pass
             
-            await update.message.reply_text(f"🗑️ **ᴅᴇʟᴇᴛᴇᴅ {deleted} ᴍᴇssᴀɢᴇs!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"🗑️ **ᴅᴇʟᴇᴛᴇᴅ {deleted} ᴍᴇssᴀɢᴇs!**\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"🗑️ **ᴘᴜʀɢᴇᴅ** {deleted} ᴍᴇssᴀɢᴇs ʙʏ {user.first_name}")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
@@ -555,7 +580,7 @@ class PikachuProtectionBot:
         try:
             admins = await context.bot.get_chat_administrators(chat.id)
             await db.update_settings(chat.id, "admins", [admin.user.id for admin in admins])
-            await update.message.reply_text(f"✅ **ᴀᴅᴍɪɴs ʟɪsᴛ ʀᴇʟᴏᴀᴅᴇᴅ!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"✅ **ᴀᴅᴍɪɴs ʟɪsᴛ ʀᴇʟᴏᴀᴅᴇᴅ!**\n\n{self.get_footer()}", parse_mode="Markdown")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
@@ -590,7 +615,7 @@ class PikachuProtectionBot:
                 staff_text += f"╰┈➤ {admin.first_name}\n"
             
             staff_text += f"\n📊 **ᴛᴏᴛᴀʟ sᴛᴀғғ:** {len(admin_list) + 1}"
-            staff_text += self.get_footer()
+            staff_text += f"\n\n{self.get_footer()}"
             
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
             await update.message.reply_text(staff_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -633,6 +658,7 @@ class PikachuProtectionBot:
 └ ᴡᴀʀɴ ʟɪᴍɪᴛ: {settings.get('warn_limit', 3)}
 
 sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
+
 {self.get_footer()}
 """
         await update.message.reply_text(settings_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -656,7 +682,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         
         rules = " ".join(context.args)
         await db.set_rules(chat.id, rules)
-        await update.message.reply_text(f"✅ **ʀᴜʟᴇs sᴇᴛ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n📋 {rules}\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"✅ **ʀᴜʟᴇs sᴇᴛ sᴜᴄᴄᴇssғᴜʟʟʏ!**\n\n📋 {rules}\n\n{self.get_footer()}", parse_mode="Markdown")
 
     async def get_rules(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
@@ -667,9 +693,9 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         rules = await db.get_rules(chat.id)
         
         if rules:
-            await update.message.reply_text(f"📋 **ɢʀᴏᴜᴘ ʀᴜʟᴇs:**\n\n{rules}\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"📋 **ɢʀᴏᴜᴘ ʀᴜʟᴇs:**\n\n{rules}\n\n{self.get_footer()}", parse_mode="Markdown")
         else:
-            await update.message.reply_text(f"ℹ️ ɴᴏ ʀᴜʟᴇs sᴇᴛ ғᴏʀ ᴛʜɪs ɢʀᴏᴜᴘ.\nᴀᴅᴍɪɴs ᴄᴀɴ sᴇᴛ ʀᴜʟᴇs ᴜsɪɴɢ `/setrules`\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"ℹ️ ɴᴏ ʀᴜʟᴇs sᴇᴛ ғᴏʀ ᴛʜɪs ɢʀᴏᴜᴘ.\nᴀᴅᴍɪɴs ᴄᴀɴ sᴇᴛ ʀᴜʟᴇs ᴜsɪɴɢ `/setrules`\n\n{self.get_footer()}", parse_mode="Markdown")
 
     # ────═◈═─ PING COMMAND ─═◈═────
     async def ping_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -714,7 +740,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 :⧽ ᴅɪsᴋ : `{disk_used:.2f}GB / {disk_total:.2f}GB` ({disk_percent}%)
 :⧽ ᴩʏ-ᴛɢᴄᴀʟʟs : `✅ ᴀᴄᴛɪᴠᴇ`
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
         
         await msg.edit_text(ping_text, parse_mode="Markdown")
@@ -748,7 +774,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 📢 **ᴠᴇʀsɪᴏɴ:** 2.0.0
 🔰 **sᴛᴀᴛᴜs:** ᴀᴄᴛɪᴠᴇ
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
         keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
         await update.message.reply_text(about_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -771,7 +797,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ ᴘʀɪᴠᴀᴛᴇ ʟᴏɢs
 ╰┈➤ 24/7 sᴜᴘᴘᴏʀᴛ
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
         else:
             text = f"""
@@ -789,7 +815,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ᴄᴏɴᴛᴀᴄᴛ ᴏᴡɴᴇʀ ᴛᴏ ʙᴜʏ:
 📞 {Config.OWNER_USERNAME}
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
         keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
         await update.message.reply_text(text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
@@ -798,7 +824,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
     async def stats_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
         if user.id != Config.OWNER_ID:
-            await update.message.reply_text(f"❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!\n\n{self.get_footer()}", parse_mode="Markdown")
             return
         
         users_count = db.users.count_documents({})
@@ -823,7 +849,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ ᴏᴡɴᴇʀ: {Config.OWNER_NAME}
 ⚡ **sᴛᴀᴛᴜs:** ᴏɴʟɪɴᴇ
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
         await update.message.reply_text(stats_text, parse_mode="Markdown")
 
@@ -875,6 +901,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
   📊 ᴡᴀʀɴ: {warn_count}/{max_warns}
   📝 ʀᴇᴀsᴏɴ: {reason}
 ────═◈═─ ✧◈✧ ─═◈═────
+
 {self.get_footer()}
 """
         await update.message.reply_text(warn_msg, parse_mode="Markdown")
@@ -898,6 +925,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
   ⏱️ {mute_duration}s
   📝 ʀᴇᴀsᴏɴ: ᴇxᴄᴇᴇᴅᴇᴅ ᴡᴀʀɴ ʟɪᴍɪᴛ
 ────═◈═─ ✧◈✧ ─═◈═────
+
 {self.get_footer()}
 """
                 await update.message.reply_text(mute_msg, parse_mode="Markdown")
@@ -934,10 +962,10 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         warnings = await db.get_warnings(target.id, chat.id)
         if warnings:
             await db.clear_warnings(target.id, chat.id)
-            await update.message.reply_text(f"✅ **ʀᴇᴍᴏᴠᴇᴅ ᴀʟʟ ᴡᴀʀɴs ғᴏʀ {target.first_name}!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"✅ **ʀᴇᴍᴏᴠᴇᴅ ᴀʟʟ ᴡᴀʀɴs ғᴏʀ {target.first_name}!**\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"✅ **ᴜɴᴡᴀʀɴ** {target.first_name} ʙʏ {user.first_name}")
         else:
-            await update.message.reply_text(f"ℹ️ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴs!\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"ℹ️ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴs!\n\n{self.get_footer()}", parse_mode="Markdown")
 
     async def warns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
@@ -962,13 +990,13 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         warnings = await db.get_warnings(target.id, chat.id)
         
         if not warnings:
-            await update.message.reply_text(f"✅ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴɪɴɢs!\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"✅ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴɪɴɢs!\n\n{self.get_footer()}", parse_mode="Markdown")
             return
         
         warn_text = f"⚠️ **ᴡᴀʀɴɪɴɢs ғᴏʀ {target.first_name}:**\n\n"
         for i, warn in enumerate(warnings, 1):
             warn_text += f"└ {i}. {warn['reason']}\n"
-        warn_text += self.get_footer()
+        warn_text += f"\n{self.get_footer()}"
         
         await update.message.reply_text(warn_text, parse_mode="Markdown")
 
@@ -994,7 +1022,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         await db.add_warning(target.id, chat.id, "ᴅᴇʟᴇᴛᴇᴅ ᴍᴇssᴀɢᴇ", user.id)
         warnings = await db.get_warnings(target.id, chat.id)
         
-        await update.message.reply_text(f"⚠️ **ᴅᴇʟᴇᴛᴇᴅ ᴍᴇssᴀɢᴇ & ᴡᴀʀɴᴇᴅ {target.first_name}!** ({len(warnings)}/{Config.MAX_WARNINGS})\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"⚠️ **ᴅᴇʟᴇᴛᴇᴅ ᴍᴇssᴀɢᴇ & ᴡᴀʀɴᴇᴅ {target.first_name}!** ({len(warnings)}/{Config.MAX_WARNINGS})\n\n{self.get_footer()}", parse_mode="Markdown")
 
     async def reset_warns(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
@@ -1023,7 +1051,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             return
         
         await db.clear_warnings(target.id, chat.id)
-        await update.message.reply_text(f"✅ **ʀᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴs ғᴏʀ {target.first_name}!**\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"✅ **ʀᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴs ғᴏʀ {target.first_name}!**\n\n{self.get_footer()}", parse_mode="Markdown")
 
     # ────═◈═─ MUTE/UNMUTE COMMANDS ─═◈═────
     async def mute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1079,6 +1107,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
   ⏱️ {duration}s
   📝 ʀᴇᴀsᴏɴ: {reason}
 ────═◈═─ ✧◈✧ ─═◈═────
+
 {self.get_footer()}
 """
             await update.message.reply_text(mute_msg, parse_mode="Markdown")
@@ -1145,7 +1174,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
                     can_add_web_page_previews=True
                 )
             )
-            await update.message.reply_text(f"🔊 **ᴜɴᴍᴜᴛᴇᴅ {target.first_name}!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"🔊 **ᴜɴᴍᴜᴛᴇᴅ {target.first_name}!**\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"🔊 **ᴜɴᴍᴜᴛᴇ** {target.first_name} ʙʏ {user.first_name}")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
@@ -1186,7 +1215,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         try:
             await context.bot.ban_chat_member(chat.id, target.id)
             await context.bot.unban_chat_member(chat.id, target.id)
-            await update.message.reply_text(f"👢 **ᴋɪᴄᴋᴇᴅ {target.first_name}!**\n📝 ʀᴇᴀsᴏɴ: {reason}\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"👢 **ᴋɪᴄᴋᴇᴅ {target.first_name}!**\n📝 ʀᴇᴀsᴏɴ: {reason}\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"👢 **ᴋɪᴄᴋ** {target.first_name} ʙʏ {user.first_name} - {reason}")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
@@ -1225,7 +1254,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         
         try:
             await context.bot.ban_chat_member(chat.id, target.id)
-            await update.message.reply_text(f"🚫 **ʙᴀɴɴᴇᴅ {target.first_name}!**\n📝 ʀᴇᴀsᴏɴ: {reason}\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"🚫 **ʙᴀɴɴᴇᴅ {target.first_name}!**\n📝 ʀᴇᴀsᴏɴ: {reason}\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"🚫 **ʙᴀɴ** {target.first_name} ʙʏ {user.first_name} - {reason}")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
@@ -1256,7 +1285,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         
         try:
             await context.bot.unban_chat_member(chat.id, target.id)
-            await update.message.reply_text(f"✅ **ᴜɴʙᴀɴɴᴇᴅ {target.first_name}!**\n{self.get_footer()}", parse_mode="Markdown")
+            await update.message.reply_text(f"✅ **ᴜɴʙᴀɴɴᴇᴅ {target.first_name}!**\n\n{self.get_footer()}", parse_mode="Markdown")
             await self.log_action(chat.id, f"✅ **ᴜɴʙᴀɴ** {target.first_name} ʙʏ {user.first_name}")
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
@@ -1289,7 +1318,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             return
         
         await db.approve_user(target.id, chat.id)
-        await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ Yᴏᴜʀ Aʀᴇ Fʀᴇᴇ.\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ Yᴏᴜʀ Aʀᴇ Fʀᴇᴇ.\n\n{self.get_footer()}", parse_mode="Markdown")
         await self.log_action(chat.id, f"✅ **ᴀᴘᴘʀᴏᴠᴇ** {target.first_name} ʙʏ {user.first_name}")
 
     async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1319,7 +1348,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             return
         
         await db.unapprove_user(target.id, chat.id)
-        await update.message.reply_text(f"❌ **ᴜɴᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏ ᴍᴏʀᴇ ʟɪɴᴋs.\n{self.get_footer()}", parse_mode="Markdown")
+        await update.message.reply_text(f"❌ **ᴜɴᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏ ᴍᴏʀᴇ ʟɪɴᴋs.\n\n{self.get_footer()}", parse_mode="Markdown")
         await self.log_action(chat.id, f"❌ **ᴜɴᴀᴘᴘʀᴏᴠᴇ** {target.first_name} ʙʏ {user.first_name}")
 
     # ────═◈═─ WELCOME/GIODBYE HANDLERS ─═◈═────
@@ -1354,6 +1383,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 👥 **ᴍᴇᴍʙᴇʀs:** {member_count}
 ────═◈═─ ✧◈✧ ─═◈═────
 🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
+
 {self.get_footer()}
 """
             await context.bot.send_message(
@@ -1386,6 +1416,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ✦•····················•✦
 
 😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
+
 {self.get_footer()}
 """
         await context.bot.send_message(
@@ -1486,6 +1517,9 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
         
         if data == "main_menu":
+            user = update.effective_user
+            main_text = await self.get_main_menu_message(user, is_premium)
+            
             keyboard = [
                 [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
                 [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
@@ -1496,13 +1530,13 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             
             try:
                 await query.edit_message_text(
-                    f"🏠 **ᴍᴀɪɴ ᴍᴇɴᴜ**\n{self.get_footer()}",
+                    main_text,
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except:
                 await query.message.reply_text(
-                    f"🏠 **ᴍᴀɪɴ ᴍᴇɴᴜ**\n{self.get_footer()}",
+                    main_text,
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
@@ -1511,13 +1545,13 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
             try:
                 await query.edit_message_text(
-                    f"👥 ᴜsᴇ /staff ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ\n{self.get_footer()}",
+                    f"👥 ᴜsᴇ /staff ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except:
                 await query.message.reply_text(
-                    f"👥 ᴜsᴇ /staff ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ\n{self.get_footer()}",
+                    f"👥 ᴜsᴇ /staff ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
@@ -1550,7 +1584,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 📢 **ᴠᴇʀsɪᴏɴ:** 2.0.0
 🔰 **sᴛᴀᴛᴜs:** ᴀᴄᴛɪᴠᴇ
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
             try:
@@ -1600,7 +1634,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ /geturl - ɢᴇᴛ ᴍᴇssᴀɢᴇ ʟɪɴᴋ
 ╰┈➤ /pinned - ᴠɪᴇᴡ ᴘɪɴɴᴇᴅ
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
             try:
@@ -1611,9 +1645,9 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         elif data == "stats":
             if user_id != Config.OWNER_ID:
                 try:
-                    await query.edit_message_text(f"❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!\n{self.get_footer()}", parse_mode="Markdown")
+                    await query.edit_message_text(f"❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!\n\n{self.get_footer()}", parse_mode="Markdown")
                 except:
-                    await query.message.reply_text(f"❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!\n{self.get_footer()}", parse_mode="Markdown")
+                    await query.message.reply_text(f"❌ ᴏɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!\n\n{self.get_footer()}", parse_mode="Markdown")
                 return
             
             users_count = db.users.count_documents({})
@@ -1638,7 +1672,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ ᴏᴡɴᴇʀ: {Config.OWNER_NAME}
 ⚡ **sᴛᴀᴛᴜs:** ᴏɴʟɪɴᴇ
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
             try:
@@ -1655,13 +1689,13 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             ]
             try:
                 await query.edit_message_text(
-                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n{self.get_footer()}",
+                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except:
                 await query.message.reply_text(
-                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n{self.get_footer()}",
+                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
@@ -1679,7 +1713,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ ᴘʀɪᴠᴀᴛᴇ ʟᴏɢs
 ╰┈➤ 24/7 sᴜᴘᴘᴏʀᴛ
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
             else:
                 text = f"""
@@ -1697,7 +1731,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ᴄᴏɴᴛᴀᴄᴛ ᴏᴡɴᴇʀ ᴛᴏ ʙᴜʏ:
 📞 {Config.OWNER_USERNAME}
 
-:⧽ ʙʏ » {Config.OWNER_NAME}
+{self.get_footer()}
 """
             keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
             try:
@@ -1713,9 +1747,9 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             await db.update_settings(chat_id, setting, not current)
             
             try:
-                await query.edit_message_text(f"✅ **{setting.upper()}** {'ᴇɴᴀʙʟᴇᴅ' if not current else 'ᴅɪsᴀʙʟᴇᴅ'}!\n{self.get_footer()}", parse_mode="Markdown")
+                await query.edit_message_text(f"✅ **{setting.upper()}** {'ᴇɴᴀʙʟᴇᴅ' if not current else 'ᴅɪsᴀʙʟᴇᴅ'}!\n\n{self.get_footer()}", parse_mode="Markdown")
             except:
-                await query.message.reply_text(f"✅ **{setting.upper()}** {'ᴇɴᴀʙʟᴇᴅ' if not current else 'ᴅɪsᴀʙʟᴇᴅ'}!\n{self.get_footer()}", parse_mode="Markdown")
+                await query.message.reply_text(f"✅ **{setting.upper()}** {'ᴇɴᴀʙʟᴇᴅ' if not current else 'ᴅɪsᴀʙʟᴇᴅ'}!\n\n{self.get_footer()}", parse_mode="Markdown")
             
             await asyncio.sleep(1)
             
@@ -1727,13 +1761,13 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             ]
             try:
                 await query.edit_message_text(
-                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n{self.get_footer()}",
+                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except:
                 await query.message.reply_text(
-                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n{self.get_footer()}",
+                    f"⚙️ **sᴇᴛᴛɪɴɢs ᴍᴇɴᴜ**\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
@@ -1756,13 +1790,13 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             display_name = data.replace("set_", "").upper()
             try:
                 await query.edit_message_text(
-                    f"{display_name}\n\nᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs: {'✅ ᴇɴᴀʙʟᴇᴅ' if current else '❌ ᴅɪsᴀʙʟᴇᴅ'}\n{self.get_footer()}",
+                    f"{display_name}\n\nᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs: {'✅ ᴇɴᴀʙʟᴇᴅ' if current else '❌ ᴅɪsᴀʙʟᴇᴅ'}\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
             except:
                 await query.message.reply_text(
-                    f"{display_name}\n\nᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs: {'✅ ᴇɴᴀʙʟᴇᴅ' if current else '❌ ᴅɪsᴀʙʟᴇᴅ'}\n{self.get_footer()}",
+                    f"{display_name}\n\nᴄᴜʀʀᴇɴᴛ sᴛᴀᴛᴜs: {'✅ ᴇɴᴀʙʟᴇᴅ' if current else '❌ ᴅɪsᴀʙʟᴇᴅ'}\n\n{self.get_footer()}",
                     parse_mode="Markdown",
                     reply_markup=InlineKeyboardMarkup(keyboard)
                 )
@@ -1775,7 +1809,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
                 await context.bot.send_message(
                     update.effective_chat.id,
                     f"❌ **ᴀɴ ᴇʀʀᴏʀ ᴏᴄᴄᴜʀʀᴇᴅ!**\n"
-                    f"ᴇʀʀᴏʀ: `{str(context.error)[:100]}`\n{self.get_footer()}",
+                    f"ᴇʀʀᴏʀ: `{str(context.error)[:100]}`\n\n{self.get_footer()}",
                     parse_mode="Markdown"
                 )
         except:
