@@ -40,7 +40,6 @@ from config import Config
 from database import Database
 from handles import Handlers
 from keyboards import Keyboards
-from utils import Utils
 
 # Setup logging
 logging.basicConfig(
@@ -107,28 +106,18 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
 📌 <b>Aᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ ᴀɴᴅ ᴍᴀᴋᴇ ᴍᴇ ᴀᴅᴍɪɴ!</b>
 {self.get_owner_credit()}
 """
-            keyboard = [
-                [InlineKeyboardButton("📊 Sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ Sᴇᴛᴛɪɴɢs", callback_data="settings")],
-                [InlineKeyboardButton("📖 Hᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ Aʙᴏᴜᴛ", callback_data="about")],
-                [InlineKeyboardButton("👥 Sᴛᴀғғ", callback_data="staff"), InlineKeyboardButton("🔄 SG", callback_data="sg")],
-                [InlineKeyboardButton("📜 Hɪsᴛᴏʀʏ", callback_data="history"), InlineKeyboardButton("💬 Cʜᴀᴛ", callback_data="chat")],
-                [InlineKeyboardButton("👑 Rᴏʟᴇs", callback_data="roles")],
-                [InlineKeyboardButton("🔗 Kɪᴅɴᴀᴘ Mᴇ - Aᴅᴅ Tᴏ Gʀᴏᴜᴘ", url=f"https://t.me/{context.bot.username}?startgroup=start")]
-            ]
-            if is_premium:
-                keyboard.append([InlineKeyboardButton("💎 Pʀᴇᴍɪᴜᴍ", callback_data="premium")])
-            
+            keyboard = Keyboards.main_menu(is_premium)
             try:
                 await query.edit_message_text(
                     main_text,
                     parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
+                    reply_markup=keyboard
                 )
             except:
                 await query.message.reply_text(
                     main_text,
                     parse_mode="HTML",
-                    reply_markup=InlineKeyboardMarkup(keyboard)
+                    reply_markup=keyboard
                 )
             return
 
@@ -297,18 +286,18 @@ Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!{sel
             return
 
         elif data == "roles":
-            roles_text = Keyboards.role_keyboard()
+            keyboard = Keyboards.role_keyboard()
             try:
                 await query.edit_message_text(
                     f"👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>\n\nSᴇʟᴇᴄᴛ ᴀ ʀᴏʟᴇ ᴛᴏ ʟᴇᴀʀɴ ᴍᴏʀᴇ:{self.get_owner_credit()}",
                     parse_mode="HTML",
-                    reply_markup=roles_text
+                    reply_markup=keyboard
                 )
             except:
                 await query.message.reply_text(
                     f"👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>\n\nSᴇʟᴇᴄᴛ ᴀ ʀᴏʟᴇ ᴛᴏ ʟᴇᴀʀɴ ᴍᴏʀᴇ:{self.get_owner_credit()}",
                     parse_mode="HTML",
-                    reply_markup=roles_text
+                    reply_markup=keyboard
                 )
             return
 
@@ -402,8 +391,13 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
             self.app.add_handler(CommandHandler("start", handlers.start))
             self.app.add_handler(CommandHandler("help", handlers.help_command))
             self.app.add_handler(CommandHandler("warn", handlers.warn_command))
-            
-            # Add more handlers from handles.py as needed
+            self.app.add_handler(CommandHandler("warns", handlers.warns_command))
+            self.app.add_handler(CommandHandler("resetwarns", handlers.resetwarns_command))
+            self.app.add_handler(CommandHandler("mute", handlers.mute_command))
+            self.app.add_handler(CommandHandler("unmute", handlers.unmute_command))
+            self.app.add_handler(CommandHandler("kick", handlers.kick_command))
+            self.app.add_handler(CommandHandler("ban", handlers.ban_command))
+            self.app.add_handler(CommandHandler("unban", handlers.unban_command))
             
             # Callback handler
             self.app.add_handler(CallbackQueryHandler(self.callback_handler))
