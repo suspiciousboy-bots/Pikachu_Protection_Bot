@@ -100,6 +100,9 @@ class Database:
         rules = self.rules.find_one({"group_id": group_id})
         return rules.get("rules") if rules else None
     
+    async def delete_rules(self, group_id):
+        return self.rules.delete_one({"group_id": group_id})
+    
     # ────═◈═─ SETTINGS METHODS ─═◈═────
     async def get_settings(self, group_id):
         settings = self.settings.find_one({"group_id": group_id})
@@ -113,7 +116,8 @@ class Database:
                 "anti18": True,
                 "warn_limit": 3,
                 "mute_duration": 300,
-                "approved_users": []
+                "approved_users": [],
+                "admins": []
             }
             self.settings.insert_one(settings)
         return settings
@@ -123,6 +127,41 @@ class Database:
             {"group_id": group_id},
             {"$set": {key: value}},
             upsert=True
+        )
+    
+    # ────═◈═─ CUSTOM WELCOME/GIODBYE METHODS ─═◈═────
+    async def set_custom_welcome(self, group_id, message):
+        return self.settings.update_one(
+            {"group_id": group_id},
+            {"$set": {"custom_welcome": message}},
+            upsert=True
+        )
+    
+    async def get_custom_welcome(self, group_id):
+        settings = self.settings.find_one({"group_id": group_id})
+        return settings.get("custom_welcome") if settings else None
+    
+    async def delete_custom_welcome(self, group_id):
+        return self.settings.update_one(
+            {"group_id": group_id},
+            {"$unset": {"custom_welcome": ""}}
+        )
+    
+    async def set_custom_goodbye(self, group_id, message):
+        return self.settings.update_one(
+            {"group_id": group_id},
+            {"$set": {"custom_goodbye": message}},
+            upsert=True
+        )
+    
+    async def get_custom_goodbye(self, group_id):
+        settings = self.settings.find_one({"group_id": group_id})
+        return settings.get("custom_goodbye") if settings else None
+    
+    async def delete_custom_goodbye(self, group_id):
+        return self.settings.update_one(
+            {"group_id": group_id},
+            {"$unset": {"custom_goodbye": ""}}
         )
     
     # ────═◈═─ APPROVE/UNAPPROVE METHODS ─═◈═────
@@ -145,6 +184,10 @@ class Database:
             return user_id in settings["approved_users"]
         return False
     
+    async def get_approved_users(self, group_id):
+        settings = self.settings.find_one({"group_id": group_id})
+        return settings.get("approved_users", []) if settings else []
+    
     # ────═◈═─ PREMIUM METHODS ─═◈═────
     async def check_premium(self, user_id):
         premium = self.premium.find_one({"user_id": user_id})
@@ -166,3 +209,25 @@ class Database:
             }},
             upsert=True
         )
+    
+    async def remove_premium(self, user_id):
+        return self.premium.delete_one({"user_id": user_id})
+    
+    async def get_premium_users(self):
+        return list(self.premium.find({"expiry_date": {"$gt": datetime.datetime.now()}}))
+    
+    # ────═◈═─ STATS METHODS ─═◈═────
+    async def get_user_count(self):
+        return self.users.count_documents({})
+    
+    async def get_group_count(self):
+        return self.groups.count_documents({})
+    
+    async def get_warning_count(self):
+        return self.warnings.count_documents({})
+    
+    async def get_mute_count(self):
+        return self.mutes.count_documents({})
+    
+    async def get_premium_count(self):
+        return self.premium.count_documents({"expiry_date": {"$gt": datetime.datetime.now()}})
