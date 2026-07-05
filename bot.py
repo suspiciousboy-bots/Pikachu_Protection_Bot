@@ -32,7 +32,7 @@ threading.Thread(target=run_web, daemon=True).start()
 print("🌐 Web server started")
 # ──────────────────────────────────────────────────
 
-from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions, User
+from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup, ChatPermissions
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from telegram.constants import ParseMode
 
@@ -329,8 +329,8 @@ Tᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ʀᴏʟᴇ: /un{role_name.lower()} @ᴜsᴇʀ
                 await query.message.reply_text(text, parse_mode="HTML")
             return
 
-        elif data.startswith("set_"):
-            setting = data.replace("set_", "")
+        elif data.startswith("toggle_"):
+            setting = data.replace("toggle_", "")
             chat_id = update.effective_chat.id
             settings = await db.get_settings(chat_id)
             current = settings.get(setting, True)
@@ -385,6 +385,7 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
     # ────═◈═─ RUN BOT ─═◈═────
     def run(self):
         try:
+            # Build application with updater
             self.app = Application.builder().token(Config.BOT_TOKEN).build()
             
             # Command handlers - Using handlers from handles.py
