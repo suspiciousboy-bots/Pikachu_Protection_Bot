@@ -63,6 +63,13 @@ class PikachuProtectionBot:
         except:
             return False
 
+    async def is_owner(self, context, chat_id, user_id):
+        try:
+            member = await context.bot.get_chat_member(chat_id, user_id)
+            return member.status == 'creator'
+        except:
+            return False
+
     async def get_user_role(self, user_id, chat_id):
         role_data = await db.get_user_role(user_id, chat_id)
         if role_data:
@@ -511,6 +518,8 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
 <b>STATUS:</b> {role}
 ╚═══════════════════════════════════╝
 
+Yᴏᴜ ᴡᴏɴ'ᴛ ʟᴇᴀᴠᴇ ᴍᴇ, ʀɪɢʜᴛ...?
+I'ᴍ ɴᴏᴛ ᴀ ʜᴜᴍᴀɴ...
 {self.get_owner_credit()}
 """
                 
@@ -739,6 +748,8 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 ╰┈➤ /pin - Pɪɴ ᴀ ᴍᴇssᴀɢᴇ
 ╰┈➤ /unpin - Uɴᴘɪɴ
 ╰┈➤ /pinned - Vɪᴇᴡ ᴘɪɴɴᴇᴅ
+╰┈➤ /editpin - Eᴅɪᴛ ᴘɪɴɴᴇᴅ
+╰┈➤ /delpin - Dᴇʟᴇᴛᴇ ᴘɪɴɴᴇᴅ
 
 <b>🗑️ Dᴇʟᴇᴛᴇ Cᴏᴍᴍᴀɴᴅs:</b>
 ╰┈➤ /del - Dᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ
@@ -758,6 +769,8 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 ╰┈➤ /sg @user - Uꜱᴇʀ ʜɪsᴛᴏʀʏ
 ╰┈➤ /history @user - Fᴜʟʟ ʜɪsᴛᴏʀʏ
 ╰┈➤ /chat - Cʜᴀᴛ ᴡɪᴛʜ ʙᴏᴛ
+╰┈➤ /filter - Aᴅᴅ ғɪʟᴛᴇʀ
+╰┈➤ /filters - Lɪsᴛ ғɪʟᴛᴇʀs
 
 <b>🔰 Mᴏᴅᴇʀᴀᴛᴏʀ Cᴏᴍᴍᴀɴᴅs:</b>
 ╰┈➤ /reload - Rᴇʟᴏᴀᴅ ᴀᴅᴍɪɴs
@@ -2137,7 +2150,7 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
                 parse_mode="HTML"
             )
 
-    # ────═◈═─ CALLBACK HANDLER (FIXED) ─═◈═────
+    # ────═◈═─ CALLBACK HANDLER ─═◈═────
     async def callback_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         query = update.callback_query
         await query.answer()
@@ -2146,7 +2159,6 @@ Sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         user_id = update.effective_user.id
         is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
         
-        # Handle main menu
         if data == "main_menu":
             user = update.effective_user
             main_text = f"""
@@ -2184,17 +2196,26 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
             if is_premium:
                 keyboard.append([InlineKeyboardButton("💎 Pʀᴇᴍɪᴜᴍ", callback_data="premium")])
             
-            await query.edit_message_text(
-                main_text,
-                parse_mode="HTML",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            try:
+                await query.edit_message_text(
+                    main_text,
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except Exception as e:
+                await query.message.reply_text(
+                    main_text,
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
             return
 
-        # Handle Stats
         elif data == "stats":
             if user_id != Config.OWNER_ID:
-                await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="HTML")
+                try:
+                    await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="HTML")
+                except:
+                    await query.message.reply_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ ᴄᴀɴ ᴠɪᴇᴡ sᴛᴀᴛs!", parse_mode="HTML")
                 return
             
             users_count = db.users.count_documents({})
@@ -2220,10 +2241,12 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
 {self.get_owner_credit()}
 """
             keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
             return
 
-        # Handle Settings
         elif data == "settings":
             keyboard = [
                 [InlineKeyboardButton("👋 Wᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"), InlineKeyboardButton("👋 Gᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")],
@@ -2231,14 +2254,20 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
                 [InlineKeyboardButton("🔞 Aɴᴛɪ-18+", callback_data="set_anti18")],
                 [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
             ]
-            await query.edit_message_text(
-                f"⚙️ <b>Sᴇᴛᴛɪɴɢs Mᴇɴᴜ</b>\n\n{self.get_owner_credit()}",
-                parse_mode="HTML",
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            try:
+                await query.edit_message_text(
+                    f"⚙️ <b>Sᴇᴛᴛɪɴɢs Mᴇɴᴜ</b>\n\n{self.get_owner_credit()}",
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
+            except:
+                await query.message.reply_text(
+                    f"⚙️ <b>Sᴇᴛᴛɪɴɢs Mᴇɴᴜ</b>\n\n{self.get_owner_credit()}",
+                    parse_mode="HTML",
+                    reply_markup=InlineKeyboardMarkup(keyboard)
+                )
             return
 
-        # Handle Help
         elif data == "help":
             help_text = f"""
 📖 <b>POWERFUL COMMANDS LIST</b> 📖
@@ -2273,10 +2302,12 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
 {self.get_owner_credit()}
 """
             keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(help_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
             return
 
-        # Handle About
         elif data == "about":
             text = f"""
 ⚡ <b>Aʙᴏᴜᴛ {Config.BOT_NAME}</b> ⚡
@@ -2297,44 +2328,57 @@ Tʜᴇ Uʟᴛɪᴍᴀᴛᴇ Gʀᴏᴜᴘ Mᴀɴᴀɢᴇᴍᴇɴᴛ Bᴏᴛ
 {self.get_owner_credit()}
 """
             keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
             return
 
-        # Handle Staff
         elif data == "staff":
-            await query.edit_message_text("👥 Uꜱᴇ /sᴛᴀғғ ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ!", parse_mode="HTML")
+            try:
+                await query.edit_message_text("👥 Uꜱᴇ /sᴛᴀғғ ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ!", parse_mode="HTML")
+            except:
+                await query.message.reply_text("👥 Uꜱᴇ /sᴛᴀғғ ᴛᴏ ᴠɪᴇᴡ sᴛᴀғғ ʟɪsᴛ!", parse_mode="HTML")
             return
 
-        # Handle SG
         elif data == "sg":
-            await query.edit_message_text(
-                f"🔄 <b>SG - Uꜱᴇʀ Hɪsᴛᴏʀʏ</b>\n\n"
-                f"Uꜱᴇ /sɢ @ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ\n"
-                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
+            text = f"""
+🔄 <b>SG - Uꜱᴇʀ Hɪsᴛᴏʀʏ</b>
+
+Uꜱᴇ /sɢ @ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ
+Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}
+"""
+            try:
+                await query.edit_message_text(text, parse_mode="HTML")
+            except:
+                await query.message.reply_text(text, parse_mode="HTML")
             return
 
-        # Handle History
         elif data == "history":
-            await query.edit_message_text(
-                f"📜 <b>Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ</b>\n\n"
-                f"Uꜱᴇ /ʜɪsᴛᴏʀʏ @ᴜsᴇʀɴᴀᴍᴇ\n"
-                f"Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ᴄʜᴀɴɢᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
+            text = f"""
+📜 <b>Hɪsᴛᴏʀʏ Tʀᴀᴄᴋɪɴɢ</b>
+
+Uꜱᴇ /ʜɪsᴛᴏʀʏ @ᴜsᴇʀɴᴀᴍᴇ
+Tᴏ ᴠɪᴇᴡ ᴛʜᴇɪʀ ᴄᴏᴍᴘʟᴇᴛᴇ ᴄʜᴀɴɢᴇ ʜɪsᴛᴏʀʏ!{self.get_owner_credit()}
+"""
+            try:
+                await query.edit_message_text(text, parse_mode="HTML")
+            except:
+                await query.message.reply_text(text, parse_mode="HTML")
             return
 
-        # Handle Chat
         elif data == "chat":
-            await query.edit_message_text(
-                f"💬 <b>Cʜᴀᴛ ᴡɪᴛʜ ᴍᴇ!</b>\n\n"
-                f"Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
+            text = f"""
+💬 <b>Cʜᴀᴛ ᴡɪᴛʜ ᴍᴇ!</b>
+
+Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇsᴘᴏɴᴅ!{self.get_owner_credit()}
+"""
+            try:
+                await query.edit_message_text(text, parse_mode="HTML")
+            except:
+                await query.message.reply_text(text, parse_mode="HTML")
             return
 
-        # Handle Roles
         elif data == "roles":
             roles_text = f"""
 👑 <b>Uꜱᴇʀ Rᴏʟᴇs</b>
@@ -2363,10 +2407,12 @@ Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
                 [InlineKeyboardButton("🔓 Fʀᴇᴇ", callback_data="role_free")],
                 [InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]
             ]
-            await query.edit_message_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(roles_text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
             return
 
-        # Handle Role buttons (role_founder, role_cofounder, etc.)
         elif data.startswith("role_"):
             role_name = data.replace("role_", "").upper()
             descriptions = {
@@ -2380,16 +2426,21 @@ Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
                 "FREE": "Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏᴍᴀᴛɪᴄ ᴘᴜɴɪsʜᴍᴇɴᴛ"
             }
             desc = descriptions.get(role_name, "")
-            await query.edit_message_text(
-                f"👑 <b>{role_name} Rᴏʟᴇ</b>\n\n"
-                f"Tᴏ ᴀᴅᴅ ᴛʜɪs ʀᴏʟᴇ: /{role_name.lower()} @ᴜsᴇʀ\n"
-                f"Tᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ʀᴏʟᴇ: /ᴜɴ{role_name.lower()} @ᴜsᴇʀ\n\n"
-                f"<b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>\n{desc}{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
+            text = f"""
+👑 <b>{role_name} Rᴏʟᴇ</b>
+
+Tᴏ ᴀᴅᴅ ᴛʜɪs ʀᴏʟᴇ: /{role_name.lower()} @ᴜsᴇʀ
+Tᴏ ʀᴇᴍᴏᴠᴇ ᴛʜɪs ʀᴏʟᴇ: /ᴜɴ{role_name.lower()} @ᴜsᴇʀ
+
+<b>Dᴇsᴄʀɪᴘᴛɪᴏɴ:</b>
+{desc}{self.get_owner_credit()}
+"""
+            try:
+                await query.edit_message_text(text, parse_mode="HTML")
+            except:
+                await query.message.reply_text(text, parse_mode="HTML")
             return
 
-        # Handle Settings toggles
         elif data.startswith("set_"):
             setting = data.replace("set_", "")
             chat_id = update.effective_chat.id
@@ -2397,13 +2448,13 @@ Tᴏ ᴀᴅᴅ/ʀᴇᴍᴏᴠᴇ ʀᴏʟᴇs:
             current = settings.get(setting, True)
             await db.update_settings(chat_id, setting, not current)
             
-            await query.edit_message_text(
-                f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}",
-                parse_mode="HTML"
-            )
+            text = f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!{self.get_owner_credit()}"
+            try:
+                await query.edit_message_text(text, parse_mode="HTML")
+            except:
+                await query.message.reply_text(text, parse_mode="HTML")
             return
 
-        # Handle Premium
         elif data == "premium":
             if is_premium:
                 text = f"""
@@ -2437,7 +2488,10 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
 {self.get_owner_credit()}
 """
             keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            try:
+                await query.edit_message_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            except:
+                await query.message.reply_text(text, parse_mode="HTML", reply_markup=InlineKeyboardMarkup(keyboard))
             return
 
     # ────═◈═─ ERROR HANDLER ─═◈═────
