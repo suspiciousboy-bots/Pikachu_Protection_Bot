@@ -39,15 +39,15 @@ class Keyboards:
         """Settings menu keyboard"""
         keyboard = [
             [
-                InlineKeyboardButton("👋 ᴡᴇʟᴄᴏᴍᴇ", callback_data="set_welcome"),
-                InlineKeyboardButton("👋 ɢᴏᴏᴅʙʏᴇ", callback_data="set_goodbye")
+                InlineKeyboardButton("👋 ᴡᴇʟᴄᴏᴍᴇ", callback_data="toggle_welcome"),
+                InlineKeyboardButton("👋 ɢᴏᴏᴅʙʏᴇ", callback_data="toggle_goodbye")
             ],
             [
-                InlineKeyboardButton("🛡️ ᴀɴᴛɪ-sᴘᴀᴍ", callback_data="set_antispam"),
-                InlineKeyboardButton("🔗 ᴀɴᴛɪ-ʟɪɴᴋ", callback_data="set_antilink")
+                InlineKeyboardButton("🛡️ ᴀɴᴛɪ-sᴘᴀᴍ", callback_data="toggle_antispam"),
+                InlineKeyboardButton("🔗 ᴀɴᴛɪ-ʟɪɴᴋ", callback_data="toggle_antilink")
             ],
             [
-                InlineKeyboardButton("🔞 ᴀɴᴛɪ-18+", callback_data="set_anti18")
+                InlineKeyboardButton("🔞 ᴀɴᴛɪ-18+", callback_data="toggle_anti18")
             ],
             [
                 InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")
