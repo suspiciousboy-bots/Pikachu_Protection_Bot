@@ -26,7 +26,7 @@ def health():
 
 def run_web():
     port = int(os.environ.get("PORT", 8080))
-    flask_app.run(host='0.0.0.0', port=port, debug=False)
+    flask_app.run(host='0.0.0.0', port=port, debug=False, use_reloader=False)
 
 threading.Thread(target=run_web, daemon=True).start()
 print("🌐 Web server started")
@@ -111,8 +111,7 @@ I ᴀᴍ ᴛʜᴇ ᴜʟᴛɪᴍᴀᴛᴇ ɢʀᴏᴜᴘ ᴍᴀɴᴀɢᴇᴍᴇɴ�
                 await query.edit_message_text(
                     main_text,
                     parse_mode="HTML",
-                    reply_markup=keyboard
-                )
+                    reply_markup=keyboard                )
             except:
                 await query.message.reply_text(
                     main_text,
