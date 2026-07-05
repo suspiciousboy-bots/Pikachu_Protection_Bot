@@ -136,9 +136,6 @@ class Handlers:
     @staticmethod
     async def about_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /about command"""
-        user = update.effective_user
-        is_premium = await db.is_premium(user.id)
-        
         text = f"""
 ⚡ <b>Aʙᴏᴜᴛ {Config.BOT_NAME}</b> ⚡
 
@@ -514,7 +511,8 @@ Yᴏᴜ ᴄᴀɴ sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ ᴀɴᴅ I'ʟʟ ʀᴇ
 ╰┈➤ Pʀᴏᴠɪᴅᴇ ɪɴғᴏʀᴍᴀᴛɪᴏɴ
 ╰┈➤ Hᴀᴠᴇ ᴀ ᴄᴏɴᴠᴇʀsᴀᴛɪᴏɴ
 
-Jᴜsᴛ ᴛʏᴘᴇ ᴀɴʏᴛʜɪɴɢ!{Config.OWNER_NAME}
+Jᴜsᴛ ᴛʏᴘᴇ ᴀɴʏᴛʜɪɴɢ!
+:⧽ ʙʏ » {Config.OWNER_NAME}
 """
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
     
@@ -533,7 +531,8 @@ Jᴜsᴛ ᴛʏᴘᴇ ᴀɴʏᴛʜɪɴɢ!{Config.OWNER_NAME}
 <b>Hᴇʟᴘᴇʀ:</b> Aᴘᴘᴇᴀʀs ɪɴ sᴛᴀғғ
 <b>Fʀᴇᴇ:</b> Iɢɴᴏʀᴇᴅ ʙʏ ᴀᴜᴛᴏ-ᴘᴜɴɪsʜᴍᴇɴᴛ
 
-Uꜱᴇ /help ᴛᴏ sᴇᴇ ʀᴏʟᴇ ᴄᴏᴍᴍᴀɴᴅs!{Config.OWNER_NAME}
+Uꜱᴇ /help ᴛᴏ sᴇᴇ ʀᴏʟᴇ ᴄᴏᴍᴍᴀɴᴅs!
+:⧽ ʙʏ » {Config.OWNER_NAME}
 """
         keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
         await update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
@@ -1288,8 +1287,11 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
     async def unfree_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await Handlers._remove_role(update, context, "Free")
     
+    # ────═◈═─ ROLE HELPER METHODS ─═◈═────
+    
     @staticmethod
     async def _add_role(update: Update, context: ContextTypes.DEFAULT_TYPE, role: str):
+        """Helper method to add role"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
@@ -1306,7 +1308,7 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
             return
         
         if not context.args:
-            await update.message.reply_text(f"⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ!\nᴇxᴀᴍᴘʟᴇ: /{context.args[0] if context.args else 'role'} @ᴜsᴇʀ")
+            await update.message.reply_text(f"⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ!\nᴇxᴀᴍᴘʟᴇ: /{role.lower().replace(' ', '')} @ᴜsᴇʀ")
             return
         
         username = context.args[0].replace('@', '')
@@ -1319,8 +1321,9 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
         await db.set_user_role(target.id, chat.id, role)
         await update.message.reply_text(f"✅ <b>{role}</b> ʀᴏʟᴇ ᴀᴅᴅᴇᴅ ᴛᴏ {target.first_name}!", parse_mode=ParseMode.HTML)
     
-        @staticmethod
+    @staticmethod
     async def _remove_role(update: Update, context: ContextTypes.DEFAULT_TYPE, role: str):
+        """Helper method to remove role"""
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
             return
