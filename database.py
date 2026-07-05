@@ -67,6 +67,14 @@ class Database:
             logger.error(f"Error adding user {user_id}: {e}")
             return False
 
+    async def get_user(self, user_id):
+        """Get user by ID"""
+        try:
+            return self.users.find_one({"user_id": user_id})
+        except Exception as e:
+            logger.error(f"Error getting user {user_id}: {e}")
+            return None
+
     async def get_user_stats(self, user_id):
         """Get user statistics"""
         try:
@@ -202,13 +210,6 @@ class Database:
             staff = list(self.user_roles.find(
                 {"chat_id": chat_id, "role": {"$in": staff_roles}}
             ))
-            
-            for member in staff:
-                user = self.users.find_one({"user_id": member["user_id"]})
-                if user:
-                    member["first_name"] = user.get("first_name", "Unknown")
-                    member["username"] = user.get("username", "")
-            
             return staff
         except Exception as e:
             logger.error(f"Error getting staff for {chat_id}: {e}")
@@ -446,30 +447,6 @@ class Database:
             logger.error(f"Error getting filters for {chat_id}: {e}")
             return []
 
-    # ────═◈═─ RULES METHODS ─═◈═────
-    
-    async def set_rules(self, chat_id, rules):
-        """Set group rules"""
-        try:
-            self.rules.update_one(
-                {"chat_id": chat_id},
-                {"$set": {"rules": rules, "updated": datetime.now()}},
-                upsert=True
-            )
-            return True
-        except Exception as e:
-            logger.error(f"Error setting rules for {chat_id}: {e}")
-            return False
-
-    async def get_rules(self, chat_id):
-        """Get group rules"""
-        try:
-            rule = self.rules.find_one({"chat_id": chat_id})
-            return rule.get("rules") if rule else None
-        except Exception as e:
-            logger.error(f"Error getting rules for {chat_id}: {e}")
-            return None
-
     # ────═◈═─ APPROVE METHODS ─═◈═────
     
     async def approve_user(self, user_id, chat_id):
@@ -529,25 +506,6 @@ class Database:
         except Exception as e:
             logger.error(f"Error getting group stats for {chat_id}: {e}")
             return {"members": 0, "messages": 0, "active_users": 0}
-
-    # ────═◈═─ BOT STATS METHODS ─═◈═────
-    
-    async def get_bot_stats(self):
-        """Get bot statistics"""
-        try:
-            return {
-                "users": self.users.count_documents({}),
-                "groups": self.groups.count_documents({}),
-                "warnings": self.warnings.count_documents({}),
-                "mutes": self.mutes.count_documents({}),
-                "premium": self.premium.count_documents({}),
-                "history": self.user_history.count_documents({}),
-                "filters": self.filters.count_documents({}),
-                "messages": self.messages.count_documents({})
-            }
-        except Exception as e:
-            logger.error(f"Error getting bot stats: {e}")
-            return {}
 
     # ────═◈═─ CLEANUP METHODS ─═◈═────
     
