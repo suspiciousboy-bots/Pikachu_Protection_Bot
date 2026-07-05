@@ -8,7 +8,7 @@ class Config:
     
     # Owner Configuration
     OWNER_ID = int(os.environ.get("OWNER_ID", "7790607144"))  # Your ID
-    OWNER_NAME = "CRAZY BOY"  # Your name
+    OWNER_NAME = "⏤͟͞ 𝐂𝐑𝐀𝐙𝐘 𝐁𝐎𝐘 ᭄࿐"  # Your name
     OWNER_USERNAME = "@OfficiallyCrazyBoy07"  # Your username
     
     # Premium Users (List of user IDs)
