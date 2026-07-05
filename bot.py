@@ -83,13 +83,6 @@ class PikachuProtectionBot:
         except:
             return False
 
-    async def get_user_info(self, context, user_id):
-        try:
-            user = await context.bot.get_chat(user_id)
-            return user
-        except:
-            return None
-
     async def log_action(self, chat_id, message):
         if self.log_channel:
             try:
@@ -101,13 +94,13 @@ class PikachuProtectionBot:
         return f"\n\n:⧽ ʙʏ » {Config.OWNER_NAME}"
 
     # ────═◈═─ START COMMAND ─═◈═────
-async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    await db.add_user(user.id, user.username, user.first_name)
-    
-    is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
-    
-    welcome_text = f"""
+    async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user = update.effective_user
+        await db.add_user(user.id, user.username, user.first_name)
+        
+        is_premium = user.id in Config.PREMIUM_USERS or user.id == Config.OWNER_ID
+        
+        welcome_text = f"""
 ✨ **ʜᴇʟʟᴏ {user.first_name}!** ✨
 
 👋 **ɪ ᴀᴍ {Config.BOT_NAME}** 🤖
@@ -128,16 +121,16 @@ async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
 🆘 **sᴜᴘᴘᴏʀᴛ:** https://t.me/+Fgx6_JRTLkFjMjE1
 {self.get_footer()}
 """
-    
-    keyboard = [
-        [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
-        [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
-        [InlineKeyboardButton("👥 sᴛᴀғғ", callback_data="staff")]
-    ]
-    if is_premium:
-        keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
-    
-    await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+        
+        keyboard = [
+            [InlineKeyboardButton("📊 sᴛᴀᴛs", callback_data="stats"), InlineKeyboardButton("⚙️ sᴇᴛᴛɪɴɢs", callback_data="settings")],
+            [InlineKeyboardButton("📖 ʜᴇʟᴘ", callback_data="help"), InlineKeyboardButton("ℹ️ ᴀʙᴏᴜᴛ", callback_data="about")],
+            [InlineKeyboardButton("👥 sᴛᴀғғ", callback_data="staff")]
+        ]
+        if is_premium:
+            keyboard.append([InlineKeyboardButton("💎 ᴘʀᴇᴍɪᴜᴍ", callback_data="premium")])
+        
+        await update.message.reply_text(welcome_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
 
     # ────═◈═─ HELP COMMAND ─═◈═────
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -151,7 +144,7 @@ async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
 ╰┈➤ /warn @user - ᴡᴀʀɴ ᴜsᴇʀ
 ╰┈➤ /unwarn @user - ʀᴇᴍᴏᴠᴇ ᴡᴀʀɴ
 ╰┈➤ /warns @user - ᴄʜᴇᴄᴋ ᴡᴀʀɴs
-╰┈➤ /delwarn - ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ & ᴡᴀʀɴ ᴜsᴇʀ
+╰┈➤ /delwarn - ᴅᴇʟᴇᴛᴇ ᴍᴇssᴀɢᴇ & ᴡᴀʀɴ
 ╰┈➤ /resetwarns @user - ʀᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴs
 ╰┈➤ /mute @user - ᴍᴜᴛᴇ ᴜsᴇʀ
 ╰┈➤ /unmute @user - ᴜɴᴍᴜᴛᴇ ᴜsᴇʀ
@@ -169,6 +162,9 @@ async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
 ╰┈➤ /setrules - sᴇᴛ ɢʀᴏᴜᴘ ʀᴜʟᴇs
 ╰┈➤ /approve @user - ᴀᴘᴘʀᴏᴠᴇ ᴜsᴇʀ
 ╰┈➤ /unapprove @user - ʀᴇᴠᴏᴋᴇ ᴀᴘᴘʀᴏᴠᴀʟ
+╰┈➤ /filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ - ᴀᴅᴅ ᴀ ғɪʟᴛᴇʀ
+╰┈➤ /stopfilter ᴋᴇʏᴡᴏʀᴅ - ʀᴇᴍᴏᴠᴇ ᴀ ғɪʟᴛᴇʀ
+╰┈➤ /filters - ʟɪsᴛ ᴀʟʟ ғɪʟᴛᴇʀs
 
 **📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
 
@@ -197,6 +193,93 @@ async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
 """
         keyboard = [[InlineKeyboardButton("🔙 ʙᴀᴄᴋ", callback_data="main_menu")]]
         await update.message.reply_text(help_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(keyboard))
+
+    # ────═◈═─ FILTER COMMANDS ─═◈═────
+    async def add_filter(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴀᴅᴅ ғɪʟᴛᴇʀs!")
+            return
+        
+        if not context.args:
+            await update.message.reply_text("⚠️ ᴜsᴀɢᴇ: `/filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ ᴛᴇxᴛ`")
+            return
+        
+        args = " ".join(context.args).split(" ", 1)
+        if len(args) < 2:
+            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴋᴇʏᴡᴏʀᴅ ᴀɴᴅ ʀᴇᴘʟʏ ᴛᴇxᴛ!")
+            return
+        
+        keyword = args[0].lower()
+        reply_text = args[1]
+        
+        await db.add_filter(chat.id, keyword, reply_text)
+        await update.message.reply_text(f"✅ **ғɪʟᴛᴇʀ ᴀᴅᴅᴇᴅ!**\n\n📌 **ᴋᴇʏᴡᴏʀᴅ:** `{keyword}`\n📝 **ʀᴇᴘʟʏ:** {reply_text}\n{self.get_footer()}", parse_mode="Markdown")
+
+    async def remove_filter(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        user = update.effective_user
+        chat = update.effective_chat
+        
+        if not await self.is_admin(context, chat.id, user.id):
+            await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʀᴇᴍᴏᴠᴇ ғɪʟᴛᴇʀs!")
+            return
+        
+        if not context.args:
+            await update.message.reply_text("⚠️ ᴜsᴀɢᴇ: `/stopfilter ᴋᴇʏᴡᴏʀᴅ`")
+            return
+        
+        keyword = context.args[0].lower()
+        await db.remove_filter(chat.id, keyword)
+        await update.message.reply_text(f"✅ **ғɪʟᴛᴇʀ ʀᴇᴍᴏᴠᴇᴅ!**\n\n📌 **ᴋᴇʏᴡᴏʀᴅ:** `{keyword}`\n{self.get_footer()}", parse_mode="Markdown")
+
+    async def list_filters(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+            return
+        
+        chat = update.effective_chat
+        filters = await db.get_filters(chat.id)
+        
+        if not filters:
+            await update.message.reply_text(f"ℹ️ **ɴᴏ ғɪʟᴛᴇʀs sᴇᴛ ɪɴ ᴛʜɪs ɢʀᴏᴜᴘ!**\n\nᴜsᴇ `/filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ` ᴛᴏ ᴀᴅᴅ ᴏɴᴇ.\n{self.get_footer()}", parse_mode="Markdown")
+            return
+        
+        filter_text = "📋 **ᴀᴄᴛɪᴠᴇ ғɪʟᴛᴇʀs:**\n\n"
+        for f in filters:
+            filter_text += f"├ **{f['keyword']}** → {f['reply_text'][:50]}...\n"
+        
+        filter_text += f"\n📊 **ᴛᴏᴛᴀʟ:** {len(filters)} ғɪʟᴛᴇʀs"
+        filter_text += self.get_footer()
+        
+        await update.message.reply_text(filter_text, parse_mode="Markdown")
+
+    async def filter_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message or not update.message.text:
+            return
+        
+        chat = update.effective_chat
+        user = update.effective_user
+        
+        if await self.is_admin(context, chat.id, user.id):
+            return
+        
+        text = update.message.text.lower()
+        filters = await db.get_filters(chat.id)
+        
+        for f in filters:
+            if f['keyword'] in text:
+                await update.message.reply_text(f['reply_text'], parse_mode="Markdown")
+                break
 
     # ────═◈═─ GET URL COMMAND ─═◈═────
     async def geturl_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -591,22 +674,15 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
     # ────═◈═─ PING COMMAND ─═◈═────
     async def ping_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         try:
-            # CPU Usage
             cpu_usage = psutil.cpu_percent(interval=0.5)
-            
-            # RAM Usage
             ram = psutil.virtual_memory()
             ram_used = ram.used / (1024 ** 3)
             ram_total = ram.total / (1024 ** 3)
             ram_percent = ram.percent
-            
-            # Disk Usage
             disk = psutil.disk_usage('/')
             disk_used = disk.used / (1024 ** 3)
             disk_total = disk.total / (1024 ** 3)
             disk_percent = disk.percent
-            
-            # Uptime
             boot_time = datetime.fromtimestamp(psutil.boot_time())
             uptime = datetime.now() - boot_time
             uptime_str = str(uptime).split('.')[0]
@@ -667,6 +743,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ ʙᴀɴ/ᴋɪᴄᴋ
 ╰┈➤ ᴘɪɴ/ᴜɴᴘɪɴ
 ╰┈➤ ᴅᴇʟᴇᴛᴇ/ᴘᴜʀɢᴇ
+╰┈➤ ғɪʟᴛᴇʀs
 
 📢 **ᴠᴇʀsɪᴏɴ:** 2.0.0
 🔰 **sᴛᴀᴛᴜs:** ᴀᴄᴛɪᴠᴇ
@@ -1468,6 +1545,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ ʙᴀɴ/ᴋɪᴄᴋ
 ╰┈➤ ᴘɪɴ/ᴜɴᴘɪɴ
 ╰┈➤ ᴅᴇʟᴇᴛᴇ/ᴘᴜʀɢᴇ
+╰┈➤ ғɪʟᴛᴇʀs
 
 📢 **ᴠᴇʀsɪᴏɴ:** 2.0.0
 🔰 **sᴛᴀᴛᴜs:** ᴀᴄᴛɪᴠᴇ
@@ -1506,6 +1584,9 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
 ╰┈➤ /rules - ᴠɪᴇᴡ ʀᴜʟᴇs
 ╰┈➤ /approve @user - ᴀᴘᴘʀᴏᴠᴇ ᴜsᴇʀ
 ╰┈➤ /unapprove @user - ʀᴇᴠᴏᴋᴇ ᴀᴘᴘʀᴏᴠᴀʟ
+╰┈➤ /filter ᴋᴇʏᴡᴏʀᴅ ʀᴇᴘʟʏ - ᴀᴅᴅ ғɪʟᴛᴇʀ
+╰┈➤ /stopfilter ᴋᴇʏᴡᴏʀᴅ - ʀᴇᴍᴏᴠᴇ ғɪʟᴛᴇʀ
+╰┈➤ /filters - ʟɪsᴛ ғɪʟᴛᴇʀs
 
 **📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
 ╰┈➤ /start - sᴛᴀʀᴛ ʙᴏᴛ
@@ -1722,6 +1803,9 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             self.app.add_handler(CommandHandler("me", self.me_command))
             self.app.add_handler(CommandHandler("geturl", self.geturl_command))
             self.app.add_handler(CommandHandler("pinned", self.pinned_command))
+            self.app.add_handler(CommandHandler("filter", self.add_filter))
+            self.app.add_handler(CommandHandler("stopfilter", self.remove_filter))
+            self.app.add_handler(CommandHandler("filters", self.list_filters))
             
             # Moderation commands
             self.app.add_handler(CommandHandler("warn", self.warn_command))
@@ -1751,6 +1835,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.antispam_handler))
             self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.antilink_handler))
             self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.anti18_handler))
+            self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, self.filter_handler))
             
             # Error handler
             self.app.add_error_handler(self.error_handler)
