@@ -153,6 +153,164 @@ class PikachuProtectionBot:
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
 
+    # ────═◈═─ WELCOME HANDLER ─═◈═────
+    async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message.new_chat_members:
+            return
+        
+        chat = update.effective_chat
+        settings = await db.get_settings(chat.id)
+        
+        if not settings.get('welcome', True):
+            return
+        
+        for member in update.message.new_chat_members:
+            if member.is_bot:
+                continue
+            
+            await db.add_user(member.id, member.username, member.first_name)
+            
+            try:
+                member_count = await context.bot.get_chat_member_count(chat.id)
+            except:
+                member_count = "?"
+            
+            # ────═◈═─ GET USER DETAILS ─═◈═────
+            try:
+                user_full = await context.bot.get_chat(member.id)
+                user_bio = getattr(user_full, 'bio', 'N/A')
+                user_id = member.id
+                user_name = member.first_name or "N/A"
+                user_username = f"@{member.username}" if member.username else "N/A"
+                
+                # ────═◈═─ GET PROFILE PHOTO ─═◈═────
+                photos = await context.bot.get_user_profile_photos(member.id, limit=1)
+                photo_file_id = None
+                if photos.total_count > 0:
+                    photo_file_id = photos.photos[0][-1].file_id
+                
+                # ────═◈═─ GET RULES ─═◈═────
+                rules = await db.get_rules(chat.id)
+                rules_text = f"\n📋 **ʀᴜʟᴇs:**\n{rules}" if rules else ""
+                
+                # ────═◈═─ GET ROLE ─═◈═────
+                try:
+                    chat_member = await context.bot.get_chat_member(chat.id, member.id)
+                    if chat_member.status == 'creator':
+                        role = "👑 Oᴡɴᴇʀ"
+                    elif chat_member.status == 'administrator':
+                        role = "👔 Aᴅᴍɪɴ"
+                    else:
+                        role = "👤 Mᴇᴍʙᴇʀ"
+                except:
+                    role = "👤 Mᴇᴍʙᴇʀ"
+                
+                # ────═◈═─ WELCOME MESSAGE ─═◈═────
+                welcome_msg = f"""
+✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
+
+You won't leave me, right...?
+I'm not a human...
+
+---
+
+**WELCOME TO THE PARTY!**
+
+---
+
+**ɴᴀᴍᴇ:** {user_name}
+**ɪᴅ:** `{user_id}`
+**ᴜsᴇʀɴᴀᴍᴇ:** {user_username}
+**ʙɪᴏ:** {user_bio[:150] if user_bio != 'N/A' else 'N/A'}
+
+---
+
+**ɢʀᴏᴜᴘ:** {chat.title}
+**ᴍᴇᴍʙᴇʀs:** {member_count}
+**ʀᴏʟᴇ:** {role}
+{rules_text}
+
+🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
+{self.get_footer()}
+"""
+                
+                # ────═◈═─ SEND WELCOME WITH PHOTO ─═◈═────
+                if photo_file_id:
+                    await context.bot.send_photo(
+                        chat.id,
+                        photo=photo_file_id,
+                        caption=welcome_msg,
+                        parse_mode="Markdown"
+                    )
+                else:
+                    await context.bot.send_message(
+                        chat.id,
+                        welcome_msg,
+                        parse_mode="Markdown"
+                    )
+                    
+            except Exception as e:
+                logger.error(f"Welcome handler error: {e}")
+                # ────═◈═─ FALLBACK WELCOME ─═◈═────
+                fallback_msg = f"""
+✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
+
+You won't leave me, right...?
+I'm not a human...
+
+---
+
+**WELCOME TO THE PARTY!**
+
+---
+
+**ɴᴀᴍᴇ:** {member.first_name}
+📍 **ɢʀᴏᴜᴘ:** {chat.title}
+👥 **ᴍᴇᴍʙᴇʀs:** {member_count}
+
+🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
+{self.get_footer()}
+"""
+                await context.bot.send_message(
+                    chat.id,
+                    fallback_msg,
+                    parse_mode="Markdown"
+                )
+
+    # ────═◈═─ GOODBYE HANDLER ─═◈═────
+    async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        if not update.message.left_chat_member:
+            return
+        
+        chat = update.effective_chat
+        settings = await db.get_settings(chat.id)
+        
+        if not settings.get('goodbye', True):
+            return
+        
+        member = update.message.left_chat_member
+        if member.is_bot:
+            return
+        
+        goodbye_msg = f"""
+💔 **ɢᴏᴏᴅʙʏᴇ!** 💔
+
+You left me... 😢
+
+---
+
+**ɴᴀᴍᴇ:** {member.first_name}
+📍 **ɢʀᴏᴜᴘ:** {chat.title}
+
+😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
+{self.get_footer()}
+"""
+        await context.bot.send_message(
+            chat.id,
+            goodbye_msg,
+            parse_mode="Markdown"
+        )
+
     # ────═◈═─ HELP COMMAND ─═◈═────
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         help_text = f"""
@@ -932,6 +1090,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
             except:
                 pass
 
+    # ────═◈═─ UNWARN COMMAND ─═◈═────
     async def unwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -967,6 +1126,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         else:
             await update.message.reply_text(f"ℹ️ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴs!\n\n{self.get_footer()}", parse_mode="Markdown")
 
+    # ────═◈═─ WARNS COMMAND ─═◈═────
     async def warns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1000,6 +1160,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         
         await update.message.reply_text(warn_text, parse_mode="Markdown")
 
+    # ────═◈═─ DELWARN COMMAND ─═◈═────
     async def delwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1024,6 +1185,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         
         await update.message.reply_text(f"⚠️ **ᴅᴇʟᴇᴛᴇᴅ ᴍᴇssᴀɢᴇ & ᴡᴀʀɴᴇᴅ {target.first_name}!** ({len(warnings)}/{Config.MAX_WARNINGS})\n\n{self.get_footer()}", parse_mode="Markdown")
 
+    # ────═◈═─ RESETWARNS COMMAND ─═◈═────
     async def reset_warns(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1053,7 +1215,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         await db.clear_warnings(target.id, chat.id)
         await update.message.reply_text(f"✅ **ʀᴇsᴇᴛ ᴀʟʟ ᴡᴀʀɴs ғᴏʀ {target.first_name}!**\n\n{self.get_footer()}", parse_mode="Markdown")
 
-    # ────═◈═─ MUTE/UNMUTE COMMANDS ─═◈═────
+    # ────═◈═─ MUTE COMMAND ─═◈═────
     async def mute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1135,6 +1297,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         except:
             pass
 
+    # ────═◈═─ UNMUTE COMMAND ─═◈═────
     async def unmute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1179,7 +1342,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
-    # ────═◈═─ KICK/BAN/UNBAN COMMANDS ─═◈═────
+    # ────═◈═─ KICK COMMAND ─═◈═────
     async def kick_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1220,6 +1383,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
+    # ────═◈═─ BAN COMMAND ─═◈═────
     async def ban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1259,6 +1423,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
+    # ────═◈═─ UNBAN COMMAND ─═◈═────
     async def unban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1290,7 +1455,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         except Exception as e:
             await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
 
-    # ────═◈═─ APPROVE/UNAPPROVE COMMANDS ─═◈═────
+    # ────═◈═─ APPROVE COMMAND ─═◈═────
     async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1321,6 +1486,7 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         await update.message.reply_text(f"✅ **ᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏᴡ Yᴏᴜʀ Aʀᴇ Fʀᴇᴇ.\n\n{self.get_footer()}", parse_mode="Markdown")
         await self.log_action(chat.id, f"✅ **ᴀᴘᴘʀᴏᴠᴇ** {target.first_name} ʙʏ {user.first_name}")
 
+    # ────═◈═─ UNAPPROVE COMMAND ─═◈═────
     async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             await update.message.reply_text("❌ ᴛʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
@@ -1350,80 +1516,6 @@ sᴇʟᴇᴄᴛ ᴀ sᴇᴛᴛɪɴɢ ᴛᴏ ᴄʜᴀɴɢᴇ.
         await db.unapprove_user(target.id, chat.id)
         await update.message.reply_text(f"❌ **ᴜɴᴀᴘᴘʀᴏᴠᴇᴅ** {target.first_name}!\n🔗 Nᴏ ᴍᴏʀᴇ ʟɪɴᴋs.\n\n{self.get_footer()}", parse_mode="Markdown")
         await self.log_action(chat.id, f"❌ **ᴜɴᴀᴘᴘʀᴏᴠᴇ** {target.first_name} ʙʏ {user.first_name}")
-
-    # ────═◈═─ WELCOME/GIODBYE HANDLERS ─═◈═────
-    async def welcome_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message.new_chat_members:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('welcome', True):
-            return
-        
-        for member in update.message.new_chat_members:
-            if member.is_bot:
-                continue
-            
-            await db.add_user(member.id, member.username, member.first_name)
-            
-            try:
-                member_count = await context.bot.get_chat_member_count(chat.id)
-            except:
-                member_count = "?"
-            
-            welcome_msg = f"""
-✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ ᴛʜᴇ ᴘᴀʀᴛʏ!** ✨
-
-────═◈═─ ✧◈✧ ─═◈═────
-👤 **ɴᴀᴍᴇ:** {member.first_name}
-📛 **ᴜsᴇʀɴᴀᴍᴇ:** @{member.username if member.username else 'N/A'}
-📍 **ɢʀᴏᴜᴘ:** {chat.title}
-👥 **ᴍᴇᴍʙᴇʀs:** {member_count}
-────═◈═─ ✧◈✧ ─═◈═────
-🌟 **ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}** 🌟
-
-{self.get_footer()}
-"""
-            await context.bot.send_message(
-                chat.id,
-                welcome_msg,
-                parse_mode="Markdown"
-            )
-
-    async def goodbye_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        if not update.message.left_chat_member:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('goodbye', True):
-            return
-        
-        member = update.message.left_chat_member
-        if member.is_bot:
-            return
-        
-        goodbye_msg = f"""
-💔 **ɢᴏᴏᴅʙʏᴇ!** 💔
-
-────═◈═─ ✧◈✧ ─═◈═────
-  👋 {member.first_name}     
-  🚪 ʟᴇғᴛ ᴛʜᴇ ɢʀᴏᴜᴘ   
-  📍 {chat.title}      
-✦•····················•✦
-
-😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
-
-{self.get_footer()}
-"""
-        await context.bot.send_message(
-            chat.id,
-            goodbye_msg,
-            parse_mode="Markdown"
-        )
 
     # ────═◈═─ ANTI-SPAM/LINK/18+ HANDLERS ─═◈═────
     async def antispam_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
