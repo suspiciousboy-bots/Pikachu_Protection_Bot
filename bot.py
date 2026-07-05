@@ -385,20 +385,75 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
     # ────═◈═─ RUN BOT ─═◈═────
     def run(self):
         try:
-            # Build application with updater
             self.app = Application.builder().token(Config.BOT_TOKEN).build()
             
-            # Command handlers - Using handlers from handles.py
+            # ────═◈═─ ALL COMMAND HANDLERS ─═◈═────
+            # General Commands
             self.app.add_handler(CommandHandler("start", handlers.start))
             self.app.add_handler(CommandHandler("help", handlers.help_command))
-            self.app.add_handler(CommandHandler("warn", handlers.warn_command))
-            self.app.add_handler(CommandHandler("warns", handlers.warns_command))
-            self.app.add_handler(CommandHandler("resetwarns", handlers.resetwarns_command))
-            self.app.add_handler(CommandHandler("mute", handlers.mute_command))
-            self.app.add_handler(CommandHandler("unmute", handlers.unmute_command))
-            self.app.add_handler(CommandHandler("kick", handlers.kick_command))
+            self.app.add_handler(CommandHandler("about", handlers.about_command))
+            self.app.add_handler(CommandHandler("ping", handlers.ping_command))
+            self.app.add_handler(CommandHandler("staff", handlers.staff_command))
+            self.app.add_handler(CommandHandler("info", handlers.info_command))
+            self.app.add_handler(CommandHandler("infopvt", handlers.infopvt_command))
+            self.app.add_handler(CommandHandler("me", handlers.me_command))
+            self.app.add_handler(CommandHandler("geturl", handlers.geturl_command))
+            self.app.add_handler(CommandHandler("sg", handlers.sg_command))
+            self.app.add_handler(CommandHandler("history", handlers.history_command))
+            self.app.add_handler(CommandHandler("chat", handlers.chat_command))
+            self.app.add_handler(CommandHandler("roles", handlers.roles_command))
+            self.app.add_handler(CommandHandler("premium", handlers.premium_command))
+            
+            # Welcome Settings
+            self.app.add_handler(CommandHandler("enablewelcome", handlers.enable_welcome))
+            self.app.add_handler(CommandHandler("disablewelcome", handlers.disable_welcome))
+            
+            # Moderation Commands
+            self.app.add_handler(CommandHandler("reload", handlers.reload_command))
+            self.app.add_handler(CommandHandler("settings", handlers.settings_command))
             self.app.add_handler(CommandHandler("ban", handlers.ban_command))
             self.app.add_handler(CommandHandler("unban", handlers.unban_command))
+            self.app.add_handler(CommandHandler("kick", handlers.kick_command))
+            self.app.add_handler(CommandHandler("mute", handlers.mute_command))
+            self.app.add_handler(CommandHandler("unmute", handlers.unmute_command))
+            self.app.add_handler(CommandHandler("warn", handlers.warn_command))
+            self.app.add_handler(CommandHandler("unwarn", handlers.unwarn_command))
+            self.app.add_handler(CommandHandler("warns", handlers.warns_command))
+            self.app.add_handler(CommandHandler("delwarn", handlers.delwarn_command))
+            self.app.add_handler(CommandHandler("resetwarns", handlers.resetwarns_command))
+            self.app.add_handler(CommandHandler("approve", handlers.approve_command))
+            self.app.add_handler(CommandHandler("unapprove", handlers.unapprove_command))
+            
+            # Role Commands
+            self.app.add_handler(CommandHandler("cofounder", handlers.cofounder_command))
+            self.app.add_handler(CommandHandler("uncofounder", handlers.uncofounder_command))
+            self.app.add_handler(CommandHandler("mod", handlers.mod_command))
+            self.app.add_handler(CommandHandler("unmod", handlers.unmod_command))
+            self.app.add_handler(CommandHandler("muter", handlers.muter_command))
+            self.app.add_handler(CommandHandler("unmuter", handlers.unmuter_command))
+            self.app.add_handler(CommandHandler("cleaner", handlers.cleaner_command))
+            self.app.add_handler(CommandHandler("uncleaner", handlers.uncleaner_command))
+            self.app.add_handler(CommandHandler("helper", handlers.helper_command))
+            self.app.add_handler(CommandHandler("unhelper", handlers.unhelper_command))
+            self.app.add_handler(CommandHandler("free", handlers.free_command))
+            self.app.add_handler(CommandHandler("unfree", handlers.unfree_command))
+            
+            # Pin Commands
+            self.app.add_handler(CommandHandler("pin", handlers.pin_command))
+            self.app.add_handler(CommandHandler("unpin", handlers.unpin_command))
+            self.app.add_handler(CommandHandler("pinned", handlers.pinned_command))
+            self.app.add_handler(CommandHandler("editpin", handlers.editpin_command))
+            self.app.add_handler(CommandHandler("delpin", handlers.delpin_command))
+            
+            # Delete Commands
+            self.app.add_handler(CommandHandler("del", handlers.del_command))
+            self.app.add_handler(CommandHandler("logdel", handlers.logdel_command))
+            self.app.add_handler(CommandHandler("purge", handlers.purge_command))
+            
+            # Filter Commands
+            self.app.add_handler(CommandHandler("filter", handlers.filter_command))
+            self.app.add_handler(CommandHandler("stopfilter", handlers.stopfilter_command))
+            self.app.add_handler(CommandHandler("filters", handlers.filters_command))
             
             # Callback handler
             self.app.add_handler(CallbackQueryHandler(self.callback_handler))
@@ -406,6 +461,7 @@ Cᴏɴᴛᴀᴄᴛ Oᴡɴᴇʀ Tᴏ Bᴜʏ:
             # Message handlers
             self.app.add_handler(MessageHandler(filters.StatusUpdate.NEW_CHAT_MEMBERS, handlers.welcome_handler))
             self.app.add_handler(MessageHandler(filters.StatusUpdate.LEFT_CHAT_MEMBER, handlers.goodbye_handler))
+            self.app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handlers.filter_handler))
             
             # Error handler
             self.app.add_error_handler(self.error_handler)
