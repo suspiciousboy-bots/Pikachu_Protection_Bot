@@ -1,5 +1,5 @@
 from telegram import Update, ChatPermissions, InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import ContextTypes, CallbackContext
+from telegram.ext import ContextTypes
 from telegram.constants import ParseMode
 import asyncio
 import datetime
@@ -20,32 +20,32 @@ class Handlers:
         """Handle /start command"""
         user = update.effective_user
         
-        # Check premium status
-        is_premium = await db.check_premium(user.id)
+        # Check premium status - FIXED: Changed to is_premium
+        is_premium = await db.is_premium(user.id)
         
         # Add user to database
         await db.add_user(user.id, user.username, user.first_name)
         
         welcome_text = f"""
-✨ **ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ {Config.BOT_NAME}** ✨
+✨ <b>ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ {Config.BOT_NAME}</b> ✨
 
 ────═◈═─ ✧◈✧ ─═◈═────
-  🤖 ʙᴏᴛ: {Config.BOT_NAME}  
-  👤 ᴜsᴇʀ: {user.first_name} 
-  💎 ᴘʀᴇᴍɪᴜᴍ: { '✅ ᴀᴄᴛɪᴠᴇ' if is_premium else '❌ ɪɴᴀᴄᴛɪᴠᴇ' } 
+🤖 <b>Bᴏᴛ:</b> {Config.BOT_NAME}  
+👤 <b>Uꜱᴇʀ:</b> {user.first_name} 
+💎 <b>Pʀᴇᴍɪᴜᴍ:</b> { '✅ Aᴄᴛɪᴠᴇ' if is_premium else '❌ Iɴᴀᴄᴛɪᴠᴇ' } 
 ✦•····················•✦
 
-🌟 **ғᴇᴀᴛᴜʀᴇs:**  
-╰┈➤ ᴡᴇʟᴄᴏᴍᴇ/ɢᴏᴏᴅʙʏᴇ  
-╰┈➤ ᴀɴᴛɪ-sᴘᴀᴍ  
-╰┈➤ ᴀɴᴛɪ-ʟɪɴᴋ  
-╰┈➤ ᴡᴀʀɴ/ᴍᴜᴛᴇ/ʙᴀɴ/ᴋɪᴄᴋ  
-╰┈➤ ᴘʀᴇᴍɪᴜᴍ ғᴇᴀᴛᴜʀᴇs  
+🌟 <b>Fᴇᴀᴛᴜʀᴇs:</b>  
+╰┈➤ Wᴇʟᴄᴏᴍᴇ/Gᴏᴏᴅʙʏᴇ  
+╰┈➤ Aɴᴛɪ-Sᴘᴀᴍ  
+╰┈➤ Aɴᴛɪ-Lɪɴᴋ  
+╰┈➤ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ  
+╰┈➤ Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs  
 
-👑 **ᴏᴡɴᴇʀ:**  
+👑 <b>Oᴡɴᴇʀ:</b>  
 ╰┈➤ {Config.OWNER_NAME} ({Config.OWNER_USERNAME})
 
-📢 **ᴜsᴇ /help ғᴏʀ ᴄᴏᴍᴍᴀɴᴅs**
+📢 <b>Usᴇ /help ғᴏʀ ᴄᴏᴍᴍᴀɴᴅs</b>
 """
         
         keyboard = Keyboards.main_menu(is_premium)
@@ -59,38 +59,37 @@ class Handlers:
     @staticmethod
     async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Handle /help command"""
-        help_text = """
-📖 **ᴄᴏᴍᴍᴀɴᴅ ʟɪsᴛ** 📖
+        help_text = f"""
+📖 <b>Cᴏᴍᴍᴀɴᴅ Lɪsᴛ</b> 📖
 
 ╔═══════════════════════════╗
 
-**👑 ᴀᴅᴍɪɴ ᴄᴏᴍᴍᴀɴᴅs:**
+<b>👑 Aᴅᴍɪɴ Cᴏᴍᴍᴀɴᴅs:</b>
 
-╰┈➤ /warn @username - ᴡᴀʀɴ ᴜsᴇʀ  
-╰┈➤ /warns @username - ᴄʜᴇᴄᴋ ᴡᴀʀɴs  
-╰┈➤ /resetwarns @username - ʀᴇsᴇᴛ ᴡᴀʀɴs  
-╰┈➤ /mute @username - ᴍᴜᴛᴇ ᴜsᴇʀ  
-╰┈➤ /unmute @username - ᴜɴᴍᴜᴛᴇ ᴜsᴇʀ  
-╰┈➤ /kick @username - ᴋɪᴄᴋ ᴜsᴇʀ  
-╰┈➤ /ban @username - ʙᴀɴ ᴜsᴇʀ  
-╰┈➤ /unban @username - ᴜɴʙᴀɴ ᴜsᴇʀ  
-╰┈➤ /settings - ᴄʜᴀɴɢᴇ sᴇᴛᴛɪɴɢs  
+╰┈➤ /warn @username - Wᴀʀɴ ᴜsᴇʀ  
+╰┈➤ /warns @username - Cʜᴇᴄᴋ ᴡᴀʀɴs  
+╰┈➤ /resetwarns @username - Rᴇsᴇᴛ ᴡᴀʀɴs  
+╰┈➤ /mute @username - Mᴜᴛᴇ ᴜsᴇʀ  
+╰┈➤ /unmute @username - Uɴᴍᴜᴛᴇ ᴜsᴇʀ  
+╰┈➤ /kick @username - Kɪᴄᴋ ᴜsᴇʀ  
+╰┈➤ /ban @username - Bᴀɴ ᴜsᴇʀ  
+╰┈➤ /unban @username - Uɴʙᴀɴ ᴜsᴇʀ  
+╰┈➤ /settings - Cʜᴀɴɢᴇ sᴇᴛᴛɪɴɢs  
 
-**📊 ɢᴇɴᴇʀᴀʟ ᴄᴏᴍᴍᴀɴᴅs:**
+<b>📊 Gᴇɴᴇʀᴀʟ Cᴏᴍᴍᴀɴᴅs:</b>
 
-╰┈➤ /start - sᴛᴀʀᴛ ʙᴏᴛ  
-╰┈➤ /help - ɢᴇᴛ ʜᴇʟᴘ  
-╰┈➤ /stats - ʙᴏᴛ sᴛᴀᴛs  
-╰┈➤ /about - ᴀʙᴏᴜᴛ ʙᴏᴛ  
+╰┈➤ /start - Sᴛᴀʀᴛ ʙᴏᴛ  
+╰┈➤ /help - Gᴇᴛ ʜᴇʟᴘ  
+╰┈➤ /stats - Bᴏᴛ sᴛᴀᴛs  
+╰┈➤ /about - Aʙᴏᴜᴛ ʙᴏᴛ  
 
-**💎 ᴘʀᴇᴍɪᴜᴍ ᴄᴏᴍᴍᴀɴᴅs:**
+<b>💎 Pʀᴇᴍɪᴜᴍ Cᴏᴍᴍᴀɴᴅs:</b>
 
-╰┈➤ /premium - ᴄʜᴇᴄᴋ ᴘʀᴇᴍɪᴜᴍ  
-╰┈➤ /activate - ᴀᴄᴛɪᴠᴀᴛᴇ ᴘʀᴇᴍɪᴜᴍ  
+╰┈➤ /premium - Cʜᴇᴄᴋ ᴘʀᴇᴍɪᴜᴍ  
 
 ╚═══════════════════════════╝
 
-🔥 ᴘᴏᴡᴇʀᴇᴅ ʙʏ {Config.BOT_NAME}
+🔥 Pᴏᴡᴇʀᴇᴅ ʙʏ {Config.BOT_NAME}
 """
         await update.message.reply_text(help_text, parse_mode=ParseMode.HTML)
     
@@ -103,20 +102,18 @@ class Handlers:
         user = update.effective_user
         chat = update.effective_chat
         
-        # Check admin permission
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴡᴀʀɴ!")
+                await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴡᴀʀɴ!")
                 return
         except:
             return
         
         if not context.args and not update.message.reply_to_message:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
             return
         
-        # Get target user
         target = None
         if update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
@@ -125,115 +122,38 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         
         if not target:
             return
         
         if target.is_bot:
-            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ᴡᴀʀɴ ʙᴏᴛs!")
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴡᴀʀɴ ʙᴏᴛs!")
             return
         
-        # Get reason
-        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "ɴᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+        reason = " ".join(context.args[1:]) if len(context.args) > 1 else "Nᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
         
-        # Add warning
         await db.add_warning(target.id, chat.id, reason, user.id)
         
-        # Get warning count
         warnings = await db.get_warnings(target.id, chat.id)
         warn_count = len(warnings)
         
-        # Get settings
         settings = await db.get_settings(chat.id)
         max_warns = settings.get('warn_limit', 3)
         
-        # Send warning message
         warn_msg = f"""
-⚠️ <b>ᴡᴀʀɴɪɴɢ!</b> ⚠️
+⚠️ <b>Wᴀʀɴɪɴɢ!</b> ⚠️
 
-<b>ᴜsᴇʀ:</b> {target.first_name}
-<b>ᴡᴀʀɴ:</b> {warn_count}/{max_warns}
-<b>ʀᴇᴀsᴏɴ:</b> {reason}
+<b>Uꜱᴇʀ:</b> {target.first_name}
+<b>Wᴀʀɴ:</b> {warn_count}/{max_warns}
+<b>Rᴇᴀsᴏɴ:</b> {reason}
 """
         
         await update.message.reply_text(warn_msg, parse_mode=ParseMode.HTML)
         
-        # Check if user should be muted/banned
         if warn_count >= max_warns:
-            await update.message.reply_text(f"⚠️ {target.first_name} ʜᴀs ʀᴇᴀᴄʜᴇᴅ ᴛʜᴇ ᴡᴀʀɴ ʟɪᴍɪᴛ! ᴛʜᴇʏ ᴡɪʟʟ ʙᴇ ᴍᴜᴛᴇᴅ.", parse_mode=ParseMode.HTML)
-
-    @staticmethod
-    async def welcome_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle new member join"""
-        if not update.message.new_chat_members:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('welcome', True):
-            return
-        
-        for member in update.message.new_chat_members:
-            if member.is_bot:
-                continue
-            
-            # Add user to db
-            await db.add_user(member.id, member.username, member.first_name)
-            
-            # Get group info
-            try:
-                member_count = await context.bot.get_chat_member_count(chat.id)
-            except:
-                member_count = "?"
-            
-            welcome_msg = f"""
-👋 <b>ᴡᴇʟᴄᴏᴍᴇ ᴛᴏ {chat.title}!</b>
-
-<b>ᴜsᴇʀ:</b> {member.first_name}
-<b>ᴍᴇᴍʙᴇʀs:</b> {member_count}
-
-🌟 <b>ᴘʀᴏᴛᴇᴄᴛᴇᴅ ʙʏ {Config.BOT_NAME}</b>
-"""
-            
-            # Send welcome message
-            await context.bot.send_message(
-                chat.id,
-                welcome_msg,
-                parse_mode=ParseMode.HTML
-            )
-    
-    @staticmethod
-    async def goodbye_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Handle member leaving"""
-        if not update.message.left_chat_member:
-            return
-        
-        chat = update.effective_chat
-        settings = await db.get_settings(chat.id)
-        
-        if not settings.get('goodbye', True):
-            return
-        
-        member = update.message.left_chat_member
-        if member.is_bot:
-            return
-        
-        goodbye_msg = f"""
-💔 <b>ɢᴏᴏᴅʙʏᴇ!</b> 💔
-
-<b>ᴜsᴇʀ:</b> {member.first_name}
-📍 <b>ɢʀᴏᴜᴘ:</b> {chat.title}
-
-😢 ᴡᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
-"""
-        await context.bot.send_message(
-            chat.id,
-            goodbye_msg,
-            parse_mode=ParseMode.HTML
-        )
+            await update.message.reply_text(f"⚠️ {target.first_name} ʜᴀs ʀᴇᴀᴄʜᴇᴅ ᴛʜᴇ ᴡᴀʀɴ ʟɪᴍɪᴛ! Tʜᴇʏ ᴡɪʟʟ ʙᴇ ᴍᴜᴛᴇᴅ.", parse_mode=ParseMode.HTML)
 
     @staticmethod
     async def warns_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -249,7 +169,7 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
@@ -277,11 +197,10 @@ class Handlers:
         user = update.effective_user
         chat = update.effective_chat
         
-        # Check admin permission
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʀᴇsᴇᴛ ᴡᴀʀɴs!")
+                await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʀᴇsᴇᴛ ᴡᴀʀɴs!")
                 return
         except:
             return
@@ -292,16 +211,16 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
         else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
         await db.clear_warnings(target.id, chat.id)
-        await update.message.reply_text(f"✅ ᴄʟᴇᴀʀᴇᴅ ᴀʟʟ ᴡᴀʀɴɪɴɢs ғᴏʀ {target.first_name}!", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(f"✅ Cʟᴇᴀʀᴇᴅ ᴀʟʟ ᴡᴀʀɴɪɴɢs ғᴏʀ {target.first_name}!", parse_mode=ParseMode.HTML)
 
     @staticmethod
     async def mute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -312,11 +231,10 @@ class Handlers:
         user = update.effective_user
         chat = update.effective_chat
         
-        # Check admin permission
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴍᴜᴛᴇ!")
+                await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴍᴜᴛᴇ!")
                 return
         except:
             return
@@ -327,20 +245,20 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
         else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
         if target.is_bot:
-            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ᴍᴜᴛᴇ ʙᴏᴛs!")
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴍᴜᴛᴇ ʙᴏᴛs!")
             return
         
-        duration = 300  # 5 minutes default
-        reason = "ɴᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
+        duration = Config.MUTE_DURATION
+        reason = "Nᴏ ʀᴇᴀsᴏɴ ᴘʀᴏᴠɪᴅᴇᴅ"
         
         try:
             if len(context.args) > 1:
@@ -353,7 +271,6 @@ class Handlers:
             
             await db.add_mute(target.id, chat.id, duration, reason, user.id)
             
-            # Use only valid parameters for ChatPermissions
             await context.bot.restrict_chat_member(
                 chat.id,
                 target.id,
@@ -363,13 +280,12 @@ class Handlers:
             mute_msg = f"""
 🔇 <b>Mᴜᴛᴇᴅ!</b> 🔇
 
-<b>ᴜsᴇʀ:</b> {target.first_name}
-<b>ᴅᴜʀᴀᴛɪᴏɴ:</b> {duration}s
-<b>ʀᴇᴀsᴏɴ:</b> {reason}
+<b>Uꜱᴇʀ:</b> {target.first_name}
+<b>Dᴜʀᴀᴛɪᴏɴ:</b> {duration}s
+<b>Rᴇᴀsᴏɴ:</b> {reason}
 """
             await update.message.reply_text(mute_msg, parse_mode=ParseMode.HTML)
             
-            # Auto-unmute after duration
             async def auto_unmute():
                 await asyncio.sleep(duration)
                 await db.remove_mute(target.id, chat.id)
@@ -391,7 +307,7 @@ class Handlers:
             asyncio.create_task(auto_unmute())
             
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ Eʀʀᴏʀ: {str(e)}")
 
     @staticmethod
     async def unmute_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -402,11 +318,10 @@ class Handlers:
         user = update.effective_user
         chat = update.effective_chat
         
-        # Check admin permission
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴍᴜᴛᴇ!")
+                await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴᴍᴜᴛᴇ!")
                 return
         except:
             return
@@ -417,12 +332,12 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
         else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
         await db.remove_mute(target.id, chat.id)
@@ -440,7 +355,7 @@ class Handlers:
             )
             await update.message.reply_text(f"🔊 <b>Uɴᴍᴜᴛᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ Eʀʀᴏʀ: {str(e)}")
 
     @staticmethod
     async def kick_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -451,11 +366,10 @@ class Handlers:
         user = update.effective_user
         chat = update.effective_chat
         
-        # Check admin permission
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴋɪᴄᴋ!")
+                await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴋɪᴄᴋ!")
                 return
         except:
             return
@@ -466,16 +380,16 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
         else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
         if target.is_bot:
-            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ᴋɪᴄᴋ ʙᴏᴛs!")
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴋɪᴄᴋ ʙᴏᴛs!")
             return
         
         try:
@@ -483,7 +397,7 @@ class Handlers:
             await context.bot.unban_chat_member(chat.id, target.id)
             await update.message.reply_text(f"👢 <b>Kɪᴄᴋᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ Eʀʀᴏʀ: {str(e)}")
 
     @staticmethod
     async def ban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -494,11 +408,10 @@ class Handlers:
         user = update.effective_user
         chat = update.effective_chat
         
-        # Check admin permission
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʙᴀɴ!")
+                await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʙᴀɴ!")
                 return
         except:
             return
@@ -509,23 +422,23 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         elif update.message.reply_to_message:
             target = update.message.reply_to_message.from_user
         else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
             return
         
         if target.is_bot:
-            await update.message.reply_text("❌ ᴄᴀɴ'ᴛ ʙᴀɴ ʙᴏᴛs!")
+            await update.message.reply_text("❌ Cᴀɴ'ᴛ ʙᴀɴ ʙᴏᴛs!")
             return
         
         try:
             await context.bot.ban_chat_member(chat.id, target.id)
             await update.message.reply_text(f"🚫 <b>Bᴀɴɴᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ Eʀʀᴏʀ: {str(e)}")
 
     @staticmethod
     async def unban_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -536,11 +449,10 @@ class Handlers:
         user = update.effective_user
         chat = update.effective_chat
         
-        # Check admin permission
         try:
             member = await context.bot.get_chat_member(chat.id, user.id)
             if not member.status in ['administrator', 'creator']:
-                await update.message.reply_text("❌ ᴏɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴʙᴀɴ!")
+                await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴʙᴀɴ!")
                 return
         except:
             return
@@ -551,14 +463,83 @@ class Handlers:
             try:
                 target = await context.bot.get_chat(username)
             except:
-                await update.message.reply_text("❌ ᴜsᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+                await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
                 return
         else:
-            await update.message.reply_text("⚠️ ᴘʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ!")
+            await update.message.reply_text("⚠️ Pʟᴇᴀsᴇ ᴘʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ!")
             return
         
         try:
             await context.bot.unban_chat_member(chat.id, target.id)
             await update.message.reply_text(f"✅ <b>Uɴʙᴀɴɴᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
         except Exception as e:
-            await update.message.reply_text(f"❌ ᴇʀʀᴏʀ: {str(e)}")
+            await update.message.reply_text(f"❌ Eʀʀᴏʀ: {str(e)}")
+
+    @staticmethod
+    async def welcome_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle new member join"""
+        if not update.message.new_chat_members:
+            return
+        
+        chat = update.effective_chat
+        settings = await db.get_settings(chat.id)
+        
+        if not settings.get('welcome', True):
+            return
+        
+        for member in update.message.new_chat_members:
+            if member.is_bot:
+                continue
+            
+            await db.add_user(member.id, member.username, member.first_name)
+            
+            try:
+                member_count = await context.bot.get_chat_member_count(chat.id)
+            except:
+                member_count = "?"
+            
+            welcome_msg = f"""
+👋 <b>Wᴇʟᴄᴏᴍᴇ Tᴏ Tʜᴇ Pᴀʀᴛʏ!</b> 🎉
+
+<b>Nᴀᴍᴇ:</b> {member.first_name}
+<b>Gʀᴏᴜᴘ:</b> {chat.title}
+<b>Mᴇᴍʙᴇʀs:</b> {member_count}
+
+🌟 <b>Pʀᴏᴛᴇᴄᴛᴇᴅ Bʏ {Config.BOT_NAME}</b>
+"""
+            
+            await context.bot.send_message(
+                chat.id,
+                welcome_msg,
+                parse_mode=ParseMode.HTML
+            )
+    
+    @staticmethod
+    async def goodbye_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Handle member leaving"""
+        if not update.message.left_chat_member:
+            return
+        
+        chat = update.effective_chat
+        settings = await db.get_settings(chat.id)
+        
+        if not settings.get('goodbye', True):
+            return
+        
+        member = update.message.left_chat_member
+        if member.is_bot:
+            return
+        
+        goodbye_msg = f"""
+💔 <b>Gᴏᴏᴅʙʏᴇ!</b> 💔
+
+<b>Uꜱᴇʀ:</b> {member.first_name}
+📍 <b>Gʀᴏᴜᴘ:</b> {chat.title}
+
+😢 Wᴇ ᴡɪʟʟ ᴍɪss ʏᴏᴜ!
+"""
+        await context.bot.send_message(
+            chat.id,
+            goodbye_msg,
+            parse_mode=ParseMode.HTML
+        )
