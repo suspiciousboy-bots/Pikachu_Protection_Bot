@@ -1,8 +1,6 @@
 import re
 import html
-import asyncio
-from datetime import datetime, timedelta
-from typing import List, Optional
+from datetime import datetime
 
 class Utils:
     @staticmethod
@@ -65,13 +63,3 @@ class Utils:
         text = html.escape(text)
         text = re.sub(r'\s+', ' ', text)
         return text.strip()
-    
-    @staticmethod
-    def get_time():
-        """Get current time formatted"""
-        return datetime.now().strftime("%H:%M:%S")
-    
-    @staticmethod
-    def get_date():
-        """Get current date formatted"""
-        return datetime.now().strftime("%Y-%m-%d")
