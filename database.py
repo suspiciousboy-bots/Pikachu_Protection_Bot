@@ -91,40 +91,6 @@ class Database:
             logger.error(f"Error getting user stats for {user_id}: {e}")
             return {"messages": 0, "groups": 0, "warns": 0}
 
-    async def increment_user_messages(self, user_id, chat_id):
-        """Increment user's message count and track group"""
-        try:
-            self.users.update_one(
-                {"user_id": user_id},
-                {"$inc": {"messages": 1}},
-                upsert=True
-            )
-            
-            self.groups.update_one(
-                {"chat_id": chat_id},
-                {"$addToSet": {"members": user_id}},
-                upsert=True
-            )
-            
-            self.messages.insert_one({
-                "user_id": user_id,
-                "chat_id": chat_id,
-                "timestamp": datetime.now()
-            })
-            return True
-        except Exception as e:
-            logger.error(f"Error incrementing messages for {user_id}: {e}")
-            return False
-
-    async def get_user_message_count(self, user_id):
-        """Get total messages sent by user"""
-        try:
-            user = self.users.find_one({"user_id": user_id})
-            return user.get("messages", 0) if user else 0
-        except Exception as e:
-            logger.error(f"Error getting message count for {user_id}: {e}")
-            return 0
-
     # ────═◈═─ USER HISTORY METHODS ─═◈═────
     
     async def add_user_history(self, user_id, data):
@@ -153,14 +119,6 @@ class Database:
         except Exception as e:
             logger.error(f"Error getting user history for {user_id}: {e}")
             return []
-
-    async def get_user_history_count(self, user_id):
-        """Get count of user history entries"""
-        try:
-            return self.user_history.count_documents({"user_id": user_id})
-        except Exception as e:
-            logger.error(f"Error getting history count for {user_id}: {e}")
-            return 0
 
     # ────═◈═─ USER ROLE METHODS ─═◈═────
     
@@ -309,14 +267,6 @@ class Database:
             logger.error(f"Error clearing warnings for {user_id}: {e}")
             return False
 
-    async def get_warning_count(self, user_id, chat_id):
-        """Get number of warnings for user"""
-        try:
-            return self.warnings.count_documents({"user_id": user_id, "chat_id": chat_id})
-        except Exception as e:
-            logger.error(f"Error getting warning count for {user_id}: {e}")
-            return 0
-
     # ────═◈═─ MUTE METHODS ─═◈═────
     
     async def add_mute(self, user_id, chat_id, duration, reason, admin_id):
@@ -348,23 +298,6 @@ class Database:
             return result.deleted_count > 0
         except Exception as e:
             logger.error(f"Error removing mute for {user_id}: {e}")
-            return False
-
-    async def is_muted(self, user_id, chat_id):
-        """Check if user is muted"""
-        try:
-            mute = self.mutes.find_one({"user_id": user_id, "chat_id": chat_id})
-            if not mute:
-                return False
-            
-            expires = mute.get("expires")
-            if expires and datetime.now() > expires:
-                await self.remove_mute(user_id, chat_id)
-                return False
-            
-            return True
-        except Exception as e:
-            logger.error(f"Error checking mute for {user_id}: {e}")
             return False
 
     # ────═◈═─ PREMIUM METHODS ─═◈═────
@@ -469,55 +402,6 @@ class Database:
             return result.deleted_count > 0
         except Exception as e:
             logger.error(f"Error unapproving user {user_id}: {e}")
-            return False
-
-    async def is_approved(self, user_id, chat_id):
-        """Check if user is approved"""
-        try:
-            return bool(self.approved.find_one({"user_id": user_id, "chat_id": chat_id}))
-        except Exception as e:
-            logger.error(f"Error checking approval for {user_id}: {e}")
-            return False
-
-    # ────═◈═─ GROUP STATS METHODS ─═◈═────
-    
-    async def get_group_stats(self, chat_id):
-        """Get group statistics"""
-        try:
-            group = self.groups.find_one({"chat_id": chat_id})
-            if not group:
-                return {
-                    "members": 0,
-                    "messages": 0,
-                    "active_users": 0
-                }
-            
-            week_ago = datetime.now() - timedelta(days=7)
-            active_users = self.messages.distinct(
-                "user_id",
-                {"chat_id": chat_id, "timestamp": {"$gte": week_ago}}
-            )
-            
-            return {
-                "members": len(group.get("members", [])),
-                "messages": group.get("messages", 0),
-                "active_users": len(active_users)
-            }
-        except Exception as e:
-            logger.error(f"Error getting group stats for {chat_id}: {e}")
-            return {"members": 0, "messages": 0, "active_users": 0}
-
-    # ────═◈═─ CLEANUP METHODS ─═◈═────
-    
-    async def cleanup_expired_mutes(self):
-        """Remove expired mutes"""
-        try:
-            expired = self.mutes.find({"expires": {"$lt": datetime.now()}})
-            for mute in expired:
-                await self.remove_mute(mute["user_id"], mute["chat_id"])
-            return True
-        except Exception as e:
-            logger.error(f"Error cleaning up expired mutes: {e}")
             return False
 
     def close(self):
