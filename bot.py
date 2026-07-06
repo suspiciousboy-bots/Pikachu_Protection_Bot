@@ -480,7 +480,10 @@ class PikachuProtectionBot:
         if not update.message.reply_to_message:
             return await update.message.reply_text("⚠️ Rᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
         target = update.message.reply_to_message.from_user
-        await context.bot.delete_message(update.effective_chat.id, update.message.reply_to_message.message_id)
+        try:
+            await context.bot.delete_message(update.effective_chat.id, update.message.reply_to_message.message_id)
+        except:
+            pass  # Message already deleted
         await db.add_warning(target.id, update.effective_chat.id, "Dᴇʟᴇᴛᴇᴅ ᴍᴇssᴀɢᴇ", update.effective_user.id)
         await update.message.reply_text(f"⚠️ <b>Dᴇʟᴇᴛᴇᴅ & ᴡᴀʀɴᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -742,39 +745,66 @@ class PikachuProtectionBot:
         await context.bot.unpin_chat_message(update.effective_chat.id)
         await update.message.reply_text("🗑️ <b>Pɪɴ ᴅᴇʟᴇᴛᴇᴅ!</b>", parse_mode=ParseMode.HTML)
 
-    # ────═◈═─ DELETE COMMANDS ─═◈═────
+    # ────═◈═─ DELETE COMMANDS (FIXED) ─═◈═────
 
     async def del_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return await update.message.reply_text("❌ Gʀᴏᴜᴘ ᴏɴʟʏ!")
         if not update.message.reply_to_message:
             return await update.message.reply_text("⚠️ Rᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
-        await context.bot.delete_message(update.effective_chat.id, update.message.reply_to_message.message_id)
-        await context.bot.delete_message(update.effective_chat.id, update.message.message_id)
+        try:
+            await context.bot.delete_message(update.effective_chat.id, update.message.reply_to_message.message_id)
+            await context.bot.delete_message(update.effective_chat.id, update.message.message_id)
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)[:50]}", parse_mode=ParseMode.HTML)
 
     async def logdel_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return await update.message.reply_text("❌ Gʀᴏᴜᴘ ᴏɴʟʏ!")
         if not update.message.reply_to_message:
             return await update.message.reply_text("⚠️ Rᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ!")
-        msg = update.message.reply_to_message
-        await context.bot.delete_message(update.effective_chat.id, msg.message_id)
-        await context.bot.delete_message(update.effective_chat.id, update.message.message_id)
-        await update.message.reply_text("✅ <b>Dᴇʟᴇᴛᴇᴅ!</b>", parse_mode=ParseMode.HTML)
+        try:
+            msg = update.message.reply_to_message
+            await context.bot.delete_message(update.effective_chat.id, msg.message_id)
+            await context.bot.delete_message(update.effective_chat.id, update.message.message_id)
+            await update.message.reply_text("✅ <b>Dᴇʟᴇᴛᴇᴅ!</b>", parse_mode=ParseMode.HTML)
+        except Exception as e:
+            await update.message.reply_text(f"❌ Error: {str(e)[:50]}", parse_mode=ParseMode.HTML)
 
     async def purge_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return await update.message.reply_text("❌ Gʀᴏᴜᴘ ᴏɴʟʏ!")
+        
+        # Check if user has permission
+        user = update.effective_user
+        chat = update.effective_chat
+        try:
+            member = await context.bot.get_chat_member(chat.id, user.id)
+            if not member.status in ['administrator', 'creator']:
+                return await update.message.reply_text("❌ Aᴅᴍɪɴ ᴏɴʟʏ!")
+        except:
+            return
+        
         if not update.message.reply_to_message:
-            return await update.message.reply_text("⚠️ Rᴇᴘʟʏ ᴛᴏ sᴛᴀʀᴛɪɴɢ ᴍᴇssᴀɢᴇ!")
-        start = update.message.reply_to_message.message_id
-        end = update.message.message_id
-        for i in range(start, end + 1):
+            return await update.message.reply_text("⚠️ Rᴇᴘʟʏ ᴛᴏ ᴛʜᴇ sᴛᴀʀᴛɪɴɢ ᴍᴇssᴀɢᴇ!")
+        
+        start_msg_id = update.message.reply_to_message.message_id
+        current_msg_id = update.message.message_id
+        deleted_count = 0
+        
+        # Delete messages in reverse order to avoid issues
+        for msg_id in range(current_msg_id, start_msg_id - 1, -1):
             try:
-                await context.bot.delete_message(update.effective_chat.id, i)
-            except:
-                pass
-        await update.message.reply_text(f"🧹 <b>Pᴜʀɢᴇᴅ {end - start + 1} ᴍᴇssᴀɢᴇs!</b>", parse_mode=ParseMode.HTML)
+                await context.bot.delete_message(chat.id, msg_id)
+                deleted_count += 1
+                await asyncio.sleep(0.05)  # Small delay to avoid rate limiting
+            except Exception:
+                pass  # Skip messages that can't be deleted
+        
+        if deleted_count > 0:
+            await update.message.reply_text(f"🧹 <b>Pᴜʀɢᴇᴅ {deleted_count} ᴍᴇssᴀɢᴇs!</b>", parse_mode=ParseMode.HTML)
+        else:
+            await update.message.reply_text("❌ Nᴏ ᴍᴇssᴀɢᴇs ᴄᴏᴜʟᴅ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ!\n⚠️ Mᴇssᴀɢᴇs ᴏʟᴅᴇʀ ᴛʜᴀɴ 48 ʜᴏᴜʀs ᴄᴀɴ'ᴛ ʙᴇ ᴅᴇʟᴇᴛᴇᴅ.", parse_mode=ParseMode.HTML)
 
     # ────═◈═─ FILTER COMMANDS ─═◈═────
 
@@ -850,13 +880,13 @@ class PikachuProtectionBot:
 """
             keyboard = Keyboards.main_menu(is_premium)
             try:
-                await query.edit_message_text(text, parse_mode="HTML", reply_markup=keyboard)
+                await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
             except:
-                await query.message.reply_text(text, parse_mode="HTML", reply_markup=keyboard)
+                await query.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
         elif data == "stats":
             if user_id != Config.OWNER_ID:
-                return await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ!", parse_mode="HTML")
+                return await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ!", parse_mode=ParseMode.HTML)
             users = db.users.count_documents({})
             groups = db.groups.count_documents({})
             warns = db.warnings.count_documents({})
@@ -870,7 +900,7 @@ class PikachuProtectionBot:
 {self.get_owner_credit()}
 """
             keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode="ParseMode.HTML", reply_markup=InlineKeyboardMarkup(keyboard))
+            await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
 
         elif data == "settings":
             keyboard = Keyboards.settings_menu()
