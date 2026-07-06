@@ -200,8 +200,8 @@ class PikachuProtectionBot:
 ═══════════════════════════════════════════════════════════
 
 <b>📌 Usᴀɢᴇ:</b>
-/lock <type>     - Lᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
-/unlock <type>   - Uɴʟᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+/lock (type)     - Lᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+/unlock (type)   - Uɴʟᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
 
 <b>🔹 Example:</b>
 /lock text       - Lᴏᴄᴋ ᴛᴇxᴛ ᴍᴇssᴀɢᴇs
@@ -227,7 +227,7 @@ class PikachuProtectionBot:
             return await update.message.reply_text("❌ Eʀʀᴏʀ ᴄʜᴇᴄᴋɪɴɢ ᴘᴇʀᴍɪssɪᴏɴs!")
         
         if not context.args:
-            return await update.message.reply_text("⚠️ Usᴀɢᴇ: /lock <type>\n\nTʏᴘᴇs: /locktypes")
+            return await update.message.reply_text("⚠️ Usᴀɢᴇ: /lock (type)\n\nTʏᴘᴇs: /locktypes")
         
         lock_type = context.args[0].lower()
         if lock_type not in self.LOCK_TYPES:
@@ -290,7 +290,7 @@ class PikachuProtectionBot:
             return await update.message.reply_text("❌ Eʀʀᴏʀ ᴄʜᴇᴄᴋɪɴɢ ᴘᴇʀᴍɪssɪᴏɴs!")
         
         if not context.args:
-            return await update.message.reply_text("⚠️ Usᴀɢᴇ: /unlock <type>\n\nTʏᴘᴇs: /locktypes")
+            return await update.message.reply_text("⚠️ Usᴀɢᴇ: /unlock (type)\n\nTʏᴘᴇs: /locktypes")
         
         lock_type = context.args[0].lower()
         if lock_type not in self.LOCK_TYPES:
@@ -370,8 +370,8 @@ class PikachuProtectionBot:
 📖 <b>Cᴏᴍᴍᴀɴᴅ Lɪsᴛ</b> 📖
 
 <b>🔒 Lᴏᴄᴋ Cᴏᴍᴍᴀɴᴅs:</b>
-/lock <type> - Lᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
-/unlock <type> - Uɴʟᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+/lock (type) - Lᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+/unlock (type) - Uɴʟᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
 /locktypes - Sʜᴏᴡ ᴀʟʟ ʟᴏᴄᴋ ᴛʏᴘᴇs
 
 <b>👑 Aᴅᴍɪɴ:</b> /warn, /unwarn, /warns, /delwarn, /resetwarns
@@ -511,7 +511,7 @@ class PikachuProtectionBot:
     async def sg_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!\n\nUsᴀɢᴇ:\n/sg @username\n/sg <user_id>\n/sg (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!\n\nUsᴀɢᴇ:\n/sg @username\n/sg (user_id)\n/sg (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         history = await db.get_user_history(target.id)
         if not history:
@@ -525,7 +525,7 @@ class PikachuProtectionBot:
     async def history_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!\n\nUsᴀɢᴇ:\n/history @username\n/history <user_id>\n/history (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!\n\nUsᴀɢᴇ:\n/history @username\n/history (user_id)\n/history (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         history = await db.get_user_history(target.id)
         if not history:
@@ -655,7 +655,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/warn @username\n/warn <user_id>\n/warn (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/warn @username\n/warn (user_id)\n/warn (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴡᴀʀɴ ʙᴏᴛ!")
@@ -673,7 +673,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unwarn @username\n/unwarn <user_id>\n/unwarn (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unwarn @username\n/unwarn (user_id)\n/unwarn (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.clear_warnings(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Wᴀʀɴs ʀᴇᴍᴏᴠᴇᴅ ғᴏʀ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -710,7 +710,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/resetwarns @username\n/resetwarns <user_id>\n/resetwarns (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/resetwarns @username\n/resetwarns (user_id)\n/resetwarns (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.clear_warnings(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Wᴀʀɴs ʀᴇsᴇᴛ ғᴏʀ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -729,7 +729,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/mute @username\n/mute <user_id>\n/mute (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/mute @username\n/mute (user_id)\n/mute (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴍᴜᴛᴇ ʙᴏᴛ!")
@@ -755,7 +755,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unmute @username\n/unmute <user_id>\n/unmute (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unmute @username\n/unmute (user_id)\n/unmute (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.remove_mute(target.id, update.effective_chat.id)
         await context.bot.restrict_chat_member(update.effective_chat.id, target.id, ChatPermissions(can_send_messages=True))
         await update.message.reply_text(f"🔊 <b>Uɴᴍᴜᴛᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
@@ -765,7 +765,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/kick @username\n/kick <user_id>\n/kick (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/kick @username\n/kick (user_id)\n/kick (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴋɪᴄᴋ ʙᴏᴛ!")
         await context.bot.ban_chat_member(update.effective_chat.id, target.id)
@@ -777,7 +777,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/ban @username\n/ban <user_id>\n/ban (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/ban @username\n/ban (user_id)\n/ban (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ʙᴀɴ ʙᴏᴛ!")
         await context.bot.ban_chat_member(update.effective_chat.id, target.id)
@@ -788,7 +788,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unban @username\n/unban <user_id>\n/unban (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unban @username\n/unban (user_id)\n/unban (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await context.bot.unban_chat_member(update.effective_chat.id, target.id)
         await update.message.reply_text(f"✅ <b>Uɴʙᴀɴɴᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -797,7 +797,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/approve @username\n/approve <user_id>\n/approve (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/approve @username\n/approve (user_id)\n/approve (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.approve_user(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Aᴘᴘʀᴏᴠᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -806,7 +806,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unapprove @username\n/unapprove <user_id>\n/unapprove (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unapprove @username\n/unapprove (user_id)\n/unapprove (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.unapprove_user(target.id, update.effective_chat.id)
         await update.message.reply_text(f"❌ <b>Uɴᴀᴘᴘʀᴏᴠᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -843,7 +843,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!\n\nᴏʀ ᴜsᴇ ID: /{role.lower().replace(' ', '')} <user_id>")
+            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!\n\nᴏʀ ᴜsᴇ ID: /{role.lower().replace(' ', '')} (user_id)")
         
         await db.set_user_role(target.id, update.effective_chat.id, role)
         await update.message.reply_text(f"✅ <b>{role}</b> ʀᴏʟᴇ ᴀᴅᴅᴇᴅ ᴛᴏ {target.first_name}!", parse_mode=ParseMode.HTML)
@@ -854,7 +854,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /un{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!\n\nᴏʀ ᴜsᴇ ID: /un{role.lower().replace(' ', '')} <user_id>")
+            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /un{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!\n\nᴏʀ ᴜsᴇ ID: /un{role.lower().replace(' ', '')} (user_id)")
         
         await db.remove_user_role(target.id, update.effective_chat.id)
         await update.message.reply_text(f"❌ <b>{role}</b> ʀᴏʟᴇ ʀᴇᴍᴏᴠᴇᴅ ғʀᴏᴍ {target.first_name}!", parse_mode=ParseMode.HTML)
@@ -1018,9 +1018,10 @@ class PikachuProtectionBot:
         user_id = update.effective_user.id
         is_premium = user_id in Config.PREMIUM_USERS or user_id == Config.OWNER_ID
         
-        if data == "main_menu":
-            user = update.effective_user
-            text = f"""
+        try:
+            if data == "main_menu":
+                user = update.effective_user
+                text = f"""
 ╔═══════════════════════════════════╗
 ║  ⚡ <b>PIKACHU PROTECTION BOT</b> ⚡
 ╚═══════════════════════════════════╝
@@ -1030,20 +1031,17 @@ class PikachuProtectionBot:
 📌 <b>Aᴅᴅ ᴍᴇ ᴛᴏ ʏᴏᴜʀ ɢʀᴏᴜᴘ!</b>
 {self.get_owner_credit()}
 """
-            keyboard = Keyboards.main_menu(is_premium)
-            try:
+                keyboard = Keyboards.main_menu(is_premium)
                 await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
-            except:
-                await query.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
-        elif data == "stats":
-            if user_id != Config.OWNER_ID:
-                return await query.edit_message_text("❌ Oɴʟʏ ᴏᴡɴᴇʀ!", parse_mode=ParseMode.HTML)
-            users = db.users.count_documents({})
-            groups = db.groups.count_documents({})
-            warns = db.warnings.count_documents({})
-            mutes = db.mutes.count_documents({})
-            text = f"""
+            elif data == "stats":
+                if user_id != Config.OWNER_ID:
+                    return await query.answer("❌ Oɴʟʏ ᴏᴡɴᴇʀ!", show_alert=True)
+                users = db.users.count_documents({})
+                groups = db.groups.count_documents({})
+                warns = db.warnings.count_documents({})
+                mutes = db.mutes.count_documents({})
+                text = f"""
 📊 <b>Bᴏᴛ Sᴛᴀᴛs</b>
 👥 Uꜱᴇʀs: {users}
 📍 Gʀᴏᴜᴘs: {groups}
@@ -1051,61 +1049,78 @@ class PikachuProtectionBot:
 🔇 Mᴜᴛᴇs: {mutes}
 {self.get_owner_credit()}
 """
-            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+                keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+                await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
 
-        elif data == "settings":
-            keyboard = Keyboards.settings_menu()
-            await query.edit_message_text("⚙️ <b>Sᴇᴛᴛɪɴɢs</b>", parse_mode=ParseMode.HTML, reply_markup=keyboard)
+            elif data == "settings":
+                keyboard = Keyboards.settings_menu()
+                await query.edit_message_text("⚙️ <b>Sᴇᴛᴛɪɴɢs</b>", parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
-        elif data == "help":
-            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text("📖 <b>Usᴇ /help ғᴏʀ ᴄᴏᴍᴍᴀɴᴅs</b>", parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+            elif data == "help":
+                keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+                await query.edit_message_text("📖 <b>Usᴇ /help ғᴏʀ ᴄᴏᴍᴍᴀɴᴅs</b>", parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
 
-        elif data == "about":
-            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(f"⚡ <b>{Config.BOT_NAME}</b>\n👑 {Config.OWNER_NAME}", parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+            elif data == "about":
+                keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+                await query.edit_message_text(f"⚡ <b>{Config.BOT_NAME}</b>\n👑 {Config.OWNER_NAME}", parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
 
-        elif data == "staff":
-            await query.edit_message_text("👥 Usᴇ /staff", parse_mode=ParseMode.HTML)
+            elif data == "staff":
+                await query.edit_message_text("👥 Usᴇ /staff", parse_mode=ParseMode.HTML)
 
-        elif data == "sg":
-            await query.edit_message_text("🔄 Usᴇ /sg @user", parse_mode=ParseMode.HTML)
+            elif data == "sg":
+                await query.edit_message_text("🔄 Usᴇ /sg @user", parse_mode=ParseMode.HTML)
 
-        elif data == "history":
-            await query.edit_message_text("📜 Usᴇ /history @user", parse_mode=ParseMode.HTML)
+            elif data == "history":
+                await query.edit_message_text("📜 Usᴇ /history @user", parse_mode=ParseMode.HTML)
 
-        elif data == "chat":
-            await query.edit_message_text("💬 Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ!", parse_mode=ParseMode.HTML)
+            elif data == "chat":
+                await query.edit_message_text("💬 Sᴇɴᴅ ᴍᴇ ᴀɴʏ ᴍᴇssᴀɢᴇ!", parse_mode=ParseMode.HTML)
 
-        elif data == "roles":
-            keyboard = Keyboards.role_keyboard()
-            await query.edit_message_text("👑 <b>Rᴏʟᴇs</b>", parse_mode=ParseMode.HTML, reply_markup=keyboard)
+            elif data == "roles":
+                keyboard = Keyboards.role_keyboard()
+                await query.edit_message_text("👑 <b>Rᴏʟᴇs</b>", parse_mode=ParseMode.HTML, reply_markup=keyboard)
 
-        elif data.startswith("role_"):
-            role = data.replace("role_", "").upper()
-            await query.edit_message_text(f"👑 <b>{role}</b>", parse_mode=ParseMode.HTML)
+            elif data.startswith("role_"):
+                role = data.replace("role_", "").upper()
+                await query.edit_message_text(f"👑 <b>{role}</b>", parse_mode=ParseMode.HTML)
 
-        elif data.startswith("toggle_"):
-            setting = data.replace("toggle_", "")
-            chat_id = update.effective_chat.id
-            settings = await db.get_settings(chat_id)
-            current = settings.get(setting, True)
-            await db.update_settings(chat_id, setting, not current)
-            await query.edit_message_text(f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!", parse_mode=ParseMode.HTML)
+            elif data.startswith("toggle_"):
+                setting = data.replace("toggle_", "")
+                chat_id = update.effective_chat.id
+                settings = await db.get_settings(chat_id)
+                current = settings.get(setting, True)
+                await db.update_settings(chat_id, setting, not current)
+                await query.edit_message_text(f"✅ <b>{setting.upper()}</b> {'Enabled' if not current else 'Disabled'}!", parse_mode=ParseMode.HTML)
 
-        elif data == "premium":
-            if is_premium:
-                text = "💎 <b>Pʀᴇᴍɪᴜᴍ Aᴄᴛɪᴠᴇ!</b>"
-            else:
-                text = f"💎 <b>Pʀᴇᴍɪᴜᴍ</b>\n💰 $5/ᴍᴏɴᴛʜ\n📞 {Config.OWNER_USERNAME}"
-            keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
-            await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+            elif data == "premium":
+                if is_premium:
+                    text = "💎 <b>Pʀᴇᴍɪᴜᴍ Aᴄᴛɪᴠᴇ!</b>"
+                else:
+                    text = f"💎 <b>Pʀᴇᴍɪᴜᴍ</b>\n💰 $5/ᴍᴏɴᴛʜ\n📞 {Config.OWNER_USERNAME}"
+                keyboard = [[InlineKeyboardButton("🔙 Bᴀᴄᴋ", callback_data="main_menu")]]
+                await query.edit_message_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
+
+        except Exception as e:
+            # If editing fails, try sending a new message
+            try:
+                await query.message.reply_text(
+                    "❌ <b>Error processing request!</b>",
+                    parse_mode=ParseMode.HTML
+                )
+            except:
+                pass
+            logger.error(f"Callback error: {e}")
 
     # ────═◈═─ ERROR HANDLER ─═◈═────
 
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         logger.error(f"Update {update} caused error {context.error}")
+        
+        # Ignore common harmless errors
+        error_str = str(context.error).lower()
+        if any(x in error_str for x in ["there is no text", "message to edit", "message not found", "bad request"]):
+            return
+        
         try:
             if update and update.effective_chat:
                 await context.bot.send_message(
