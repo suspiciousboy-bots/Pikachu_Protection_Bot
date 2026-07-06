@@ -72,6 +72,223 @@ class PikachuProtectionBot:
     def get_owner_credit(self):
         return f"\n\n<b>👑 Cʀᴇᴀᴛᴇᴅ ʙʏ: {Config.OWNER_NAME}</b>"
 
+    # ────═◈═─ HELPER: GET TARGET USER ─═◈═────
+    async def _get_target_user(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Get target user from reply or username or ID"""
+        target = None
+        
+        # Check if reply to a message
+        if update.message.reply_to_message:
+            target = update.message.reply_to_message.from_user
+            return target
+        
+        # Check if username provided
+        if context.args:
+            username = context.args[0].replace('@', '')
+            try:
+                target = await context.bot.get_chat(username)
+                return target
+            except:
+                pass
+            
+            # Try as user ID
+            try:
+                user_id = int(username)
+                target = await context.bot.get_chat(user_id)
+                return target
+            except:
+                pass
+        
+        return None
+
+    # ────═◈═─ LOCK TYPES ─═◈═────
+    LOCK_TYPES = {
+        'all': '🔒 All messages',
+        'album': '🖼️ Album',
+        'anonchannel': '📢 Anonymous Channel',
+        'audio': '🎵 Audio',
+        'bot': '🤖 Bot commands',
+        'botlink': '🔗 Bot links',
+        'button': '🔘 Buttons',
+        'cashtag': '💰 Cashtags',
+        'checklist': '✅ Checklist',
+        'cjk': '🈴 CJK characters',
+        'command': '📝 Commands',
+        'comment': '💬 Comments',
+        'contact': '📇 Contacts',
+        'cyrillic': '🅰️ Cyrillic',
+        'document': '📄 Documents',
+        'email': '📧 Emails',
+        'emoji': '😊 Emojis',
+        'emojicustom': '🎨 Custom emojis',
+        'emojigame': '🎮 Emoji games',
+        'emojionly': '😃 Emoji only',
+        'externalreply': '↩️ External replies',
+        'forward': '↗️ Forwards',
+        'forwardbot': '🤖 Bot forwards',
+        'forwardchannel': '📢 Channel forwards',
+        'forwardstory': '📖 Story forwards',
+        'forwarduser': '👤 User forwards',
+        'game': '🎮 Games',
+        'gif': '🎞️ GIFs',
+        'guestbot': '👻 Guest bots',
+        'inline': '🔗 Inline',
+        'invitelink': '🔗 Invite links',
+        'location': '📍 Location',
+        'outsidereaction': '👀 Outside reactions',
+        'phone': '📞 Phone numbers',
+        'photo': '📸 Photos',
+        'poll': '📊 Polls',
+        'reaction': '😊 Reactions',
+        'rtl': '↔️ RTL text',
+        'spoiler': '🔵 Spoilers',
+        'sticker': '🎨 Stickers',
+        'stickermanimated': '🎭 Animated stickers',
+        'stickerpremium': '💎 Premium stickers',
+        'text': '📝 Text messages',
+        'videonote': '🎥 Video notes',
+        'voice': '🎤 Voice messages',
+        'zalgo': '🔥 Zalgo text'
+    }
+
+    # ────═◈═─ LOCK/UNLOCK COMMANDS ─═◈═────
+
+    async def locktypes_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Show all available lock types"""
+        text = "📋 <b>Aᴠᴀɪʟᴀʙʟᴇ Lᴏᴄᴋ Tʏᴘᴇs:</b>\n\n"
+        items = list(self.LOCK_TYPES.items())
+        for i in range(0, len(items), 3):
+            row = items[i:i+3]
+            for key, name in row:
+                text += f"• <code>{key}</code> - {name}\n"
+            text += "\n"
+        text += f"\n📌 <b>Usᴀɢᴇ:</b>\n/lock <type>\n/unlock <type>\n\n:⧽ ʙʏ: {Config.OWNER_NAME}"
+        await update.message.reply_text(text, parse_mode=ParseMode.HTML)
+
+    async def lock_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Lock a specific message type in the group"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            return await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+        
+        # Check admin permission
+        user = update.effective_user
+        chat = update.effective_chat
+        try:
+            member = await context.bot.get_chat_member(chat.id, user.id)
+            if not member.status in ['administrator', 'creator']:
+                return await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ʟᴏᴄᴋ ᴄʜᴀᴛ!")
+        except:
+            return await update.message.reply_text("❌ Eʀʀᴏʀ ᴄʜᴇᴄᴋɪɴɢ ᴘᴇʀᴍɪssɪᴏɴs!")
+        
+        if not context.args:
+            return await update.message.reply_text("⚠️ Usᴀɢᴇ: /lock <type>\n\nTʏᴘᴇs: /locktypes")
+        
+        lock_type = context.args[0].lower()
+        if lock_type not in self.LOCK_TYPES:
+            return await update.message.reply_text(f"❌ Uɴᴋɴᴏᴡɴ ʟᴏᴄᴋ ᴛʏᴘᴇ: <code>{lock_type}</code>\n\nCʜᴇᴄᴋ /locktypes ғᴏʀ ᴀʟʟ ᴛʏᴘᴇs!", parse_mode=ParseMode.HTML)
+        
+        # Save lock setting in database
+        settings = await db.get_settings(chat.id)
+        locks = settings.get('locks', {})
+        locks[lock_type] = True
+        await db.update_settings(chat.id, 'locks', locks)
+        
+        # Apply lock using Telegram's restrict permissions
+        if lock_type == 'all':
+            permissions = ChatPermissions(
+                can_send_messages=False,
+                can_send_audios=False,
+                can_send_documents=False,
+                can_send_photos=False,
+                can_send_videos=False,
+                can_send_video_notes=False,
+                can_send_voice_notes=False,
+                can_send_polls=False,
+                can_send_other_messages=False,
+                can_add_web_page_previews=False
+            )
+            await context.bot.set_chat_permissions(chat.id, permissions)
+        elif lock_type == 'text':
+            permissions = ChatPermissions(
+                can_send_messages=False,
+                can_send_audios=True,
+                can_send_documents=True,
+                can_send_photos=True,
+                can_send_videos=True,
+                can_send_video_notes=True,
+                can_send_voice_notes=True,
+                can_send_polls=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True
+            )
+            await context.bot.set_chat_permissions(chat.id, permissions)
+        elif lock_type in ['audio', 'document', 'photo', 'video', 'videonote', 'voice']:
+            # For specific media types, we need to handle individually
+            pass
+        
+        await update.message.reply_text(f"✅ <b>Lᴏᴄᴋᴇᴅ</b> <code>{lock_type}</code> - {self.LOCK_TYPES.get(lock_type, lock_type)}!", parse_mode=ParseMode.HTML)
+
+    async def unlock_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
+        """Unlock a specific message type in the group"""
+        if not update.effective_chat.type in ['group', 'supergroup']:
+            return await update.message.reply_text("❌ Tʜɪs ᴄᴏᴍᴍᴀɴᴅ ᴏɴʟʏ ᴡᴏʀᴋs ɪɴ ɢʀᴏᴜᴘs!")
+        
+        # Check admin permission
+        user = update.effective_user
+        chat = update.effective_chat
+        try:
+            member = await context.bot.get_chat_member(chat.id, user.id)
+            if not member.status in ['administrator', 'creator']:
+                return await update.message.reply_text("❌ Oɴʟʏ ᴀᴅᴍɪɴs ᴄᴀɴ ᴜɴʟᴏᴄᴋ ᴄʜᴀᴛ!")
+        except:
+            return await update.message.reply_text("❌ Eʀʀᴏʀ ᴄʜᴇᴄᴋɪɴɢ ᴘᴇʀᴍɪssɪᴏɴs!")
+        
+        if not context.args:
+            return await update.message.reply_text("⚠️ Usᴀɢᴇ: /unlock <type>\n\nTʏᴘᴇs: /locktypes")
+        
+        lock_type = context.args[0].lower()
+        if lock_type not in self.LOCK_TYPES:
+            return await update.message.reply_text(f"❌ Uɴᴋɴᴏᴡɴ ʟᴏᴄᴋ ᴛʏᴘᴇ: <code>{lock_type}</code>\n\nCʜᴇᴄᴋ /locktypes ғᴏʀ ᴀʟʟ ᴛʏᴘᴇs!", parse_mode=ParseMode.HTML)
+        
+        # Remove lock setting from database
+        settings = await db.get_settings(chat.id)
+        locks = settings.get('locks', {})
+        locks[lock_type] = False
+        await db.update_settings(chat.id, 'locks', locks)
+        
+        # Unlock - restore all permissions
+        if lock_type == 'all':
+            permissions = ChatPermissions(
+                can_send_messages=True,
+                can_send_audios=True,
+                can_send_documents=True,
+                can_send_photos=True,
+                can_send_videos=True,
+                can_send_video_notes=True,
+                can_send_voice_notes=True,
+                can_send_polls=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True
+            )
+            await context.bot.set_chat_permissions(chat.id, permissions)
+        else:
+            # Unlock specific type - restore all permissions
+            permissions = ChatPermissions(
+                can_send_messages=True,
+                can_send_audios=True,
+                can_send_documents=True,
+                can_send_photos=True,
+                can_send_videos=True,
+                can_send_video_notes=True,
+                can_send_voice_notes=True,
+                can_send_polls=True,
+                can_send_other_messages=True,
+                can_add_web_page_previews=True
+            )
+            await context.bot.set_chat_permissions(chat.id, permissions)
+        
+        await update.message.reply_text(f"✅ <b>Uɴʟᴏᴄᴋᴇᴅ</b> <code>{lock_type}</code> - {self.LOCK_TYPES.get(lock_type, lock_type)}!", parse_mode=ParseMode.HTML)
+
     # ────═◈═─ GENERAL COMMANDS ─═◈═────
     
     async def start(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -93,6 +310,7 @@ class PikachuProtectionBot:
 ╰┈➤ Aɴᴛɪ-Sᴘᴀᴍ  
 ╰┈➤ Aɴᴛɪ-Lɪɴᴋ  
 ╰┈➤ Wᴀʀɴ/Mᴜᴛᴇ/Bᴀɴ/Kɪᴄᴋ  
+╰┈➤ Lᴏᴄᴋ/Uɴʟᴏᴄᴋ Cʜᴀᴛ  
 ╰┈➤ Pʀᴇᴍɪᴜᴍ Fᴇᴀᴛᴜʀᴇs  
 
 👑 <b>Oᴡɴᴇʀ:</b> {Config.OWNER_NAME}
@@ -104,6 +322,11 @@ class PikachuProtectionBot:
     async def help_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         text = f"""
 📖 <b>Cᴏᴍᴍᴀɴᴅ Lɪsᴛ</b> 📖
+
+<b>🔒 Lᴏᴄᴋ Cᴏᴍᴍᴀɴᴅs:</b>
+/lock <type> - Lᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+/unlock <type> - Uɴʟᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+/locktypes - Sʜᴏᴡ ᴀʟʟ ʟᴏᴄᴋ ᴛʏᴘᴇs
 
 <b>👑 Aᴅᴍɪɴ:</b> /warn, /unwarn, /warns, /delwarn, /resetwarns
 /mute, /unmute, /kick, /ban, /unban, /approve, /unapprove
@@ -187,16 +410,8 @@ class PikachuProtectionBot:
         await update.message.reply_text(text, parse_mode=ParseMode.HTML, reply_markup=InlineKeyboardMarkup(keyboard))
 
     async def info_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
+        target = await self._get_target_user(update, context)
+        if not target:
             target = update.effective_user
         
         stats = await db.get_user_stats(target.id)
@@ -211,16 +426,8 @@ class PikachuProtectionBot:
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
     async def infopvt_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
+        target = await self._get_target_user(update, context)
+        if not target:
             target = update.effective_user
         
         stats = await db.get_user_stats(target.id)
@@ -256,17 +463,9 @@ class PikachuProtectionBot:
         await update.message.reply_text(f"🔗 <b>Lɪɴᴋ:</b>\n{link}", parse_mode=ParseMode.HTML)
 
     async def sg_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!")
         
         history = await db.get_user_history(target.id)
         if not history:
@@ -278,17 +477,9 @@ class PikachuProtectionBot:
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
     async def history_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!")
         
         history = await db.get_user_history(target.id)
         if not history:
@@ -416,17 +607,9 @@ class PikachuProtectionBot:
         except:
             return
         
-        target = None
-        if update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        elif context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴡᴀʀɴ ʙᴏᴛ!")
@@ -442,30 +625,19 @@ class PikachuProtectionBot:
     async def unwarn_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = None
-        if update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        elif context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         await db.clear_warnings(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Wᴀʀɴs ʀᴇᴍᴏᴠᴇᴅ ғᴏʀ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
     async def warns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = update.effective_user
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            target = update.effective_user
+        
         warnings = await db.get_warnings(target.id, update.effective_chat.id)
         if not warnings:
             return await update.message.reply_text(f"✅ {target.first_name} ʜᴀs ɴᴏ ᴡᴀʀɴs!")
@@ -483,24 +655,16 @@ class PikachuProtectionBot:
         try:
             await context.bot.delete_message(update.effective_chat.id, update.message.reply_to_message.message_id)
         except:
-            pass  # Message already deleted
+            pass
         await db.add_warning(target.id, update.effective_chat.id, "Dᴇʟᴇᴛᴇᴅ ᴍᴇssᴀɢᴇ", update.effective_user.id)
         await update.message.reply_text(f"⚠️ <b>Dᴇʟᴇᴛᴇᴅ & ᴡᴀʀɴᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
     async def resetwarns_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         await db.clear_warnings(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Wᴀʀɴs ʀᴇsᴇᴛ ғᴏʀ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -517,17 +681,9 @@ class PikachuProtectionBot:
         except:
             return
         
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴍᴜᴛᴇ ʙᴏᴛ!")
@@ -551,17 +707,9 @@ class PikachuProtectionBot:
     async def unmute_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         await db.remove_mute(target.id, update.effective_chat.id)
         await context.bot.restrict_chat_member(update.effective_chat.id, target.id, ChatPermissions(can_send_messages=True))
         await update.message.reply_text(f"🔊 <b>Uɴᴍᴜᴛᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
@@ -569,17 +717,9 @@ class PikachuProtectionBot:
     async def kick_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴋɪᴄᴋ ʙᴏᴛ!")
         await context.bot.ban_chat_member(update.effective_chat.id, target.id)
@@ -589,17 +729,9 @@ class PikachuProtectionBot:
     async def ban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ʙᴀɴ ʙᴏᴛ!")
         await context.bot.ban_chat_member(update.effective_chat.id, target.id)
@@ -608,47 +740,27 @@ class PikachuProtectionBot:
     async def unban_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        if not context.args:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ!")
-        username = context.args[0].replace('@', '')
-        try:
-            target = await context.bot.get_chat(username)
-        except:
-            return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         await context.bot.unban_chat_member(update.effective_chat.id, target.id)
         await update.message.reply_text(f"✅ <b>Uɴʙᴀɴɴᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
     async def approve_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         await db.approve_user(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Aᴘᴘʀᴏᴠᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
     async def unapprove_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return
-        target = None
-        if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-            except:
-                return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
-        elif update.message.reply_to_message:
-            target = update.message.reply_to_message.from_user
-        else:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀ!")
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
         await db.unapprove_user(target.id, update.effective_chat.id)
         await update.message.reply_text(f"❌ <b>Uɴᴀᴘᴘʀᴏᴠᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -682,28 +794,24 @@ class PikachuProtectionBot:
     async def _add_role(self, update: Update, context: ContextTypes.DEFAULT_TYPE, role: str):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return await update.message.reply_text("❌ Gʀᴏᴜᴘ ᴏɴʟʏ!")
-        if not context.args:
-            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /{role.lower().replace(' ', '')} @ᴜsᴇʀ")
-        username = context.args[0].replace('@', '')
-        try:
-            target = await context.bot.get_chat(username)
-        except:
-            return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+        
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!")
+        
         await db.set_user_role(target.id, update.effective_chat.id, role)
-        await update.message.reply_text(f"✅ <b>{role}</b> ᴀᴅᴅᴇᴅ ᴛᴏ {target.first_name}!", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(f"✅ <b>{role}</b> ʀᴏʟᴇ ᴀᴅᴅᴇᴅ ᴛᴏ {target.first_name}!", parse_mode=ParseMode.HTML)
 
     async def _remove_role(self, update: Update, context: ContextTypes.DEFAULT_TYPE, role: str):
         if not update.effective_chat.type in ['group', 'supergroup']:
             return await update.message.reply_text("❌ Gʀᴏᴜᴘ ᴏɴʟʏ!")
-        if not context.args:
-            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /un{role.lower().replace(' ', '')} @ᴜsᴇʀ")
-        username = context.args[0].replace('@', '')
-        try:
-            target = await context.bot.get_chat(username)
-        except:
-            return await update.message.reply_text("❌ Uꜱᴇʀ ɴᴏᴛ ғᴏᴜɴᴅ!")
+        
+        target = await self._get_target_user(update, context)
+        if not target:
+            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /un{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!")
+        
         await db.remove_user_role(target.id, update.effective_chat.id)
-        await update.message.reply_text(f"❌ <b>{role}</b> ʀᴇᴍᴏᴠᴇᴅ ғʀᴏᴍ {target.first_name}!", parse_mode=ParseMode.HTML)
+        await update.message.reply_text(f"❌ <b>{role}</b> ʀᴏʟᴇ ʀᴇᴍᴏᴠᴇᴅ ғʀᴏᴍ {target.first_name}!", parse_mode=ParseMode.HTML)
 
     # ────═◈═─ PIN COMMANDS ─═◈═────
 
@@ -745,7 +853,7 @@ class PikachuProtectionBot:
         await context.bot.unpin_chat_message(update.effective_chat.id)
         await update.message.reply_text("🗑️ <b>Pɪɴ ᴅᴇʟᴇᴛᴇᴅ!</b>", parse_mode=ParseMode.HTML)
 
-    # ────═◈═─ DELETE COMMANDS (FIXED) ─═◈═────
+    # ────═◈═─ DELETE COMMANDS ─═◈═────
 
     async def del_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         if not update.effective_chat.type in ['group', 'supergroup']:
@@ -775,7 +883,6 @@ class PikachuProtectionBot:
         if not update.effective_chat.type in ['group', 'supergroup']:
             return await update.message.reply_text("❌ Gʀᴏᴜᴘ ᴏɴʟʏ!")
         
-        # Check if user has permission
         user = update.effective_user
         chat = update.effective_chat
         try:
@@ -792,14 +899,13 @@ class PikachuProtectionBot:
         current_msg_id = update.message.message_id
         deleted_count = 0
         
-        # Delete messages in reverse order to avoid issues
         for msg_id in range(current_msg_id, start_msg_id - 1, -1):
             try:
                 await context.bot.delete_message(chat.id, msg_id)
                 deleted_count += 1
-                await asyncio.sleep(0.05)  # Small delay to avoid rate limiting
+                await asyncio.sleep(0.05)
             except Exception:
-                pass  # Skip messages that can't be deleted
+                pass
         
         if deleted_count > 0:
             await update.message.reply_text(f"🧹 <b>Pᴜʀɢᴇᴅ {deleted_count} ᴍᴇssᴀɢᴇs!</b>", parse_mode=ParseMode.HTML)
@@ -989,6 +1095,13 @@ class PikachuProtectionBot:
             self.app.add_handler(CommandHandler("disablewelcome", self.disable_welcome))
             self.app.add_handler(CommandHandler("settings", self.settings_command))
             self.app.add_handler(CommandHandler("reload", self.reload_command))
+            
+            # Lock Commands
+            self.app.add_handler(CommandHandler("locktypes", self.locktypes_command))
+            self.app.add_handler(CommandHandler("lock", self.lock_command))
+            self.app.add_handler(CommandHandler("unlock", self.unlock_command))
+            
+            # Moderation Commands
             self.app.add_handler(CommandHandler("warn", self.warn_command))
             self.app.add_handler(CommandHandler("unwarn", self.unwarn_command))
             self.app.add_handler(CommandHandler("warns", self.warns_command))
@@ -1001,6 +1114,8 @@ class PikachuProtectionBot:
             self.app.add_handler(CommandHandler("unban", self.unban_command))
             self.app.add_handler(CommandHandler("approve", self.approve_command))
             self.app.add_handler(CommandHandler("unapprove", self.unapprove_command))
+            
+            # Role Commands
             self.app.add_handler(CommandHandler("cofounder", self.cofounder_command))
             self.app.add_handler(CommandHandler("uncofounder", self.uncofounder_command))
             self.app.add_handler(CommandHandler("mod", self.mod_command))
@@ -1013,14 +1128,20 @@ class PikachuProtectionBot:
             self.app.add_handler(CommandHandler("unhelper", self.unhelper_command))
             self.app.add_handler(CommandHandler("free", self.free_command))
             self.app.add_handler(CommandHandler("unfree", self.unfree_command))
+            
+            # Pin Commands
             self.app.add_handler(CommandHandler("pin", self.pin_command))
             self.app.add_handler(CommandHandler("unpin", self.unpin_command))
             self.app.add_handler(CommandHandler("pinned", self.pinned_command))
             self.app.add_handler(CommandHandler("editpin", self.editpin_command))
             self.app.add_handler(CommandHandler("delpin", self.delpin_command))
+            
+            # Delete Commands
             self.app.add_handler(CommandHandler("del", self.del_command))
             self.app.add_handler(CommandHandler("logdel", self.logdel_command))
             self.app.add_handler(CommandHandler("purge", self.purge_command))
+            
+            # Filter Commands
             self.app.add_handler(CommandHandler("filter", self.filter_command))
             self.app.add_handler(CommandHandler("stopfilter", self.stopfilter_command))
             self.app.add_handler(CommandHandler("filters", self.filters_command))
