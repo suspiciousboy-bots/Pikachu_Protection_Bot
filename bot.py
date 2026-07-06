@@ -82,21 +82,43 @@ class PikachuProtectionBot:
             target = update.message.reply_to_message.from_user
             return target
         
-        # Check if username provided
+        # Check if username or ID provided
         if context.args:
-            username = context.args[0].replace('@', '')
-            try:
-                target = await context.bot.get_chat(username)
-                return target
-            except:
-                pass
+            username = context.args[0].strip()
             
-            # Try as user ID
+            # Remove @ if present
+            if username.startswith('@'):
+                username = username[1:]
+            
+            # Try to get user by username
             try:
-                user_id = int(username)
-                target = await context.bot.get_chat(user_id)
-                return target
-            except:
+                # Try with @ symbol first
+                try:
+                    target = await context.bot.get_chat(f"@{username}")
+                    if target:
+                        return target
+                except:
+                    pass
+                
+                # Try without @ symbol
+                try:
+                    target = await context.bot.get_chat(username)
+                    if target:
+                        return target
+                except:
+                    pass
+                
+                # Try as user ID
+                try:
+                    user_id = int(username)
+                    target = await context.bot.get_chat(user_id)
+                    if target:
+                        return target
+                except:
+                    pass
+                    
+            except Exception as e:
+                logger.error(f"Error getting user: {e}")
                 pass
         
         return None
@@ -154,15 +176,39 @@ class PikachuProtectionBot:
     # ────═◈═─ LOCK/UNLOCK COMMANDS ─═◈═────
 
     async def locktypes_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
-        """Show all available lock types"""
-        text = "📋 <b>Aᴠᴀɪʟᴀʙʟᴇ Lᴏᴄᴋ Tʏᴘᴇs:</b>\n\n"
+        """Show all available lock types in a beautiful format"""
+        text = """
+╔═══════════════════════════════════════════════════════════╗
+║              📋 Aᴠᴀɪʟᴀʙʟᴇ Lᴏᴄᴋ Tʏᴘᴇs                  ║
+╚═══════════════════════════════════════════════════════════╝
+
+"""
+        # Group lock types into columns
         items = list(self.LOCK_TYPES.items())
         for i in range(0, len(items), 3):
             row = items[i:i+3]
+            line = ""
             for key, name in row:
-                text += f"• <code>{key}</code> - {name}\n"
-            text += "\n"
-        text += f"\n📌 <b>Usᴀɢᴇ:</b>\n/lock <type>\n/unlock <type>\n\n:⧽ ʙʏ: {Config.OWNER_NAME}"
+                line += f"  {name:<18}"
+            text += line + "\n"
+            line2 = ""
+            for key, name in row:
+                line2 += f"  <code>/{key}</code>{' ' * (18 - len(key) - 6)}"
+            text += line2 + "\n\n"
+
+        text += """
+═══════════════════════════════════════════════════════════
+
+<b>📌 Usᴀɢᴇ:</b>
+/lock <type>     - Lᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+/unlock <type>   - Uɴʟᴏᴄᴋ ᴀ ᴍᴇssᴀɢᴇ ᴛʏᴘᴇ
+
+<b>🔹 Example:</b>
+/lock text       - Lᴏᴄᴋ ᴛᴇxᴛ ᴍᴇssᴀɢᴇs
+/unlock text     - Uɴʟᴏᴄᴋ ᴛᴇxᴛ ᴍᴇssᴀɢᴇs
+
+:⧽ ʙʏ: {Config.OWNER_NAME}
+"""
         await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
     async def lock_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -465,7 +511,7 @@ class PikachuProtectionBot:
     async def sg_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!\n\nUsᴀɢᴇ:\n/sg @username\n/sg <user_id>\n/sg (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         history = await db.get_user_history(target.id)
         if not history:
@@ -479,7 +525,7 @@ class PikachuProtectionBot:
     async def history_command(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ ᴏʀ ʀᴇᴘʟʏ!\n\nUsᴀɢᴇ:\n/history @username\n/history <user_id>\n/history (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         history = await db.get_user_history(target.id)
         if not history:
@@ -609,7 +655,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/warn @username\n/warn <user_id>\n/warn (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴡᴀʀɴ ʙᴏᴛ!")
@@ -627,7 +673,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unwarn @username\n/unwarn <user_id>\n/unwarn (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.clear_warnings(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Wᴀʀɴs ʀᴇᴍᴏᴠᴇᴅ ғᴏʀ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -664,7 +710,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/resetwarns @username\n/resetwarns <user_id>\n/resetwarns (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.clear_warnings(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Wᴀʀɴs ʀᴇsᴇᴛ ғᴏʀ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -683,7 +729,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/mute @username\n/mute <user_id>\n/mute (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴍᴜᴛᴇ ʙᴏᴛ!")
@@ -709,7 +755,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unmute @username\n/unmute <user_id>\n/unmute (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.remove_mute(target.id, update.effective_chat.id)
         await context.bot.restrict_chat_member(update.effective_chat.id, target.id, ChatPermissions(can_send_messages=True))
         await update.message.reply_text(f"🔊 <b>Uɴᴍᴜᴛᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
@@ -719,7 +765,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/kick @username\n/kick <user_id>\n/kick (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ᴋɪᴄᴋ ʙᴏᴛ!")
         await context.bot.ban_chat_member(update.effective_chat.id, target.id)
@@ -731,7 +777,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/ban @username\n/ban <user_id>\n/ban (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         if target.is_bot:
             return await update.message.reply_text("❌ Cᴀɴ'ᴛ ʙᴀɴ ʙᴏᴛ!")
         await context.bot.ban_chat_member(update.effective_chat.id, target.id)
@@ -742,7 +788,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unban @username\n/unban <user_id>\n/unban (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await context.bot.unban_chat_member(update.effective_chat.id, target.id)
         await update.message.reply_text(f"✅ <b>Uɴʙᴀɴɴᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -751,7 +797,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/approve @username\n/approve <user_id>\n/approve (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.approve_user(target.id, update.effective_chat.id)
         await update.message.reply_text(f"✅ <b>Aᴘᴘʀᴏᴠᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -760,7 +806,7 @@ class PikachuProtectionBot:
             return
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!")
+            return await update.message.reply_text("⚠️ Pʀᴏᴠɪᴅᴇ ᴀ ᴜsᴇʀɴᴀᴍᴇ, ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴍᴇssᴀɢᴇ, ᴏʀ ᴘʀᴏᴠɪᴅᴇ ᴀɴ ID!\n\nUsᴀɢᴇ:\n/unapprove @username\n/unapprove <user_id>\n/unapprove (ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ)")
         await db.unapprove_user(target.id, update.effective_chat.id)
         await update.message.reply_text(f"❌ <b>Uɴᴀᴘᴘʀᴏᴠᴇᴅ {target.first_name}!</b>", parse_mode=ParseMode.HTML)
 
@@ -797,7 +843,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!")
+            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!\n\nᴏʀ ᴜsᴇ ID: /{role.lower().replace(' ', '')} <user_id>")
         
         await db.set_user_role(target.id, update.effective_chat.id, role)
         await update.message.reply_text(f"✅ <b>{role}</b> ʀᴏʟᴇ ᴀᴅᴅᴇᴅ ᴛᴏ {target.first_name}!", parse_mode=ParseMode.HTML)
@@ -808,7 +854,7 @@ class PikachuProtectionBot:
         
         target = await self._get_target_user(update, context)
         if not target:
-            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /un{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!")
+            return await update.message.reply_text(f"⚠️ Usᴀɢᴇ: /un{role.lower().replace(' ', '')} @ᴜsᴇʀ\nᴏʀ ʀᴇᴘʟʏ ᴛᴏ ᴀ ᴜsᴇʀ's ᴍᴇssᴀɢᴇ!\n\nᴏʀ ᴜsᴇ ID: /un{role.lower().replace(' ', '')} <user_id>")
         
         await db.remove_user_role(target.id, update.effective_chat.id)
         await update.message.reply_text(f"❌ <b>{role}</b> ʀᴏʟᴇ ʀᴇᴍᴏᴠᴇᴅ ғʀᴏᴍ {target.first_name}!", parse_mode=ParseMode.HTML)
