@@ -246,7 +246,6 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
    ❍ Aɴᴛɪ-Sᴘᴀᴍ Pʀᴏᴛᴇᴄᴛɪᴏɴ                
                                           
 ╰─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ─ ╯
-
 📢 Fᴏʀ Uᴘᴅᴀᴛᴇs: {Config.UPDATES_CHANNEL}
 💬 Sᴜᴘᴘᴏʀᴛ: {Config.SUPPORT_GROUP}
 
