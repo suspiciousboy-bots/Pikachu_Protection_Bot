@@ -62,7 +62,7 @@ def format_mention(user):
         return f"@{user.username}"
     return f"[{user.first_name}](tg://user?id={user.id})"
 
-# ==================== MAIN MENU (UPDATED - REMOVED STAFF, SG, HISTORY) ====================
+# ==================== MAIN MENU (UPDATED) ====================
 def main_menu():
     keyboard = [
         [
@@ -341,8 +341,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 /infopvt - Private info
 /me - Your info
 /geturl - Get message link
-/sg @user - Show user's dark past (name/username history)
-/history @user - Full history (name/username changes)
+/sg @user - Show user's name/username history
+/history @user - Full history with timestamps
 /chat - Chat with bot
 
 👋 Welcome & Goodbye:
@@ -1487,7 +1487,7 @@ async def purge(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         await update.message.reply_text(f"❌ Error: {str(e)}")
 
-# ==================== SG / HISTORY COMMANDS (UPDATED WITH FETCHING MESSAGE) ====================
+# ==================== SG COMMAND (FORMATTED LIKE NEZUKO) ====================
 async def sg(update: Update, context: ContextTypes.DEFAULT_TYPE):
     target, _ = await get_target_user(update, context)
     
@@ -1509,57 +1509,67 @@ async def sg(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
-    # Format the history like SangMata style
-    name_changes = []
-    username_changes = []
+    # Format as Nezuko style
+    first_names = []
+    usernames = []
     
     for entry in history:
         name = f"{entry.get('first_name', '')} {entry.get('last_name', '')}".strip()
         if name:
-            name_changes.append({
-                'name': name,
-                'timestamp': entry.get('timestamp', '')
-            })
+            ts = entry.get('timestamp')
+            if isinstance(ts, datetime):
+                ts = ts.strftime("%d/%m/%y %H:%M:%S")
+            else:
+                ts = str(ts)
+            first_names.append({"name": name, "timestamp": ts})
         if entry.get('username'):
-            username_changes.append({
-                'username': entry.get('username'),
-                'timestamp': entry.get('timestamp', '')
+            usernames.append({
+                "username": entry.get('username'),
+                "timestamp": entry.get('timestamp')
             })
+    
+    # Remove duplicates (keep last occurrence) - but we'll just show unique list
+    unique_names = []
+    seen = set()
+    for f in reversed(first_names):
+        if f['name'] not in seen:
+            seen.add(f['name'])
+            unique_names.append(f)
+    unique_names.reverse()
+    
+    unique_usernames = []
+    seen = set()
+    for u in reversed(usernames):
+        if u['username'] not in seen:
+            seen.add(u['username'])
+            unique_usernames.append(u)
+    unique_usernames.reverse()
     
     text = f"""
-📊 **Usᴇʀ Hɪsᴛᴏʀʏ (Dᴀʀᴋ Pᴀsᴛ)** 📊
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-❍ Usᴇʀ: {target.first_name}
-❍ ID: `{target.id}`
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 **{target.first_name}'s History**
+  __________________________________
 """
+    text += f"\n  UserID : #{target.id}\n"
     
-    if name_changes:
-        text += "📛 **Nᴀᴍᴇ Cʜᴀɴɢᴇs:**\n"
-        for change in name_changes:
-            ts = change['timestamp']
-            if isinstance(ts, datetime):
-                ts = ts.strftime("%d %b %Y, %I:%M %p")
-            text += f"╰┈➤ {change['name']}  `({ts})`\n"
-        text += "\n"
+    if unique_names:
+        text += "\n  **First Names:**\n"
+        for i, name in enumerate(unique_names, 1):
+            text += f"   * {name['name']}\n"
     else:
-        text += "📛 Nᴏ ɴᴀᴍᴇ ᴄʜᴀɴɢᴇs ʀᴇᴄᴏʀᴅᴇᴅ\n\n"
+        text += "\n  **First Names:**\n   * None\n"
     
-    if username_changes:
-        text += "🔰 **Usᴇʀɴᴀᴍᴇ Cʜᴀɴɢᴇs:**\n"
-        for change in username_changes:
-            ts = change['timestamp']
-            if isinstance(ts, datetime):
-                ts = ts.strftime("%d %b %Y, %I:%M %p")
-            text += f"╰┈➤ @{change['username']}  `({ts})`\n"
-        text += "\n"
+    if unique_usernames:
+        text += "\n  -----------\n\n  **User Names:**\n"
+        for username in unique_usernames:
+            text += f"   * @{username['username']}\n"
     else:
-        text += "🔰 Nᴏ ᴜsᴇʀɴᴀᴍᴇ ᴄʜᴀɴɢᴇs ʀᴇᴄᴏʀᴅᴇᴅ\n\n"
+        text += "\n  -----------\n\n  **User Names:**\n   * None\n"
     
     text += f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Tᴏᴛᴀʟ Nᴀᴍᴇ Cʜᴀɴɢᴇs: {len(name_changes)}
-📊 Tᴏᴛᴀʟ Usᴇʀɴᴀᴍᴇ Cʜᴀɴɢᴇs: {len(username_changes)}
+  
+  __________________________________
+📊 **Total Name Changes:** {len(unique_names)}
+📊 **Total Username Changes:** {len(unique_usernames)}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔍 Fᴇᴛᴄʜᴇᴅ ғʀᴏᴍ ᴍʏ ᴅᴀᴛᴀʙᴀsᴇ
 
@@ -1567,16 +1577,16 @@ async def sg(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ˏˋ°•*⁀➷ Pᴏᴡᴇʀᴇᴅ Bʏ ⏤͟͞ 𝐂𝐑𝐀𝐙𝐘 𝐁𝐎𝐘 ᭄࿐ ➷⁀•°ˊˎ
 """
     
-    await fetching_msg.edit_text(text, parse_mode=ParseMode.HTML)
+    await fetching_msg.edit_text(text, parse_mode=ParseMode.MARKDOWN)
 
-
+# ==================== HISTORY COMMAND (WITH TIMESTAMPS) ====================
 async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
     target, _ = await get_target_user(update, context)
     
     if not target:
         target = update.effective_user
     
-    # Send "Fetching full history..." message
+    # Send "Fetching..." message
     fetching_msg = await update.message.reply_text(
         f"📜 Fᴇᴛᴄʜɪɴɢ ғᴜʟʟ ʜɪsᴛᴏʀʏ ғᴏʀ {target.first_name}...\n\nPʟᴇᴀsᴇ ᴡᴀɪᴛ ғᴏʀ ᴛʜᴇ ʀᴇsᴘᴏɴsᴇ."
     )
@@ -1590,25 +1600,57 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
     
+    # Format with timestamps and numbering
     text = f"""
-📜 **Fᴜʟʟ Hɪsᴛᴏʀʏ Oғ {target.first_name}** 📜
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-❍ Usᴇʀ: {target.first_name}
-❍ ID: `{target.id}`
-━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 **{target.first_name}'s History**
+  __________________________________
 """
+    text += f"\n  UserID : #{target.id}\n"
+    
+    # First Names with timestamps
+    first_names = []
+    usernames = []
     
     for entry in history:
         name = f"{entry.get('first_name', '')} {entry.get('last_name', '')}".strip()
-        username = entry.get('username', 'Nᴏɴᴇ')
-        ts = entry.get('timestamp', '')
-        if isinstance(ts, datetime):
-            ts = ts.strftime("%d %b %Y, %I:%M %p")
-        text += f"╰┈➤ **{name}**  (@{username})  `{ts}`\n"
+        if name:
+            ts = entry.get('timestamp')
+            if isinstance(ts, datetime):
+                ts = ts.strftime("%d/%m/%y %H:%M:%S")
+            else:
+                ts = str(ts)
+            first_names.append({"name": name, "timestamp": ts})
+        if entry.get('username'):
+            usernames.append({
+                "username": entry.get('username'),
+                "timestamp": entry.get('timestamp')
+            })
+    
+    # List names with numbers
+    if first_names:
+        text += "\n  **First Names:**\n"
+        for i, item in enumerate(first_names, 1):
+            text += f"   {i:02d}. [{item['timestamp']}] {item['name']}\n"
+    else:
+        text += "\n  **First Names:**\n   * None\n"
+    
+    if usernames:
+        # Format usernames with timestamps
+        text += "\n  -----------\n\n  **User Names:**\n"
+        for i, item in enumerate(usernames, 1):
+            ts = item['timestamp']
+            if isinstance(ts, datetime):
+                ts = ts.strftime("%d/%m/%y %H:%M:%S")
+            else:
+                ts = str(ts)
+            text += f"   {i}. [{ts}] @{item['username']}\n"
+    else:
+        text += "\n  -----------\n\n  **User Names:**\n   * None\n"
     
     text += f"""
-━━━━━━━━━━━━━━━━━━━━━━━━━━
-📊 Tᴏᴛᴀʟ Eɴᴛʀɪᴇs: {len(history)}
+  
+  __________________________________
+📊 **Total Entries:** {len(history)}
 ━━━━━━━━━━━━━━━━━━━━━━━━━━
 🔍 Fᴇᴛᴄʜᴇᴅ ғʀᴏᴍ ᴍʏ ᴅᴀᴛᴀʙᴀsᴇ
 
@@ -1616,7 +1658,7 @@ async def history(update: Update, context: ContextTypes.DEFAULT_TYPE):
 ˏˋ°•*⁀➷ Pᴏᴡᴇʀᴇᴅ Bʏ ⏤͟͞ 𝐂𝐑𝐀𝐙𝐘 𝐁𝐎𝐘 ᭄࿐ ➷⁀•°ˊˎ
 """
     
-    await fetching_msg.edit_text(text, parse_mode=ParseMode.HTML)
+    await fetching_msg.edit_text(text, parse_mode=ParseMode.MARKDOWN)
 
 # ==================== WELCOME & GOODBYE COMMANDS ====================
 async def enablewelcome(update: Update, context: ContextTypes.DEFAULT_TYPE):
