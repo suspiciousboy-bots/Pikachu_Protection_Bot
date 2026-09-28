@@ -1,0 +1,30 @@
+# fly.toml app configuration file
+# https://fly.io/docs/reference/configuration/
+
+app = "pikachu-protection-bot"  # ⚠️ YAHAN apna unique naam daal (lowercase aur dash ke saath)
+primary_region = "bom"          # Mumbai region (India ke liye best latency)
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false    # ⭐ BAHUT ZAROORI: Bot ko sleep hone se rokega
+  auto_start_machines = true
+  min_machines_running = 1      # ⭐ BAHUT ZAROORI: Hamesha 1 machine zinda rakhega
+
+  [[http_service.checks]]
+    interval = "15s"
+    timeout = "2s"
+    grace_period = "5s"
+    method = "GET"
+    path = "/health"            # Tere bot.py me Flask ka /health endpoint hai
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"              # 512MB RAM free tier me fit hai aur bot ke liye kaafi hai
+  cpus = 1
